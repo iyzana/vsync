@@ -1,0 +1,7 @@
+- Allow adding by link so real youtube can be used
+- Click adds to queue
+- Queue takes preference over backing playlist (like spotify)
+- Allow playlist shuffle
+- Play-now keeps the queue intact
+- No autoplay
+- Maybe Play-now pushes current track with timestamp as next in queue
