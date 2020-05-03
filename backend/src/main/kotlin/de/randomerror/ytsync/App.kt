@@ -19,7 +19,7 @@ inline class RoomId(val roomId: String)
 fun main() {
     (LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME) as Logger).level = Level.INFO
 
-    webSocket("/roo", SyncWebSocket::class.java)
+    webSocket("/room", SyncWebSocket::class.java)
     init()
 }
 

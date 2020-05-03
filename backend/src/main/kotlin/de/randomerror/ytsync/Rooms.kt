@@ -15,7 +15,7 @@ fun createRoom(session: Session): String? {
     val roomId = generateRoomId()
     rooms[roomId] = mutableListOf(session)
     sessions[session] = roomId
-    return roomId.roomId
+    return "create ${roomId.roomId}"
 }
 
 private fun generateRoomId(): RoomId {
@@ -29,17 +29,15 @@ fun joinRoom(roomId: RoomId, session: Session): String? {
     val room = rooms[roomId] ?: return null
     room.add(session)
     sessions[session] = roomId
-    return "ok"
+    return "join ok"
 }
 
 fun messageRoom(session: Session, message: String): String? {
     val roomId = sessions[session] ?: return null
     rooms[roomId]!!.forEach { member ->
-        if (member != session) {
-            member.remote.sendString(message)
-        }
+        member.remote.sendString(message)
     }
-    return "ok"
+    return "msg ok"
 }
 
 fun close(session: Session) {

@@ -1,24 +1,31 @@
-import React from "react";
+import React, { useRef, useState } from "react";
 import "./YtEmbed.css";
+import YouTube, { Options } from "react-youtube";
 
 interface YtEmbedProps {
   videoId: string;
+  onStateChange: () => void;
+  setPlayer: (player: any) => void;
 }
 
-function YtEmbed({ videoId }: YtEmbedProps) {
+const opts: Options = {
+  width: "100%",
+  height: "100%",
+  playerVars: {
+    autoplay: 0,
+  },
+};
+
+function YtEmbed({ videoId, onStateChange, setPlayer }: YtEmbedProps) {
   return (
     <div className="aspect-ratio">
-      <div className="aspect-ratio-inner">
-        <iframe
-          title="YouTube Embed"
-          width="100%"
-          height="100%"
-          src={`https://www.youtube.com/embed/${videoId}`}
-          frameBorder="0"
-          allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
-          allowFullScreen
-        ></iframe>
-      </div>
+      <YouTube
+        opts={opts}
+        containerClassName="aspect-ratio-inner"
+        videoId={videoId}
+        onReady={(e) => setPlayer(e.target)}
+        onStateChange={onStateChange}
+      ></YouTube>
     </div>
   );
 }
