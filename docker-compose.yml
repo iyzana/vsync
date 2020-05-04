@@ -1,0 +1,19 @@
+version: 3.3
+services:
+  backend:
+    build: backend
+    container_name: yt-sync-backend
+    restart: unless-stopped
+    networks:
+      - nginx:
+  frontend:
+    build: frontend
+    container_name: yt-sync-frontend
+    restart: unless-stopped
+    networks:
+      - nginx:
+
+networks:
+  nginx:
+    external:
+      name: nginx_nginx
