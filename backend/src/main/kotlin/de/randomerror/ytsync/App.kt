@@ -40,24 +40,43 @@ class SyncWebSocket {
     @Throws(IOException::class)
     fun message(session: Session, message: String) {
         val cmd = message.trim().split(' ')
+        val cmdString = cmd.joinToString(" ")
+        log(session, cmdString)
         val response = when {
             cmd.size == 1 && cmd[0] == "create" -> createRoom(session)
             cmd.size == 2 && cmd[0] == "join" -> joinRoom(RoomId(cmd[1]), session)
-            cmd.size == 1 && cmd[0] == "play" -> messageRoom(session, "play")
-            cmd.size == 1 && cmd[0] == "pause" -> messageRoom(session, "pause")
+            cmd.size == 2 && cmd[0] == "play" -> {
+                coordinatePlay(session, TimeStamp(cmd[1].toDouble()))
+            }
+            cmd.size == 2 && cmd[0] == "pause" -> {
+                coordinateClientPause(session, TimeStamp(cmd[1].toDouble()))
+            }
+            cmd.size == 2 && cmd[0] == "ready" -> {
+                setReady(session, TimeStamp(cmd[1].toDouble()))
+            }
+            cmd.size == 1 && cmd[0] == "sync" -> {
+                sync(session)
+            }
+            cmd.size == 2 && cmd[0] == "buffer" -> {
+                handleBuffering(session, TimeStamp(cmd[1].toDouble()))
+            }
             else -> {
                 kill(session)
                 null
             }
         }
         if (response != null) {
-            log(session, cmd.joinToString(" ") + " -> " + response)
-            session.remote.sendString(response)
+            log(session, "$cmdString -> $response")
+            session.remote.sendStringByFuture(response)
         } else {
-            log(session, cmd.joinToString(" ") + " -> <err>")
+            log(session, "$cmdString -> <err>")
             kill(session)
         }
     }
+}
+
+fun log(message: String) {
+    logger.info(message)
 }
 
 fun log(session: Session, message: String) {
