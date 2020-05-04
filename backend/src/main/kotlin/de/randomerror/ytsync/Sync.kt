@@ -38,7 +38,7 @@ fun createRoom(session: Session): String? {
 private fun generateRoomId(): RoomId {
     val bytes = ByteArray(3)
     random.nextBytes(bytes)
-    return RoomId(String(Base64.getEncoder().encode(bytes)))
+    return RoomId(String(Base64.getUrlEncoder().encode(bytes)))
 }
 
 fun joinRoom(roomId: RoomId, session: Session): String? {
