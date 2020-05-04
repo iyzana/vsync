@@ -100,12 +100,9 @@ function App() {
     }
   }, [player, oldState, setOldState]);
 
-  const ready = useCallback(
-    (player: any) => {
-      setPlayer(player);
-    },
-    [player]
-  );
+  const ready = useCallback((player: any) => {
+    setPlayer(player);
+  }, []);
   return (
     <main>
       <div className="container">
