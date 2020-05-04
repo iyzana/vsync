@@ -34,12 +34,12 @@ function App() {
       } else if (msg === "invalid command") {
         window.location.href = "/";
       } else if (msg === "play") {
-        if (player.getPlayerState() !== YouTube.PlayerState.PLAYING) {
+        if (player?.getPlayerState() !== YouTube.PlayerState.PLAYING) {
           player?.playVideo();
         }
       } else if (msg.startsWith("pause")) {
         const timestamp = parseFloat(msg.split(" ")[1]);
-        if (player.getPlayerState() === YouTube.PlayerState.PLAYING) {
+        if (player?.getPlayerState() === YouTube.PlayerState.PLAYING) {
           player?.pauseVideo();
         }
         const shouldSeek = Math.abs(player?.getCurrentTime() - timestamp) > 1;
@@ -94,7 +94,6 @@ function App() {
       console.log(`sending buffer ${player.getCurrentTime()}`);
       ws.send(`buffer ${player.getCurrentTime()}`);
     } else if (newState === YouTube.PlayerState.UNSTARTED) {
-      console.log("can't start video");
       console.log("sending sync");
       ws.send("sync");
     }
@@ -107,7 +106,7 @@ function App() {
     <main>
       <div className="container">
         <YtEmbed
-          videoId="5NPBIwQyPWE"
+          videoId="s8QYxmpuyxg"
           onStateChange={onStateChange}
           setPlayer={ready}
         />

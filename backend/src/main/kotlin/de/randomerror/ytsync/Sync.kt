@@ -19,9 +19,9 @@ sealed class SyncState {
 }
 
 class SessionState(
-        val session: Session,
-        var state: SyncState,
-        var ignorePauseTill: Instant? = null
+    val session: Session,
+    var state: SyncState,
+    var ignorePauseTill: Instant? = null
 )
 
 private val rooms: MutableMap<RoomId, MutableList<SessionState>> = HashMap()
@@ -49,38 +49,34 @@ fun joinRoom(roomId: RoomId, session: Session): String? {
     return "join ok"
 }
 
-fun setReady(session: Session, timestamp: TimeStamp): String? {
-    val roomId = sessions[session] ?: return null
-    val room = rooms[roomId]!!
-    room.find { it.session == session }!!.state = SyncState.Ready(timestamp)
-    if (room.all { isReady(it.state, timestamp) }) {
-        room.forEach {
-            it.state = SyncState.Playing(
-                    Instant.now(),
-                    timestamp
-            )
-        }
-        broadcastRoom(room, "play") ?: return null
-    }
-    return "ok ready"
-}
-
 fun coordinatePlay(session: Session, timestamp: TimeStamp): String? {
     val roomId = sessions[session] ?: return null
     val room = rooms[roomId]!!
+    val sessionState = room.find { it.session == session }!!
+    sessionState.state = SyncState.Playing(Instant.now(), timestamp)
     if (room.all { isReady(it.state, timestamp) }) {
-        room.filter { it.state != SyncState.Unstarted }.forEach {
-            it.state = SyncState.Playing(
-                    Instant.now(),
-                    timestamp
-            )
-        }
+        room
+            .filter { it.state != SyncState.Unstarted }
+            .forEach { it.state = SyncState.Playing(Instant.now(), timestamp) }
         broadcastRoom(room, "play") ?: return null
     } else {
         coordinateServerPause(room, timestamp) ?: return null
         broadcastRoom(room, "ready? ${timestamp.timestamp}") ?: return null
     }
     return "ok play"
+}
+
+fun setReady(session: Session, timestamp: TimeStamp): String? {
+    val roomId = sessions[session] ?: return null
+    val room = rooms[roomId]!!
+    room.find { it.session == session }!!.state = SyncState.Ready(timestamp)
+    if (room.all { isReady(it.state, timestamp) }) {
+        room
+            .filter { it.state != SyncState.Unstarted }
+            .forEach { it.state = SyncState.Playing(Instant.now(), timestamp) }
+        broadcastRoom(room, "play") ?: return null
+    }
+    return "ok ready"
 }
 
 fun isReady(state: SyncState, timestamp: TimeStamp): Boolean {
@@ -109,15 +105,19 @@ fun coordinateClientPause(session: Session, timestamp: TimeStamp): String? {
     if (ignorePauseTill != null && ignorePauseTill.isAfter(Instant.now())) {
         return "ok ignore pause"
     }
-    room.forEach { it.state = SyncState.Paused(timestamp) }
+    room
+        .filter { it.state != SyncState.Unstarted }
+        .forEach { it.state = SyncState.Paused(timestamp) }
     return broadcastRoom(room, "pause ${timestamp.timestamp}")
 }
 
 fun coordinateServerPause(room: MutableList<SessionState>, timestamp: TimeStamp): String? {
-    room.forEach {
-        it.state = SyncState.Paused(timestamp)
-        it.ignorePauseTill = Instant.now().plusSeconds(1)
-    }
+    room
+        .filter { it.state != SyncState.Unstarted }
+        .forEach {
+            it.state = SyncState.Paused(timestamp)
+            it.ignorePauseTill = Instant.now().plusSeconds(1)
+        }
     return broadcastRoom(room, "pause ${timestamp.timestamp}")
 }
 
@@ -161,16 +161,11 @@ fun handleBuffering(session: Session, timestamp: TimeStamp): String? {
     return coordinatePlay(session, timestamp)
 }
 
-fun broadcastRoom(session: Session, message: String): String? {
-    val roomId = sessions[session] ?: return null
-    return broadcastRoom(rooms[roomId]!!, message)
-}
-
 fun broadcastRoom(sessions: MutableList<SessionState>, message: String): String? {
     log("broadcast $message")
-    sessions.filter { it.state != SyncState.Unstarted }.forEach { member ->
-        member.session.remote.sendStringByFuture(message)
-    }
+    sessions
+        .filter { it.state != SyncState.Unstarted }
+        .forEach { member -> member.session.remote.sendStringByFuture(message) }
     return "ok $message"
 }
 
