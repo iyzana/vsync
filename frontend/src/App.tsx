@@ -16,7 +16,9 @@ ws.onopen = () => {
 
 function App() {
   const [player, setPlayer] = useState<any | null>(null);
-  const [prepare, setPrepare] = useState<number | null>(null);
+  const [preloadTime, setPreloadTime] = useState<number | null>(null);
+  const [nextReadyCheck, setNextReadyCheck] = useState<number>(100);
+  const [initialized, setInitialized] = useState<boolean>(false);
   const [oldState, setOldState] = useState<number>(
     YouTube.PlayerState.UNSTARTED
   );
@@ -39,42 +41,59 @@ function App() {
         }
       } else if (msg.startsWith("pause")) {
         const timestamp = parseFloat(msg.split(" ")[1]);
-        if (player?.getPlayerState() === YouTube.PlayerState.PLAYING) {
-          player?.pauseVideo();
-        }
         const shouldSeek = Math.abs(player?.getCurrentTime() - timestamp) > 1;
         if (shouldSeek) {
-          player?.seekTo(timestamp, true);
+          setTimeout(() => {
+            player?.seekTo(timestamp, true);
+          }, 150);
+        }
+        if (player?.getPlayerState() !== YouTube.PlayerState.PAUSED) {
+          console.log("pause setting pause");
+          player?.pauseVideo();
         }
       } else if (msg.startsWith("ready?")) {
         const timestamp = parseFloat(msg.split(" ")[1]);
-        setPrepare(timestamp);
+        setNextReadyCheck(100);
+        setPreloadTime(timestamp);
       }
     };
     const readyCheck = setInterval(() => {
       const currentFraction = player?.getCurrentTime() / player?.getDuration();
       const targetPreload = 5 / player?.getDuration();
-      if (prepare === null) {
+      if (preloadTime === null) {
         clearInterval(readyCheck);
         return;
       }
       console.log(
-        `ready? ${player?.getPlayerState()} ${prepare} ${player?.getCurrentTime()} ${player?.getVideoLoadedFraction()}`
+        `ready? ${player?.getPlayerState()} ${preloadTime} ${player?.getCurrentTime()} ${player?.getVideoLoadedFraction()}`
       );
+      const loaded = player?.getVideoLoadedFraction();
       if (
-        Math.abs(player?.getCurrentTime() - prepare) <= 1 &&
-        player?.getVideoLoadedFraction() - currentFraction >= targetPreload
+        Math.abs(player?.getCurrentTime() - preloadTime) <= 1 &&
+        (loaded - currentFraction >= targetPreload || loaded === 1)
       ) {
         console.log(`sending ready ${player?.getCurrentTime()}`);
         ws.send(`ready ${player?.getCurrentTime()}`);
-        setPrepare(null);
+        setPreloadTime(null);
       } else {
-        player?.seekTo(prepare, true);
+        if (
+          player?.getPlayerState() === YouTube.PlayerState.PLAYING ||
+          player?.getPlayerState() === YouTube.PlayerState.BUFFERING
+        ) {
+          console.log("ready setting pause");
+          player?.pauseVideo();
+        }
+
+        player?.seekTo(preloadTime, true);
+        // youtube does not update videoLoadedFraction
+        // without updated seek event
+        setPreloadTime((time) => time!! + 0.01);
+        setNextReadyCheck((check) => Math.min(5000, check * 2));
       }
-    }, 250);
+    }, nextReadyCheck);
 
     return () => clearInterval(readyCheck);
-  }, [player, prepare, setPrepare]);
+  }, [player, preloadTime, setPreloadTime, nextReadyCheck, setNextReadyCheck]);
 
   const onStateChange = useCallback(() => {
     const memOldState = oldState;
@@ -85,19 +104,26 @@ function App() {
       console.log(`sending pause ${player.getCurrentTime()}`);
       ws.send(`pause ${player.getCurrentTime()}`);
     } else if (newState === YouTube.PlayerState.PLAYING) {
-      console.log(`sending play ${player.getCurrentTime()}`);
-      ws.send(`play ${player.getCurrentTime()}`);
+      if (initialized) {
+        console.log(`sending play ${player.getCurrentTime()}`);
+        ws.send(`play ${player.getCurrentTime()}`);
+      } else {
+        setInitialized(true);
+        // the youtube player behaves strange if it is paused
+        // almost immediately after starting, so delay sync
+        setTimeout(() => {
+          console.log("sending sync");
+          ws.send("sync");
+        }, 500);
+      }
     } else if (
       newState === YouTube.PlayerState.BUFFERING &&
       memOldState === YouTube.PlayerState.PLAYING
     ) {
       console.log(`sending buffer ${player.getCurrentTime()}`);
       ws.send(`buffer ${player.getCurrentTime()}`);
-    } else if (newState === YouTube.PlayerState.UNSTARTED) {
-      console.log("sending sync");
-      ws.send("sync");
     }
-  }, [player, oldState, setOldState]);
+  }, [player, oldState, setOldState, initialized, setInitialized]);
 
   const ready = useCallback((player: any) => {
     setPlayer(player);
@@ -106,7 +132,7 @@ function App() {
     <main>
       <div className="container">
         <YtEmbed
-          videoId="s8QYxmpuyxg"
+          videoId="ZYqG31V4qtA"
           onStateChange={onStateChange}
           setPlayer={ready}
         />

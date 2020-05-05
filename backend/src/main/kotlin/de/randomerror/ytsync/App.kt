@@ -11,10 +11,9 @@ import org.eclipse.jetty.websocket.api.annotations.WebSocket
 import org.slf4j.LoggerFactory
 import spark.Spark.*
 import java.io.IOException
+import java.util.concurrent.atomic.AtomicInteger
 
 private val logger = KotlinLogging.logger {}
-
-inline class RoomId(val roomId: String)
 
 fun main() {
     (LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME) as Logger).level = Level.INFO
@@ -41,35 +40,31 @@ class SyncWebSocket {
     fun message(session: Session, message: String) {
         val cmd = message.trim().split(' ')
         val cmdString = cmd.joinToString(" ")
-        log(session, cmdString)
-        val response = when {
-            cmd.size == 1 && cmd[0] == "create" -> createRoom(session)
-            cmd.size == 2 && cmd[0] == "join" -> joinRoom(RoomId(cmd[1]), session)
-            cmd.size == 2 && cmd[0] == "play" -> {
-                coordinatePlay(session, TimeStamp(cmd[1].toDouble()))
+        log(session, "\\ $cmdString")
+        try {
+            val response = when {
+                cmd.size == 1 && cmd[0] == "create" -> createRoom(session)
+                cmd.size == 2 && cmd[0] == "join" -> joinRoom(RoomId(cmd[1]), session)
+                cmd.size == 2 && cmd[0] == "play" -> {
+                    coordinatePlay(session, TimeStamp(cmd[1].toDouble()), isPlaying = true)
+                }
+                cmd.size == 2 && cmd[0] == "pause" -> {
+                    coordinateClientPause(session, TimeStamp(cmd[1].toDouble()))
+                }
+                cmd.size == 2 && cmd[0] == "ready" -> {
+                    setReady(session, TimeStamp(cmd[1].toDouble()))
+                }
+                cmd.size == 1 && cmd[0] == "sync" -> {
+                    sync(session)
+                }
+                cmd.size == 2 && cmd[0] == "buffer" -> {
+                    handleBuffering(session, TimeStamp(cmd[1].toDouble()))
+                }
+                else -> throw Disconnect()
             }
-            cmd.size == 2 && cmd[0] == "pause" -> {
-                coordinateClientPause(session, TimeStamp(cmd[1].toDouble()))
-            }
-            cmd.size == 2 && cmd[0] == "ready" -> {
-                setReady(session, TimeStamp(cmd[1].toDouble()))
-            }
-            cmd.size == 1 && cmd[0] == "sync" -> {
-                sync(session)
-            }
-            cmd.size == 2 && cmd[0] == "buffer" -> {
-                handleBuffering(session, TimeStamp(cmd[1].toDouble()))
-            }
-            else -> {
-                kill(session)
-                null
-            }
-        }
-        if (response != null) {
-            log(session, "$cmdString -> $response")
-            session.remote.sendStringByFuture(response)
-        } else {
-            log(session, "$cmdString -> <err>")
+            log(session, "/ $cmdString -> $response")
+        } catch (e: Disconnect) {
+            log(session, "/ $cmdString -> <err>")
             kill(session)
         }
     }
