@@ -13,6 +13,9 @@ ws.onopen = () => {
     ws.send(`join ${roomId}`);
   }
 };
+ws.onclose = () => {
+  console.log("disconnected");
+};
 
 function App() {
   const [player, setPlayer] = useState<any | null>(null);
@@ -22,11 +25,9 @@ function App() {
   const [oldState, setOldState] = useState<number>(
     YouTube.PlayerState.UNSTARTED
   );
+  const [videoId, setVideoId] = useState("M0p_1rVfOpw");
 
   useEffect(() => {
-    ws.onclose = () => {
-      console.log("disconnected");
-    };
     ws.onmessage = (ev: MessageEvent) => {
       const msg = ev.data as string;
       console.log(`received ${msg}`);
@@ -92,7 +93,10 @@ function App() {
       }
     }, nextReadyCheck);
 
-    return () => clearInterval(readyCheck);
+    return () => {
+      ws.onmessage = null;
+      clearInterval(readyCheck);
+    };
   }, [player, preloadTime, setPreloadTime, nextReadyCheck, setNextReadyCheck]);
 
   const onStateChange = useCallback(() => {
@@ -129,15 +133,34 @@ function App() {
     setPlayer(player);
   }, []);
   return (
-    <main>
-      <div className="container">
-        <YtEmbed
-          videoId="ZYqG31V4qtA"
-          onStateChange={onStateChange}
-          setPlayer={ready}
-        />
+    <div className="with-sidebar">
+      <div>
+        <section className="main">
+          <main className="embed">
+            <YtEmbed
+              videoId={videoId}
+              onStateChange={onStateChange}
+              setPlayer={ready}
+            />
+          </main>
+        </section>
+        <section>
+          <div className="queue">
+            <div className="queue-list">
+              <h3>Queue</h3>
+            </div>
+            <div className="search">
+              <input
+                type="text"
+                placeholder="Queue Video"
+                value={videoId}
+                onChange={(e) => setVideoId(e.target.value)}
+              />
+            </div>
+          </div>
+        </section>
       </div>
-    </main>
+    </div>
   );
 }
 

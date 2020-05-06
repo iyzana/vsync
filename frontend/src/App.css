@@ -1,9 +1,75 @@
-main {
-  height: 100vh;
+.with-sidebar {
+  overflow: hidden;
+  padding: var(--s1);
+  height: calc(100% - var(--s1) * 2);
 }
 
-.container {
+.with-sidebar > * {
+  height: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  margin: calc(var(--s1) / 2 * -1);
+  justify-content: center;
+}
+
+.with-sidebar > * > * {
+  margin: calc(var(--s1) / 2);
+  flex-basis: 30rem;
+  flex-grow: 0;
+}
+
+.with-sidebar > * > :nth-child(1) {
+  flex-basis: 0;
+  flex-grow: 999;
+  min-width: calc(70% - var(--s1));
+}
+
+.main {
+  display: flex;
+  flex-flow: column nowrap;
+  align-items: center;
+  max-height: 100%;
+}
+
+.left {
+  height: 0;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.search {
+  width: 100%;
+  max-width: 30rem;
+}
+
+input {
+  --bw: 1px;
+  width: calc(100% - var(--s0) * 2);
+  background-color: #666666;
+  border: none;
+  color: var(--fg);
+  border-radius: 0 0 var(--radius) var(--radius);
+  padding: var(--s0);
+}
+
+.embed {
+  width: 100%;
+}
+
+.queue {
+  border-radius: var(--radius);
+  background-color: var(--card);
+  height: 100%;
   margin: 0 auto;
-  width: 90%;
-  max-width: 1200px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.queue-list {
+    padding: var(--s1);
+}
+
+.queue h3 {
+  margin-top: 0;
 }

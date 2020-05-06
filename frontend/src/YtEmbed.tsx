@@ -12,7 +12,9 @@ const opts: Options = {
   width: "100%",
   height: "100%",
   playerVars: {
-    autoplay: 0,
+    autoplay: 1,
+    modestbranding: 1,
+    rel: 0,
   },
 };
 
