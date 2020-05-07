@@ -1,17 +1,21 @@
-version: 3.3
+version: "3.3"
 services:
   backend:
     build: backend
     container_name: yt-sync-backend
     restart: unless-stopped
+    ports:
+      - '4567:4567'
     networks:
-      - nginx:
+      - nginx
   frontend:
     build: frontend
     container_name: yt-sync-frontend
     restart: unless-stopped
+    ports:
+      - '80:80'
     networks:
-      - nginx:
+      - nginx
 
 networks:
   nginx:

@@ -10,5 +10,6 @@ RUN npm run build
 
 FROM nginx:alpine
 
+EXPOSE 80
 COPY --from=build /app/build /data/dist
 COPY nginx.conf /etc/nginx/conf.d/default.conf
