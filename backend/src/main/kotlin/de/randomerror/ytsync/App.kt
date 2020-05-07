@@ -45,21 +45,12 @@ class SyncWebSocket {
             val response = when {
                 cmd.size == 1 && cmd[0] == "create" -> createRoom(session)
                 cmd.size == 2 && cmd[0] == "join" -> joinRoom(RoomId(cmd[1]), session)
-                cmd.size == 2 && cmd[0] == "play" -> {
-                    coordinatePlay(session, TimeStamp(cmd[1].toDouble()), isPlaying = true)
-                }
-                cmd.size == 2 && cmd[0] == "pause" -> {
-                    coordinateClientPause(session, TimeStamp(cmd[1].toDouble()))
-                }
-                cmd.size == 2 && cmd[0] == "ready" -> {
-                    setReady(session, TimeStamp(cmd[1].toDouble()))
-                }
-                cmd.size == 1 && cmd[0] == "sync" -> {
-                    sync(session)
-                }
-                cmd.size == 2 && cmd[0] == "buffer" -> {
-                    handleBuffering(session, TimeStamp(cmd[1].toDouble()))
-                }
+                cmd.size == 2 && cmd[0] == "play" -> coordinatePlay(session, cmd[1].asTimeStamp(), isPlaying = true)
+                cmd.size == 2 && cmd[0] == "pause" -> coordinateClientPause(session, cmd[1].asTimeStamp())
+                cmd.size == 2 && cmd[0] == "ready" -> setReady(session, cmd[1].asTimeStamp())
+                cmd.size == 1 && cmd[0] == "sync" -> sync(session)
+                cmd.size == 2 && cmd[0] == "buffer" -> handleBuffering(session, cmd[1].asTimeStamp())
+                cmd.size == 1 && cmd[0] == "ping" -> "pong"
                 else -> throw Disconnect()
             }
             log(session, "/ $cmdString -> $response")
@@ -69,6 +60,8 @@ class SyncWebSocket {
         }
     }
 }
+
+class Disconnect(message: String = "invalid command") : RuntimeException(message)
 
 fun log(message: String) {
     logger.info(message)

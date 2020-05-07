@@ -2,72 +2,62 @@ package de.randomerror.ytsync
 
 import org.eclipse.jetty.websocket.api.Session
 import java.time.Instant
-import java.util.*
 import kotlin.math.abs
 
-private fun getRoom(session: Session): MutableList<SessionData> {
-    val roomId = sessions[session] ?: throw Disconnect()
-    return rooms[roomId]!!
+inline class TimeStamp(val second: Double)
+
+fun String.asTimeStamp(): TimeStamp {
+    return TimeStamp(toDouble())
 }
 
-private fun getSessionData(
-    session: Session,
-    room: MutableList<SessionData>
-) = room.find { it.session == session }!!
-
-fun createRoom(session: Session): String {
-    if (sessions[session] != null) throw Disconnect()
-    val roomId = generateRoomId()
-    val room = mutableListOf(SessionData(session, SyncState.Unstarted))
-    rooms[roomId] = room
-    sessions[session] = roomId
-    session.remote.sendString("create ${roomId.roomId}")
-    return "create ${roomId.roomId}"
-}
-
-private val random = Random()
-
-private fun generateRoomId(): RoomId {
-    val bytes = ByteArray(3)
-    random.nextBytes(bytes)
-    return RoomId(String(Base64.getUrlEncoder().encode(bytes)))
-}
-
-fun joinRoom(roomId: RoomId, session: Session): String {
-    if (sessions[session] != null) throw Disconnect()
-    val room = rooms[roomId] ?: throw Disconnect()
-    room.add(SessionData(session, SyncState.Unstarted))
-    sessions[session] = roomId
-    return "join ok"
+sealed class SyncState {
+    object Unstarted : SyncState()
+    class Paused(val timestamp: TimeStamp = TimeStamp(0.0)) : SyncState()
+    class AwaitReady(val timestamp: TimeStamp) : SyncState()
+    class Ready(val timestamp: TimeStamp) : SyncState()
+    class Playing(
+        private val realStartTime: Instant,
+        private val originalTimestamp: TimeStamp
+    ) : SyncState() {
+        val timestamp: TimeStamp
+            get() {
+                // todo: calculate playback-speed
+                val timePlaying = Instant.now().epochSecond - realStartTime.epochSecond
+                val currentTime = originalTimestamp.second + timePlaying
+                return TimeStamp(currentTime)
+            }
+    }
 }
 
 fun coordinatePlay(session: Session, timestamp: TimeStamp, isPlaying: Boolean = false): String {
     val room = getRoom(session)
-    val sessionData = getSessionData(session, room)
-    if (isPlaying && sessionData.state !is SyncState.AwaitReady) {
-        sessionData.state = SyncState.Playing(Instant.now(), timestamp)
+    val user = room.getUser(session)
+    if (isPlaying && user.syncState !is SyncState.AwaitReady) {
+        user.syncState = SyncState.Playing(Instant.now(), timestamp)
     }
-    if (room.all { isReady(it.state, timestamp) }) {
-        setSyncState(room, SyncState.Playing(Instant.now(), timestamp))
-        room.forEach { it.ignorePauseTill = null }
-        broadcast(room, "play")
+    if (room.participants.all { isReady(it.syncState, timestamp) }) {
+        startPlay(room, timestamp)
     } else {
         coordinateServerPause(room, timestamp)
-        setSyncState(room, SyncState.AwaitReady(timestamp))
-        broadcast(room, "ready? ${timestamp.second}")
+        room.setSyncState(SyncState.AwaitReady(timestamp))
+        room.broadcastActive("ready? ${timestamp.second}")
     }
     return "play"
 }
 
 fun setReady(session: Session, timestamp: TimeStamp): String {
     val room = getRoom(session)
-    getSessionData(session, room).state = SyncState.Ready(timestamp)
-    if (room.all { isReady(it.state, timestamp) }) {
-        setSyncState(room, SyncState.Playing(Instant.now(), timestamp))
-        room.forEach { it.ignorePauseTill = null }
-        broadcast(room, "play")
+    room.getUser(session).syncState = SyncState.Ready(timestamp)
+    if (room.participants.all { isReady(it.syncState, timestamp) }) {
+        startPlay(room, timestamp)
     }
     return "ready"
+}
+
+private fun startPlay(room: Room, timestamp: TimeStamp) {
+    room.setSyncState(SyncState.Playing(Instant.now(), timestamp))
+    room.participants.forEach { it.ignorePauseTill = null }
+    room.broadcastActive("play")
 }
 
 private fun isReady(state: SyncState, timestamp: TimeStamp): Boolean {
@@ -89,41 +79,43 @@ private fun isReady(state: SyncState, timestamp: TimeStamp): Boolean {
 
 fun coordinateClientPause(session: Session, timestamp: TimeStamp): String {
     val room = getRoom(session)
-    val sessionData = getSessionData(session, room)
-    if (sessionData.state is SyncState.AwaitReady) {
+    val user = room.getUser(session)
+    if (user.syncState is SyncState.AwaitReady) {
         return "pause ignore ready"
     }
-    val ignorePauseTill = getSessionData(session, room).ignorePauseTill
+    val ignorePauseTill = user.ignorePauseTill
     if (ignorePauseTill != null && ignorePauseTill.isAfter(Instant.now())) {
         return "pause ignore"
     }
-    setSyncState(room, SyncState.Paused(timestamp))
-    room.forEach { it.ignorePauseTill = Instant.now().plusSeconds(1) }
-    room.filter { it.state != SyncState.Unstarted }
+    room.setSyncState(SyncState.Paused(timestamp))
+    room.participants
+        .forEach { it.ignorePauseTill = Instant.now().plusSeconds(1) }
+    room.participants
+        .filter { it.syncState != SyncState.Unstarted }
         .filter { it.session != session }
         .forEach { it.session.remote.sendStringByFuture("pause ${timestamp.second}") }
     return "pause client"
 }
 
-private fun coordinateServerPause(room: MutableList<SessionData>, timestamp: TimeStamp) {
-    setSyncState(room, SyncState.Paused(timestamp))
-    room.forEach { it.ignorePauseTill = Instant.now().plusSeconds(1) }
-    broadcast(room, "pause ${timestamp.second}")
+private fun coordinateServerPause(room: Room, timestamp: TimeStamp) {
+    room.setSyncState(SyncState.Paused(timestamp))
+    room.participants.forEach { it.ignorePauseTill = Instant.now().plusSeconds(1) }
+    room.broadcastActive("pause ${timestamp.second}")
 }
 
 fun sync(session: Session): String {
     val room = getRoom(session)
-    val sessionData = getSessionData(session, room)
-    if (sessionData.state != SyncState.Unstarted) {
+    val user = room.getUser(session)
+    if (user.syncState != SyncState.Unstarted) {
         return "sync deny"
     }
-    sessionData.state = SyncState.Playing(Instant.now(), TimeStamp(0.0))
+    user.syncState = SyncState.Playing(Instant.now(), TimeStamp(0.0))
 
-    val activeMembers = room.filter { it.state != SyncState.Unstarted }
+    val activeMembers = room.participants.filter { it.syncState != SyncState.Unstarted }
     if (activeMembers.size == 1) {
         return "sync go"
     } else {
-        return when (val state = activeMembers.find { it.session != session }!!.state) {
+        return when (val state = activeMembers.find { it.session != session }!!.syncState) {
             is SyncState.Paused -> {
                 coordinateServerPause(room, state.timestamp)
                 "sync pause"
@@ -149,40 +141,24 @@ fun sync(session: Session): String {
 
 fun handleBuffering(session: Session, timestamp: TimeStamp): String {
     val room = getRoom(session)
-    val sessionData = getSessionData(session, room)
-    if (sessionData.state is SyncState.Paused) {
+    val user = room.getUser(session)
+    if (user.syncState is SyncState.Paused) {
         return "buffer deny"
     }
-    sessionData.state = SyncState.Paused(timestamp)
+    user.syncState = SyncState.Paused(timestamp)
     coordinatePlay(session, timestamp)
     return "buffer"
 }
 
-private fun setSyncState(room: MutableList<SessionData>, state: SyncState) {
-    room
-        .filter { it.state != SyncState.Unstarted }
-        .forEach { it.state = state }
+private fun Room.setSyncState(state: SyncState) {
+    participants
+        .filter { it.syncState != SyncState.Unstarted }
+        .forEach { it.syncState = state }
 }
 
-private fun broadcast(sessions: MutableList<SessionData>, message: String) {
+private fun Room.broadcastActive(message: String) {
     log("broadcast $message")
-    sessions
-        .filter { it.state != SyncState.Unstarted }
+    participants
+        .filter { it.syncState != SyncState.Unstarted }
         .forEach { member -> member.session.remote.sendStringByFuture(message) }
-}
-
-fun close(session: Session) {
-    val roomId = sessions.remove(session) ?: return
-    val room = rooms[roomId]!!
-
-    room.removeAll { it.session == session }
-    if (room.isEmpty()) {
-        rooms.remove(roomId)
-        log(session, "<close ${roomId.roomId}>")
-    }
-}
-
-fun kill(session: Session) {
-    session.remote.sendString("invalid command")
-    session.close(400, "invalid command")
 }

@@ -28,6 +28,13 @@ function App() {
   const [videoId, setVideoId] = useState("M0p_1rVfOpw");
 
   useEffect(() => {
+    const interval = setInterval(() => {
+      ws.send("ping");
+    }, 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
     ws.onmessage = (ev: MessageEvent) => {
       const msg = ev.data as string;
       console.log(`received ${msg}`);
