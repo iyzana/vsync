@@ -14,6 +14,7 @@ inline class RoomId(val roomId: String)
 
 class Room(
     val participants: MutableList<User>,
+    val queue: MutableList<String> = mutableListOf(),
     var shutdownThread: Thread? = null
 )
 
@@ -32,6 +33,18 @@ fun Room.getUser(
     session: Session
 ) = participants.find { it.session == session }!!
 
+fun Room.broadcastActive(message: String) {
+    log("broadcast $message")
+    participants
+        .filter { it.syncState != SyncState.Unstarted }
+        .forEach { member -> member.session.remote.sendStringByFuture(message) }
+}
+
+fun Room.broadcastAll(message: String) {
+    log("broadcast all $message")
+    participants
+        .forEach { member -> member.session.remote.sendStringByFuture(message) }
+}
 
 fun createRoom(session: Session): String {
     if (sessions[session] != null) throw Disconnect()

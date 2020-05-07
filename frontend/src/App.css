@@ -31,45 +31,7 @@
   max-height: 100%;
 }
 
-.left {
-  height: 0;
-  margin-top: 0;
-  margin-bottom: 0;
-}
-
-.search {
-  width: 100%;
-  max-width: 30rem;
-}
-
-input {
-  --bw: 1px;
-  width: calc(100% - var(--s0) * 2);
-  background-color: #666666;
-  border: none;
-  color: var(--fg);
-  border-radius: 0 0 var(--radius) var(--radius);
-  padding: var(--s0);
-}
-
 .embed {
   width: 100%;
 }
 
-.queue {
-  border-radius: var(--radius);
-  background-color: var(--card);
-  height: 100%;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-}
-
-.queue-list {
-    padding: var(--s1);
-}
-
-.queue h3 {
-  margin-top: 0;
-}

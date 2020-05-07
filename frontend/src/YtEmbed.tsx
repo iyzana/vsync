@@ -21,13 +21,17 @@ const opts: Options = {
 function YtEmbed({ videoId, onStateChange, setPlayer }: YtEmbedProps) {
   return (
     <div className="aspect-ratio">
-      <YouTube
-        opts={opts}
-        containerClassName="aspect-ratio-inner"
-        videoId={videoId}
-        onReady={(e) => setPlayer(e.target)}
-        onStateChange={onStateChange}
-      ></YouTube>
+      {videoId === "" ? (
+        <div className="aspect-ratio-inner empty-player"></div>
+      ) : (
+        <YouTube
+          opts={opts}
+          containerClassName="aspect-ratio-inner"
+          videoId={videoId}
+          onReady={(e) => setPlayer(e.target)}
+          onStateChange={onStateChange}
+        ></YouTube>
+      )}
     </div>
   );
 }

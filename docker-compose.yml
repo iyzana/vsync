@@ -13,7 +13,7 @@ services:
     container_name: yt-sync-frontend
     restart: unless-stopped
     ports:
-      - '80:80'
+      - '3000:80'
     networks:
       - nginx
 

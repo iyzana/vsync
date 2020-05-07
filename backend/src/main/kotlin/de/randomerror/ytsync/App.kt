@@ -50,6 +50,7 @@ class SyncWebSocket {
                 cmd.size == 2 && cmd[0] == "ready" -> setReady(session, cmd[1].asTimeStamp())
                 cmd.size == 1 && cmd[0] == "sync" -> sync(session)
                 cmd.size == 2 && cmd[0] == "buffer" -> handleBuffering(session, cmd[1].asTimeStamp())
+                cmd.size == 2 && cmd[0] == "queue" -> enqueue(session, cmd[1])
                 cmd.size == 1 && cmd[0] == "ping" -> "pong"
                 else -> throw Disconnect()
             }

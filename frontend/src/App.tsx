@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import "./App.css";
 import YtEmbed from "./YtEmbed";
 import YouTube from "react-youtube";
+import Queue from "./Queue";
 
 const ws = new WebSocket("ws://succcubbus.ddns.net:4567/room");
 ws.onopen = () => {
@@ -25,7 +26,7 @@ function App() {
   const [oldState, setOldState] = useState<number>(
     YouTube.PlayerState.UNSTARTED
   );
-  const [videoId, setVideoId] = useState("M0p_1rVfOpw");
+  const [videoId, setVideoId] = useState<string>("");
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -63,6 +64,9 @@ function App() {
         const timestamp = parseFloat(msg.split(" ")[1]);
         setNextReadyCheck(100);
         setPreloadTime(timestamp);
+      } else if (msg.startsWith("video")) {
+        const videoId = msg.split(" ")[1];
+        setVideoId(videoId);
       }
     };
     const readyCheck = setInterval(() => {
@@ -152,19 +156,7 @@ function App() {
           </main>
         </section>
         <section>
-          <div className="queue">
-            <div className="queue-list">
-              <h3>Queue</h3>
-            </div>
-            <div className="search">
-              <input
-                type="text"
-                placeholder="Queue Video"
-                value={videoId}
-                onChange={(e) => setVideoId(e.target.value)}
-              />
-            </div>
-          </div>
+          <Queue ws={ws} videos={["asdf", "foo", "bar"]} />
         </section>
       </div>
     </div>

@@ -156,9 +156,3 @@ private fun Room.setSyncState(state: SyncState) {
         .forEach { it.syncState = state }
 }
 
-private fun Room.broadcastActive(message: String) {
-    log("broadcast $message")
-    participants
-        .filter { it.syncState != SyncState.Unstarted }
-        .forEach { member -> member.session.remote.sendStringByFuture(message) }
-}
