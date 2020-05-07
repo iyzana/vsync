@@ -9,9 +9,9 @@ import org.eclipse.jetty.websocket.api.annotations.OnWebSocketConnect
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage
 import org.eclipse.jetty.websocket.api.annotations.WebSocket
 import org.slf4j.LoggerFactory
-import spark.Spark.*
+import spark.Spark.init
+import spark.Spark.webSocket
 import java.io.IOException
-import java.util.concurrent.atomic.AtomicInteger
 
 private val logger = KotlinLogging.logger {}
 

@@ -1,7 +1,6 @@
 package de.randomerror.ytsync
 
 import org.eclipse.jetty.websocket.api.Session
-import java.lang.IllegalStateException
 import java.time.Instant
 import java.util.*
 import kotlin.math.abs

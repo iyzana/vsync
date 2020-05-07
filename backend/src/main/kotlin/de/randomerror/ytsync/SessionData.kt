@@ -2,8 +2,6 @@ package de.randomerror.ytsync
 
 import org.eclipse.jetty.websocket.api.Session
 import java.time.Instant
-import java.util.*
-import kotlin.collections.HashMap
 
 val rooms: MutableMap<RoomId, MutableList<SessionData>> = HashMap()
 val sessions: MutableMap<Session, RoomId> = HashMap()
