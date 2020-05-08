@@ -40,6 +40,10 @@ function App() {
   useEffect(() => {
     ws.onclose = () => {
       console.log("disconnected");
+      /* setErrors((errors) => [...errors, "Connection closed"]); */
+    };
+    ws.onerror = () => {
+      console.log("error");
       setErrors((errors) => [...errors, "Connection lost"]);
     };
   }, [setErrors]);
@@ -52,7 +56,11 @@ function App() {
         const roomId = msg.split(" ")[1];
         window.history.pushState(roomId, "", `/${roomId}`);
       } else if (msg === "invalid command") {
-        window.location.href = "/";
+        setErrors((errors) => [...errors, "You found a bug"]);
+      } else if (msg === "server full") {
+        setErrors((errors) => [...errors, "Server is too full"]);
+      } else if (msg === "join err not-found") {
+        setErrors((errors) => [...errors, "Room does not exist"]);
       } else if (msg === "play") {
         if (player?.getPlayerState() !== YouTube.PlayerState.PLAYING) {
           player?.playVideo();
@@ -78,13 +86,7 @@ function App() {
         setVideoId(videoId);
       } else if (msg.startsWith("queue add")) {
         const msgParts = msg.split(" ");
-        const videoId = msgParts[2];
-        const title = msgParts.slice(3).join(" ");
-        const queueItem: QueueItem = {
-          videoId,
-          title,
-          thumbnail: `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`,
-        };
+        const queueItem: QueueItem = JSON.parse(msgParts.slice(2).join(" "));
         setQueue((queue) => [...queue, queueItem]);
       } else if (msg === "queue err not-found") {
         setErrors((errors) => [...errors, "Video not found"]);
@@ -95,7 +97,7 @@ function App() {
     return () => {
       ws.onmessage = null;
     };
-  }, [player, setPreloadTime, setNextReadyCheck, setErrors]);
+  }, [player, setPreloadTime, setQueue, setNextReadyCheck, setErrors]);
 
   useEffect(() => {
     if (preloadTime === null) {

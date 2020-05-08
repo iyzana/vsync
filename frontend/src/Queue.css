@@ -16,6 +16,17 @@
   margin-bottom: var(--s0);
 }
 
+.queue-item {
+    display: flex;
+    flex-flow: row nowrap;
+}
+
+.thumbnail {
+    min-width: 30%;
+    max-width: 30%;
+    margin-right: var(--s0);
+}
+
 .queue h3 {
   margin-top: 0;
 }

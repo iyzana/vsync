@@ -33,13 +33,18 @@ function Queue({ ws, videos, errors, setErrors }: QueueProps) {
     <div className="queue">
       <div className="queue-list">
         <h3>Queue</h3>
-        {videos.map(({ videoId, title }) => (
-          <div key={videoId}>{title}</div>
+        {videos.map(({ videoId, title, thumbnail }) => (
+          <div key={videoId} className="queue-item">
+            <img className="thumbnail" src={thumbnail} alt="" />
+            <div>{title}</div>
+          </div>
         ))}
       </div>
       <div>
         {errors.map((error, index) => (
-          <div key={index} className="error">{error}</div>
+          <div key={index} className="error">
+            {error}
+          </div>
         ))}
         <div className="search">
           <input

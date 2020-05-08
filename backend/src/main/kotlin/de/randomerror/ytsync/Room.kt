@@ -22,7 +22,8 @@ data class Room(
 
 data class QueueItem(
     val videoId: String,
-    var title: String? = null
+    var title: String,
+    var thumbnail: String
 )
 
 data class User(
@@ -48,19 +49,18 @@ fun Room.broadcastActive(message: String) {
 }
 
 fun Room.broadcastAll(message: String) {
-    logger.info("broadcast all $message")
+    logger.info("broadcast all (${participants.size}) $message")
     participants
         .forEach { member -> member.session.remote.sendStringByFuture(message) }
 }
 
-fun createRoom(session: Session): String {
+fun createRoom(session: Session, roomId: RoomId = generateRoomId()): String {
     if (sessions[session] != null) throw Disconnect()
-    val roomId = generateRoomId()
     if (rooms.containsKey(roomId)) throw Disconnect("server full")
     val room = Room(mutableListOf(User(session)))
     rooms[roomId] = room
     sessions[session] = roomId
-    session.remote.sendString("create ${roomId.roomId}")
+    session.remote.sendStringByFuture("create ${roomId.roomId}")
     return "create ${roomId.roomId}"
 }
 
@@ -72,15 +72,25 @@ private fun generateRoomId(): RoomId {
 
 fun joinRoom(roomId: RoomId, session: Session): String {
     if (sessions[session] != null) throw Disconnect()
-    val room = rooms[roomId] ?: throw Disconnect()
-    room.participants.add(User(session))
-    room.shutdownThread?.interrupt()
-    room.shutdownThread = null
-    sessions[session] = roomId
+    var room = rooms[roomId]
+    if (room == null) {
+        createRoom(session, roomId)
+        log(session, "create ${roomId.roomId}")
+        room = rooms[roomId]!!
+    } else {
+        room.participants.add(User(session))
+        room.shutdownThread?.interrupt()
+        room.shutdownThread = null
+        sessions[session] = roomId
+    }
     if (room.queue.isNotEmpty()) {
-        session.remote.sendString("video ${room.queue[0].videoId}")
+        val playingId = room.queue[0].videoId
+        log(session, "video $playingId")
+        session.remote.sendStringByFuture("video $playingId")
         for (item in room.queue.drop(1)) {
-            session.remote.sendString("queue add ${item.videoId} ${item.title}")
+            val videoJson = gson.toJson(item)
+            log(session, "queue add $videoJson")
+            session.remote.sendStringByFuture("queue add $videoJson")
         }
     }
     return "join ok"
@@ -114,6 +124,6 @@ private fun scheduleRoomClose(
 }
 
 fun kill(session: Session) {
-    session.remote.sendString("invalid command")
+    session.remote.sendStringByFuture("invalid command")
     session.close(400, "invalid command")
 }

@@ -2,6 +2,7 @@ package de.randomerror.ytsync
 
 import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.Logger
+import com.google.gson.Gson
 import mu.KotlinLogging
 import org.eclipse.jetty.websocket.api.Session
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketClose
@@ -12,6 +13,7 @@ import org.slf4j.LoggerFactory
 import spark.Spark.*
 import java.io.IOException
 
+val gson = Gson()
 private val logger = KotlinLogging.logger {}
 
 fun main() {
