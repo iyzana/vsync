@@ -69,11 +69,20 @@ function App() {
         setVideoId(videoId);
       }
     };
+    return () => {
+      ws.onmessage = null;
+    };
+  }, [player, setPreloadTime, setNextReadyCheck]);
+
+  useEffect(() => {
+    if (preloadTime === null) {
+      return;
+    }
+
     const readyCheck = setInterval(() => {
       const currentFraction = player?.getCurrentTime() / player?.getDuration();
       const targetPreload = 5 / player?.getDuration();
       if (preloadTime === null) {
-        clearInterval(readyCheck);
         return;
       }
       console.log(
@@ -104,10 +113,7 @@ function App() {
       }
     }, nextReadyCheck);
 
-    return () => {
-      ws.onmessage = null;
-      clearInterval(readyCheck);
-    };
+    return () => clearInterval(readyCheck);
   }, [player, preloadTime, setPreloadTime, nextReadyCheck, setNextReadyCheck]);
 
   const onStateChange = useCallback(() => {
