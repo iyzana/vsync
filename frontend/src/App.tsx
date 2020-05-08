@@ -4,6 +4,7 @@ import YtEmbed from "./YtEmbed";
 import YouTube from "react-youtube";
 import Queue from "./Queue";
 import QueueItem from "./QueueItem";
+import Input from "./Input";
 
 const server = "succcubbus.ddns.net:4567";
 
@@ -88,6 +89,9 @@ function App() {
         const msgParts = msg.split(" ");
         const queueItem: QueueItem = JSON.parse(msgParts.slice(2).join(" "));
         setQueue((queue) => [...queue, queueItem]);
+      } else if (msg.startsWith("queue rm")) {
+        const videoId = msg.split(" ")[2];
+        setQueue((queue) => queue.filter((video) => video.videoId !== videoId));
       } else if (msg === "queue err not-found") {
         setErrors((errors) => [...errors, "Video not found"]);
       } else if (msg === "queue err duplicate") {
@@ -187,7 +191,13 @@ function App() {
           </main>
         </section>
         <section>
-          <Queue ws={ws} videos={queue} errors={errors} setErrors={setErrors} />
+          <div className="control">
+            <Queue
+              videos={queue}
+              removeVideo={(video) => ws.send(`queue rm ${video}`)}
+            />
+            <Input ws={ws} errors={errors} setErrors={setErrors} />
+          </div>
         </section>
       </div>
     </div>

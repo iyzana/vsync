@@ -49,6 +49,13 @@ fun enqueue(session: Session, query: String): String {
     return "queue"
 }
 
+fun dequeue(session: Session, videoId: String): String {
+    val room = getRoom(session)
+    room.queue.removeAll { it.videoId == videoId }
+    room.broadcastAll("queue rm $videoId")
+    return "queue rm"
+}
+
 private fun fetchVideoInfo(query: String): VideoInfo? {
     val process = Runtime.getRuntime().exec(
         arrayOf(

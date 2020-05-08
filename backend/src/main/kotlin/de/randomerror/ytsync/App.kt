@@ -51,7 +51,9 @@ class SyncWebSocket {
                 cmd.size == 2 && cmd[0] == "ready" -> setReady(session, cmd[1].asTimeStamp())
                 cmd.size == 1 && cmd[0] == "sync" -> sync(session)
                 cmd.size == 2 && cmd[0] == "buffer" -> handleBuffering(session, cmd[1].asTimeStamp())
-                cmd.size >= 2 && cmd[0] == "queue" -> enqueue(session, cmd.subList(1, cmd.size).joinToString(" "))
+                cmd.size >= 3 && cmd[0] == "queue" && cmd[1] == "add" ->
+                    enqueue(session, cmd.subList(2, cmd.size).joinToString(" "))
+                cmd.size == 3 && cmd[0] == "queue" && cmd[1] == "rm" -> dequeue(session, cmd[2])
                 cmd.size == 1 && cmd[0] == "ping" -> "pong"
                 else -> throw Disconnect()
             }

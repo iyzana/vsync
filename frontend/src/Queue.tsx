@@ -1,61 +1,27 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import "./Queue.css";
 import QueueItem from "./QueueItem";
 
 interface QueueProps {
-  ws: WebSocket;
   videos: QueueItem[];
-  errors: string[];
-  setErrors: (map: (errors: string[]) => string[]) => void;
+  removeVideo: (videoId: string) => void;
 }
 
-function Queue({ ws, videos, errors, setErrors }: QueueProps) {
-  const [message, setMessage] = useState("");
-
-  const onKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" && message !== "") {
-      ws.send(`queue ${message}`);
-      setMessage("");
-    }
-  };
-
-  useEffect(() => {
-    if (errors.length === 0) {
-      return;
-    }
-    const timeout = setTimeout(() => {
-      setErrors((errors) => errors.slice(1));
-    }, 3000);
-    return () => clearTimeout(timeout);
-  }, [errors, setErrors]);
-
+function Queue({ videos, removeVideo }: QueueProps) {
   return (
-    <div className="queue">
-      <div className="queue-list">
-        <h3>Queue</h3>
-        {videos.map(({ videoId, title, thumbnail }) => (
-          <div key={videoId} className="queue-item">
+    <div className="queue-list">
+      <h3>Queue</h3>
+      {videos.map(({ videoId, title, thumbnail }) => (
+        <div key={videoId} className="queue-item">
+          <div className="video-info">
             <img className="thumbnail" src={thumbnail} alt="" />
             <div>{title}</div>
           </div>
-        ))}
-      </div>
-      <div>
-        {errors.map((error, index) => (
-          <div key={index} className="error">
-            {error}
+          <div className="remove" onClick={() => removeVideo(videoId)}>
+            ✕
           </div>
-        ))}
-        <div className="search">
-          <input
-            type="text"
-            placeholder="Enter YouTube URL here"
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            onKeyUp={onKey}
-          />
         </div>
-      </div>
+      ))}
     </div>
   );
 }
