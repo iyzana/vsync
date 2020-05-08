@@ -4,6 +4,7 @@ import com.google.gson.Gson
 import com.google.gson.JsonParser
 import mu.KotlinLogging
 import org.eclipse.jetty.websocket.api.Session
+import java.io.StringWriter
 import java.lang.ClassCastException
 import java.lang.IllegalStateException
 import java.lang.NullPointerException
@@ -50,17 +51,27 @@ fun enqueue(session: Session, query: String): String {
 
 private fun fetchVideoInfo(query: String): VideoInfo? {
     val process = Runtime.getRuntime().exec(
-        arrayOf("youtube-dl", "--default-search", "ytsearch", "--dump-json", query)
+        arrayOf(
+            "youtube-dl",
+            "--default-search", "ytsearch",
+            "--no-playlist",
+            "--dump-json",
+            query
+        )
     )
+    val result = StringWriter()
+    process.inputStream.bufferedReader().copyTo(result)
     if (!process.waitFor(5, TimeUnit.SECONDS)) {
+        logger.warn("ytdl timeout")
         process.destroy()
         return null
     }
     if (process.exitValue() != 0) {
+        logger.warn("ytdl err")
         logger.warn(process.errorStream.bufferedReader().readText())
         return null
     }
-    val videoData = process.inputStream.bufferedReader().readText().trim()
+    val videoData = result.buffer.toString()
     val video = JsonParser.parseString(videoData).asJsonObject
     return try {
         val id = video.get("id").asString
