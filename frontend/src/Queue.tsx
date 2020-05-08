@@ -5,12 +5,16 @@ import QueueItem from "./QueueItem";
 interface QueueProps {
   videos: QueueItem[];
   removeVideo: (videoId: string) => void;
+  numUsers: number;
 }
 
-function Queue({ videos, removeVideo }: QueueProps) {
+function Queue({ videos, removeVideo, numUsers }: QueueProps) {
   return (
     <div className="queue-list">
-      <h3>Queue</h3>
+      <div className="header">
+        <h3>Queue</h3>
+        <div>{numUsers + " connected"} </div>
+      </div>
       {videos.map(({ videoId, title, thumbnail }) => (
         <div key={videoId} className="queue-item">
           <div className="video-info">

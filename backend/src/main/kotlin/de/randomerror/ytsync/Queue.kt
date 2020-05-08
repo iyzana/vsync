@@ -51,6 +51,10 @@ fun enqueue(session: Session, query: String): String {
 
 fun dequeue(session: Session, videoId: String): String {
     val room = getRoom(session)
+    // first in queue is currently playing song
+    if (room.queue.isNotEmpty() && room.queue[0].videoId == videoId) {
+        return "queue rm deny"
+    }
     room.queue.removeAll { it.videoId == videoId }
     room.broadcastAll("queue rm $videoId")
     return "queue rm"

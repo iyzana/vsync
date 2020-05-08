@@ -83,6 +83,7 @@ fun joinRoom(roomId: RoomId, session: Session): String {
         room.shutdownThread = null
         sessions[session] = roomId
     }
+    room.broadcastAll("users ${room.participants.size}")
     if (room.queue.isNotEmpty()) {
         val playingId = room.queue[0].videoId
         log(session, "video $playingId")
@@ -101,6 +102,7 @@ fun close(session: Session) {
     val room = rooms[roomId]!!
 
     room.participants.removeAll { it.session == session }
+    room.broadcastAll("users ${room.participants.size}")
     if (room.participants.isEmpty()) {
         scheduleRoomClose(room, roomId, session)
     }

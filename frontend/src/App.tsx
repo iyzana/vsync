@@ -30,6 +30,7 @@ function App() {
   const [videoId, setVideoId] = useState<string>("");
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const [errors, setErrors] = useState<string[]>([]);
+  const [numUsers, setNumUsers] = useState(1);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -96,12 +97,22 @@ function App() {
         setErrors((errors) => [...errors, "Video not found"]);
       } else if (msg === "queue err duplicate") {
         setErrors((errors) => [...errors, "Already in queue"]);
+      } else if (msg.startsWith("users")) {
+        const users = parseInt(msg.split(" ")[1]);
+        setNumUsers(users);
       }
     };
     return () => {
       ws.onmessage = null;
     };
-  }, [player, setPreloadTime, setQueue, setNextReadyCheck, setErrors]);
+  }, [
+    player,
+    setPreloadTime,
+    setQueue,
+    setNumUsers,
+    setNextReadyCheck,
+    setErrors,
+  ]);
 
   useEffect(() => {
     if (preloadTime === null) {
@@ -195,6 +206,7 @@ function App() {
             <Queue
               videos={queue}
               removeVideo={(video) => ws.send(`queue rm ${video}`)}
+              numUsers={numUsers}
             />
             <Input ws={ws} errors={errors} setErrors={setErrors} />
           </div>
