@@ -64,11 +64,11 @@ private fun isReady(state: SyncState, timestamp: TimeStamp): Boolean {
     return when (state) {
         is SyncState.Ready -> {
             val diff = abs(state.timestamp.second - timestamp.second)
-            diff <= 2
+            diff <= 1
         }
         is SyncState.Playing -> {
             val diff = abs(state.timestamp.second - timestamp.second)
-            diff <= 2
+            diff <= 1
         }
         is SyncState.Unstarted -> {
             true // ignore unstarted clients
