@@ -4,6 +4,7 @@ import YtEmbed from "./YtEmbed";
 import YouTube from "react-youtube";
 import Queue from "./Queue";
 import QueueItem from "./QueueItem";
+import Error from "./Error";
 import Input from "./Input";
 
 const server = "succcubbus.ddns.net:4567";
@@ -29,7 +30,7 @@ function App() {
   );
   const [videoId, setVideoId] = useState<string>("");
   const [queue, setQueue] = useState<QueueItem[]>([]);
-  const [errors, setErrors] = useState<string[]>([]);
+  const [errors, setErrors] = useState<Error[]>([]);
   const [numUsers, setNumUsers] = useState(1);
 
   useEffect(() => {
@@ -42,12 +43,14 @@ function App() {
   useEffect(() => {
     ws.onclose = () => {
       console.log("disconnected");
-      /* setErrors((errors) => [...errors, "Connection closed"]); */
+      setTimeout(() => {
+        setErrors((errors) => [
+          ...errors,
+          { message: "Connection closed", permanent: true },
+        ]);
+      }, 200);
     };
-    ws.onerror = () => {
-      console.log("error");
-      setErrors((errors) => [...errors, "Connection lost"]);
-    };
+    ws.onerror = () => console.log("error");
   }, [setErrors]);
 
   useEffect(() => {
@@ -58,11 +61,15 @@ function App() {
         const roomId = msg.split(" ")[1];
         window.history.pushState(roomId, "", `/${roomId}`);
       } else if (msg === "invalid command") {
-        setErrors((errors) => [...errors, "You found a bug"]);
+        setErrors((errors) => [
+          ...errors,
+          { message: "You found a bug", permanent: false },
+        ]);
       } else if (msg === "server full") {
-        setErrors((errors) => [...errors, "Server is too full"]);
-      } else if (msg === "join err not-found") {
-        setErrors((errors) => [...errors, "Room does not exist"]);
+        setErrors((errors) => [
+          ...errors,
+          { message: "Server is too full", permanent: false },
+        ]);
       } else if (msg === "play") {
         if (player?.getPlayerState() !== YouTube.PlayerState.PLAYING) {
           player?.playVideo();
@@ -94,9 +101,15 @@ function App() {
         const videoId = msg.split(" ")[2];
         setQueue((queue) => queue.filter((video) => video.videoId !== videoId));
       } else if (msg === "queue err not-found") {
-        setErrors((errors) => [...errors, "Video not found"]);
+        setErrors((errors) => [
+          ...errors,
+          { message: "Video not found", permanent: false },
+        ]);
       } else if (msg === "queue err duplicate") {
-        setErrors((errors) => [...errors, "Already in queue"]);
+        setErrors((errors) => [
+          ...errors,
+          { message: "Already in queue", permanent: false },
+        ]);
       } else if (msg.startsWith("users")) {
         const users = parseInt(msg.split(" ")[1]);
         setNumUsers(users);

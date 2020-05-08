@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
 import "./Input.css";
+import Error from "./Error";
 
 interface InputProps {
   ws: WebSocket;
-  errors: string[];
-  setErrors: (map: (errors: string[]) => string[]) => void;
+  errors: Error[];
+  setErrors: (map: (errors: Error[]) => Error[]) => void;
 }
 
 function Input({ ws, errors, setErrors }: InputProps) {
@@ -22,7 +23,7 @@ function Input({ ws, errors, setErrors }: InputProps) {
       return;
     }
     const timeout = setTimeout(() => {
-      setErrors((errors) => errors.slice(1));
+      setErrors((errors) => errors.filter((error) => error.permanent));
     }, 3000);
     return () => clearTimeout(timeout);
   }, [errors, setErrors]);
@@ -30,7 +31,7 @@ function Input({ ws, errors, setErrors }: InputProps) {
     <div>
       {errors.map((error, index) => (
         <div key={index} className="error">
-          {error}
+          {error.message}
         </div>
       ))}
       <input
