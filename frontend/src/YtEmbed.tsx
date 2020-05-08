@@ -22,7 +22,7 @@ function YtEmbed({ videoId, onStateChange, setPlayer }: YtEmbedProps) {
   return (
     <div className="aspect-ratio">
       {videoId === "" ? (
-        <div className="aspect-ratio-inner empty-player"></div>
+        <div className="aspect-ratio-inner empty-player">NO VIDEO</div>
       ) : (
         <YouTube
           opts={opts}

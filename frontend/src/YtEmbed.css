@@ -14,6 +14,10 @@
 }
 
 .empty-player {
+  display: flex;
+  align-items: center;
+  font-size: 2rem;
+  justify-content: center;
   border-radius: var(--radius);
   border: 16px solid var(--card);
   width: calc(100% - 32px);
