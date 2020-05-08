@@ -3,8 +3,11 @@ import "./App.css";
 import YtEmbed from "./YtEmbed";
 import YouTube from "react-youtube";
 import Queue from "./Queue";
+import QueueItem from "./QueueItem";
 
-const ws = new WebSocket("ws://succcubbus.ddns.net:4567/room");
+const server = "succcubbus.ddns.net:4567";
+
+const ws = new WebSocket(`ws://${server}/room`);
 ws.onopen = () => {
   const path = window.location.pathname;
   if (path === "" || path === "/") {
@@ -13,9 +16,6 @@ ws.onopen = () => {
     const roomId = path.substring(1);
     ws.send(`join ${roomId}`);
   }
-};
-ws.onclose = () => {
-  console.log("disconnected");
 };
 
 function App() {
@@ -27,6 +27,8 @@ function App() {
     YouTube.PlayerState.UNSTARTED
   );
   const [videoId, setVideoId] = useState<string>("");
+  const [queue, setQueue] = useState<QueueItem[]>([]);
+  const [errors, setErrors] = useState<string[]>([]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -34,6 +36,13 @@ function App() {
     }, 60 * 1000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    ws.onclose = () => {
+      console.log("disconnected");
+      setErrors((errors) => [...errors, "Connection lost"]);
+    };
+  }, [setErrors]);
 
   useEffect(() => {
     ws.onmessage = (ev: MessageEvent) => {
@@ -67,12 +76,26 @@ function App() {
       } else if (msg.startsWith("video")) {
         const videoId = msg.split(" ")[1];
         setVideoId(videoId);
+      } else if (msg.startsWith("queue add")) {
+        const msgParts = msg.split(" ");
+        const videoId = msgParts[2];
+        const title = msgParts.slice(3).join(" ");
+        const queueItem: QueueItem = {
+          videoId,
+          title,
+          thumbnail: `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`,
+        };
+        setQueue((queue) => [...queue, queueItem]);
+      } else if (msg === "queue err not-found") {
+        setErrors((errors) => [...errors, "Video not found"]);
+      } else if (msg === "queue err duplicate") {
+        setErrors((errors) => [...errors, "Already in queue"]);
       }
     };
     return () => {
       ws.onmessage = null;
     };
-  }, [player, setPreloadTime, setNextReadyCheck]);
+  }, [player, setPreloadTime, setNextReadyCheck, setErrors]);
 
   useEffect(() => {
     if (preloadTime === null) {
@@ -162,7 +185,7 @@ function App() {
           </main>
         </section>
         <section>
-          <Queue ws={ws} videos={["asdf", "foo", "bar"]} />
+          <Queue ws={ws} videos={queue} errors={errors} setErrors={setErrors} />
         </section>
       </div>
     </div>

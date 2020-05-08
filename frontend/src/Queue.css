@@ -12,13 +12,16 @@
   padding: var(--s1);
 }
 
+.queue-list > * {
+  margin-bottom: var(--s0);
+}
+
 .queue h3 {
   margin-top: 0;
 }
 
 .search {
   width: 100%;
-  max-width: 30rem;
 }
 
 input {
@@ -29,5 +32,11 @@ input {
   border-top: 1px solid #888888;
   color: var(--fg);
   border-radius: 0 0 var(--radius) var(--radius);
+  padding: var(--s0);
+}
+
+.error {
+  width: calc(100% - var(--s0) * 2);
+  background-color: #880011;
   padding: var(--s0);
 }

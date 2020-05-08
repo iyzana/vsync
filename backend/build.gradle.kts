@@ -14,6 +14,7 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
 
     implementation("com.sparkjava:spark-kotlin:1.0.0-alpha")
+    implementation("com.google.code.gson:gson:2.8.6")
 
     implementation("ch.qos.logback:logback-classic:1.2.3")
     implementation("io.github.microutils:kotlin-logging:1.7.9")

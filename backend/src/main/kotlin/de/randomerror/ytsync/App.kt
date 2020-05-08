@@ -9,8 +9,7 @@ import org.eclipse.jetty.websocket.api.annotations.OnWebSocketConnect
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage
 import org.eclipse.jetty.websocket.api.annotations.WebSocket
 import org.slf4j.LoggerFactory
-import spark.Spark.init
-import spark.Spark.webSocket
+import spark.Spark.*
 import java.io.IOException
 
 private val logger = KotlinLogging.logger {}
@@ -50,7 +49,7 @@ class SyncWebSocket {
                 cmd.size == 2 && cmd[0] == "ready" -> setReady(session, cmd[1].asTimeStamp())
                 cmd.size == 1 && cmd[0] == "sync" -> sync(session)
                 cmd.size == 2 && cmd[0] == "buffer" -> handleBuffering(session, cmd[1].asTimeStamp())
-                cmd.size == 2 && cmd[0] == "queue" -> enqueue(session, cmd[1])
+                cmd.size >= 2 && cmd[0] == "queue" -> enqueue(session, cmd.subList(1, cmd.size).joinToString(" "))
                 cmd.size == 1 && cmd[0] == "ping" -> "pong"
                 else -> throw Disconnect()
             }
@@ -63,10 +62,6 @@ class SyncWebSocket {
 }
 
 class Disconnect(message: String = "invalid command") : RuntimeException(message)
-
-fun log(message: String) {
-    logger.info(message)
-}
 
 fun log(session: Session, message: String) {
     logger.info(session.remoteAddress.toString() + ": " + message)

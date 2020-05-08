@@ -1,5 +1,6 @@
 package de.randomerror.ytsync
 
+import mu.KotlinLogging
 import org.eclipse.jetty.websocket.api.Session
 import java.time.Instant
 import java.util.*
@@ -9,16 +10,22 @@ import kotlin.concurrent.thread
 val sessions: MutableMap<Session, RoomId> = HashMap()
 val rooms: MutableMap<RoomId, Room> = HashMap()
 private val random = Random()
+private val logger = KotlinLogging.logger {}
 
 inline class RoomId(val roomId: String)
 
-class Room(
+data class Room(
     val participants: MutableList<User>,
-    val queue: MutableList<String> = mutableListOf(),
+    val queue: MutableList<QueueItem> = mutableListOf(),
     var shutdownThread: Thread? = null
 )
 
-class User(
+data class QueueItem(
+    val videoId: String,
+    var title: String? = null
+)
+
+data class User(
     val session: Session,
     var syncState: SyncState = SyncState.Unstarted,
     var ignorePauseTill: Instant? = null
@@ -34,14 +41,14 @@ fun Room.getUser(
 ) = participants.find { it.session == session }!!
 
 fun Room.broadcastActive(message: String) {
-    log("broadcast $message")
+    logger.info("broadcast $message")
     participants
         .filter { it.syncState != SyncState.Unstarted }
         .forEach { member -> member.session.remote.sendStringByFuture(message) }
 }
 
 fun Room.broadcastAll(message: String) {
-    log("broadcast all $message")
+    logger.info("broadcast all $message")
     participants
         .forEach { member -> member.session.remote.sendStringByFuture(message) }
 }
@@ -70,6 +77,12 @@ fun joinRoom(roomId: RoomId, session: Session): String {
     room.shutdownThread?.interrupt()
     room.shutdownThread = null
     sessions[session] = roomId
+    if (room.queue.isNotEmpty()) {
+        session.remote.sendString("video ${room.queue[0].videoId}")
+        for (item in room.queue.drop(1)) {
+            session.remote.sendString("queue add ${item.videoId} ${item.title}")
+        }
+    }
     return "join ok"
 }
 
