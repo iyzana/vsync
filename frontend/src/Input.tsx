@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from "react";
-import "./Input.css";
-import Error from "./Error";
+import React, { useEffect, useState } from 'react';
+import './Input.css';
+import Error from './Error';
 
 interface InputProps {
   ws: WebSocket;
@@ -9,12 +9,12 @@ interface InputProps {
 }
 
 function Input({ ws, errors, setErrors }: InputProps) {
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState('');
 
   const onKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" && message !== "") {
+    if (e.key === 'Enter' && message !== '') {
       ws.send(`queue add ${message}`);
-      setMessage("");
+      setMessage('');
     }
   };
 
@@ -23,7 +23,7 @@ function Input({ ws, errors, setErrors }: InputProps) {
       return;
     }
     const timeout = setTimeout(() => {
-      setErrors((errors) => errors.filter((error) => error.permanent));
+      setErrors(errors => errors.filter(error => error.permanent));
     }, 3000);
     return () => clearTimeout(timeout);
   }, [errors, setErrors]);
@@ -39,7 +39,7 @@ function Input({ ws, errors, setErrors }: InputProps) {
         type="text"
         placeholder="Enter YouTube URL here"
         value={message}
-        onChange={(e) => setMessage(e.target.value)}
+        onChange={e => setMessage(e.target.value)}
         onKeyUp={onKey}
       />
     </div>

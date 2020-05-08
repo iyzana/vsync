@@ -3,4 +3,3 @@ export default interface QueueItem {
   title: string;
   thumbnail: string;
 }
-

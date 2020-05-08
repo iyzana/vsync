@@ -1,4 +1,4 @@
 export default interface Error {
-    message: string,
-    permanent: boolean;
+  message: string;
+  permanent: boolean;
 }

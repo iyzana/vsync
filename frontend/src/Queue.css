@@ -3,9 +3,9 @@
 }
 
 .header {
-    display: flex;
-    flex-flow: row nowrap;
-    justify-content: space-between;
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: space-between;
 }
 
 h3 {
@@ -17,28 +17,27 @@ h3 {
 }
 
 .queue-item {
-    display: flex;
-    flex-flow: row nowrap;
+  display: flex;
+  flex-flow: row nowrap;
 }
 
 .remove {
-    visibility: hidden;
-    cursor: pointer;
+  visibility: hidden;
+  cursor: pointer;
 }
 
 .queue-item:hover > .remove {
-    visibility: visible;
+  visibility: visible;
 }
 
 .video-info {
-    display: flex;
-    flex-flow: row nowrap;
-    margin-right: var(--s0)
+  display: flex;
+  flex-flow: row nowrap;
+  margin-right: var(--s0);
 }
 
 .thumbnail {
-    min-width: 35%;
-    max-width: 35%;
-    margin-right: var(--s0);
+  min-width: 35%;
+  max-width: 35%;
+  margin-right: var(--s0);
 }
-

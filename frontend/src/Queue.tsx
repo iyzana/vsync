@@ -1,6 +1,6 @@
-import React from "react";
-import "./Queue.css";
-import QueueItem from "./QueueItem";
+import React from 'react';
+import './Queue.css';
+import QueueItem from './QueueItem';
 
 interface QueueProps {
   videos: QueueItem[];
@@ -13,7 +13,7 @@ function Queue({ videos, removeVideo, numUsers }: QueueProps) {
     <div className="queue-list">
       <div className="header">
         <h3>Queue</h3>
-        <div>{numUsers + " connected"} </div>
+        <div>{numUsers + ' connected'} </div>
       </div>
       {videos.map(({ videoId, title, thumbnail }) => (
         <div key={videoId} className="queue-item">
