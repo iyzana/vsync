@@ -7,9 +7,9 @@ import QueueItem from './QueueItem';
 import Error from './Error';
 import Input from './Input';
 
-const server = 'succcubbus.ddns.net:4567';
+const server = 'yt.randomerror.de/api';
 
-const ws = new WebSocket(`ws://${server}/room`);
+const ws = new WebSocket(`wss://${server}/room`);
 ws.onopen = () => {
   const path = window.location.pathname;
   if (path === '' || path === '/') {
