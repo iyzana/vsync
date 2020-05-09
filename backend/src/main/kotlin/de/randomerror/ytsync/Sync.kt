@@ -88,8 +88,7 @@ fun coordinateClientPause(session: Session, timestamp: TimeStamp): String {
         return "pause ignore"
     }
     room.setSyncState(SyncState.Paused(timestamp))
-    room.participants
-        .forEach { it.ignorePauseTill = Instant.now().plusSeconds(1) }
+    ignoreUpcomingPause(room)
     room.participants
         .filter { it.syncState != SyncState.Unstarted }
         .filter { it.session != session }
@@ -99,7 +98,7 @@ fun coordinateClientPause(session: Session, timestamp: TimeStamp): String {
 
 private fun coordinateServerPause(room: Room, timestamp: TimeStamp) {
     room.setSyncState(SyncState.Paused(timestamp))
-    room.participants.forEach { it.ignorePauseTill = Instant.now().plusSeconds(1) }
+    ignoreUpcomingPause(room)
     room.broadcastActive("pause ${timestamp.second}")
 }
 
@@ -137,6 +136,33 @@ fun sync(session: Session): String {
             }
         }
     }
+}
+
+fun setEnded(session: Session): String {
+    val room = getRoom(session)
+    val user = room.getUser(session)
+
+    val ignoreEndTill = user.ignoreEndTill
+    if (ignoreEndTill != null && ignoreEndTill.isAfter(Instant.now())) {
+        return "end ignore"
+    }
+
+    // queue should have at least one item since it contains the
+    // currently playing one and supposedly some video just ended
+    if (room.queue.isEmpty()) throw Disconnect("invalid command")
+    room.queue.removeAt(0)
+
+    if (room.queue.isNotEmpty()) {
+        room.participants.forEach { it.ignoreEndTill = Instant.now().plusSeconds(2) }
+        val next = room.queue[0]
+        room.broadcastAll("queue rm ${next.videoId}")
+        room.broadcastAll("video ${next.videoId}")
+    }
+    return "end"
+}
+
+private fun ignoreUpcomingPause(room: Room) {
+    room.participants.forEach { it.ignorePauseTill = Instant.now().plusSeconds(2) }
 }
 
 fun handleBuffering(session: Session, timestamp: TimeStamp): String {

@@ -29,7 +29,8 @@ data class QueueItem(
 data class User(
     val session: Session,
     var syncState: SyncState = SyncState.Unstarted,
-    var ignorePauseTill: Instant? = null
+    var ignorePauseTill: Instant? = null,
+    var ignoreEndTill: Instant? = null
 )
 
 fun getRoom(session: Session): Room {

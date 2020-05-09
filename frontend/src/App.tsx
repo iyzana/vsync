@@ -32,6 +32,7 @@ function App() {
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const [errors, setErrors] = useState<Error[]>([]);
   const [numUsers, setNumUsers] = useState(1);
+  const [delayPauseTill, setDelayPauseTill] = useState<number | null>(null);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -83,8 +84,10 @@ function App() {
           }, 150);
         }
         if (player?.getPlayerState() !== YouTube.PlayerState.PAUSED) {
-          console.log('pause setting pause');
-          player?.pauseVideo();
+          if (delayPauseTill === null || delayPauseTill! < Date.now()) {
+            console.log('pause setting pause');
+            player?.pauseVideo();
+          }
         }
       } else if (msg.startsWith('ready?')) {
         const timestamp = parseFloat(msg.split(' ')[1]);
@@ -93,6 +96,7 @@ function App() {
       } else if (msg.startsWith('video')) {
         const videoId = msg.split(' ')[1];
         setVideoId(videoId);
+        setDelayPauseTill(Date.now() + 500);
       } else if (msg.startsWith('queue add')) {
         const msgParts = msg.split(' ');
         const queueItem: QueueItem = JSON.parse(msgParts.slice(2).join(' '));
@@ -125,6 +129,8 @@ function App() {
     setNumUsers,
     setNextReadyCheck,
     setErrors,
+    delayPauseTill,
+    setDelayPauseTill,
   ]);
 
   useEffect(() => {
@@ -154,8 +160,10 @@ function App() {
           player?.getPlayerState() === YouTube.PlayerState.PLAYING ||
           player?.getPlayerState() === YouTube.PlayerState.BUFFERING
         ) {
-          console.log('ready setting pause');
-          player?.pauseVideo();
+          if (delayPauseTill === null || delayPauseTill! < Date.now()) {
+            console.log('ready setting pause');
+            player?.pauseVideo();
+          }
         }
 
         player?.seekTo(preloadTime, true);
@@ -167,7 +175,14 @@ function App() {
     }, nextReadyCheck);
 
     return () => clearInterval(readyCheck);
-  }, [player, preloadTime, setPreloadTime, nextReadyCheck, setNextReadyCheck]);
+  }, [
+    player,
+    preloadTime,
+    delayPauseTill,
+    setPreloadTime,
+    nextReadyCheck,
+    setNextReadyCheck,
+  ]);
 
   const onStateChange = useCallback(() => {
     const memOldState = oldState;
@@ -175,8 +190,10 @@ function App() {
     setOldState(newState);
     console.log('player state changed to ' + newState);
     if (newState === YouTube.PlayerState.PAUSED) {
-      console.log(`sending pause ${player.getCurrentTime()}`);
-      ws.send(`pause ${player.getCurrentTime()}`);
+      if (delayPauseTill === null || delayPauseTill! < Date.now()) {
+        console.log(`sending pause ${player.getCurrentTime()}`);
+        ws.send(`pause ${player.getCurrentTime()}`);
+      }
     } else if (newState === YouTube.PlayerState.PLAYING) {
       if (initialized) {
         console.log(`sending play ${player.getCurrentTime()}`);
@@ -185,11 +202,13 @@ function App() {
         setInitialized(true);
         // the youtube player behaves strange if it is paused
         // almost immediately after starting, so delay sync
-        setTimeout(() => {
-          console.log('sending sync');
-          ws.send('sync');
-        }, 500);
+        setDelayPauseTill(Date.now() + 500);
+        console.log('sending sync');
+        ws.send('sync');
       }
+    } else if (newState === YouTube.PlayerState.ENDED) {
+      console.log(`sending end`);
+      ws.send(`end`);
     } else if (
       newState === YouTube.PlayerState.BUFFERING &&
       memOldState === YouTube.PlayerState.PLAYING
@@ -197,7 +216,14 @@ function App() {
       console.log(`sending buffer ${player.getCurrentTime()}`);
       ws.send(`buffer ${player.getCurrentTime()}`);
     }
-  }, [player, oldState, setOldState, initialized, setInitialized]);
+  }, [
+    player,
+    oldState,
+    setOldState,
+    delayPauseTill,
+    initialized,
+    setInitialized,
+  ]);
 
   const ready = useCallback((player: any) => {
     setPlayer(player);
