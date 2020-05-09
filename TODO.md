@@ -2,3 +2,6 @@
 - add and play immediately
 - voting to skip
 - backing yt playlists
+- playback speed
+- syncing indicator
+- send end while empty is allowed (can press replay on last video)
