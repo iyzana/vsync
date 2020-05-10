@@ -55,7 +55,10 @@ class SyncWebSocket {
                 cmd.size >= 3 && cmd[0] == "queue" && cmd[1] == "add" ->
                     enqueue(session, cmd.subList(2, cmd.size).joinToString(" "))
                 cmd.size == 3 && cmd[0] == "queue" && cmd[1] == "rm" -> dequeue(session, cmd[2])
-                cmd.size == 1 && cmd[0] == "ping" -> "pong"
+                cmd.size == 1 && cmd[0] == "ping" -> {
+                    session.remote.sendStringByFuture("pong")
+                    "pong"
+                }
                 else -> throw Disconnect()
             }
             log(session, "/ $cmdString -> $response")
