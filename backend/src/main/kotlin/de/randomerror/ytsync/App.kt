@@ -12,6 +12,7 @@ import org.eclipse.jetty.websocket.api.annotations.WebSocket
 import org.slf4j.LoggerFactory
 import spark.Spark.*
 import java.io.IOException
+import java.nio.ByteBuffer
 
 val gson = Gson()
 private val logger = KotlinLogging.logger {}
@@ -56,6 +57,7 @@ class SyncWebSocket {
                     enqueue(session, cmd.subList(2, cmd.size).joinToString(" "))
                 cmd.size == 3 && cmd[0] == "queue" && cmd[1] == "rm" -> dequeue(session, cmd[2])
                 cmd.size == 1 && cmd[0] == "ping" -> {
+                    session.remote.sendPing(ByteBuffer.allocate(0))
                     session.remote.sendStringByFuture("pong")
                     "pong"
                 }
