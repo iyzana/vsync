@@ -7,9 +7,7 @@ import QueueItem from './QueueItem';
 import Error from './Error';
 import Input from './Input';
 
-const server = 'yt.randomerror.de/api';
-
-const ws = new WebSocket(`wss://${server}/room`);
+const ws = new WebSocket(`wss://yt.randomerror.de/api/room`);
 ws.onopen = () => {
   const path = window.location.pathname;
   if (path === '' || path === '/') {
@@ -33,13 +31,6 @@ function App() {
   const [errors, setErrors] = useState<Error[]>([]);
   const [numUsers, setNumUsers] = useState(1);
   const [delayPauseTill, setDelayPauseTill] = useState<number | null>(null);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      ws.send('ping');
-    }, 60 * 1000);
-    return () => clearInterval(interval);
-  }, []);
 
   useEffect(() => {
     ws.onclose = () => {

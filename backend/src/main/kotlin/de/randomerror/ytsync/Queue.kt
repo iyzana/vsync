@@ -1,13 +1,9 @@
 package de.randomerror.ytsync
 
-import com.google.gson.Gson
 import com.google.gson.JsonParser
 import mu.KotlinLogging
 import org.eclipse.jetty.websocket.api.Session
 import java.io.StringWriter
-import java.lang.ClassCastException
-import java.lang.IllegalStateException
-import java.lang.NullPointerException
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit

@@ -13,6 +13,9 @@ import org.slf4j.LoggerFactory
 import spark.Spark.*
 import java.io.IOException
 import java.nio.ByteBuffer
+import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledFuture
+import java.util.concurrent.TimeUnit
 
 val gson = Gson()
 private val logger = KotlinLogging.logger {}
@@ -26,15 +29,24 @@ fun main() {
 
 @WebSocket
 class SyncWebSocket {
+    private val keepaliveScheduler = Executors.newScheduledThreadPool(1)
+    private val keepaliveTasks = mutableMapOf<Session, ScheduledFuture<*>>()
+
     @OnWebSocketConnect
     fun connected(session: Session) {
         log(session, "<connect>")
+        val keepaliveTask = keepaliveScheduler.scheduleAtFixedRate({
+            log(session, "<ping>")
+            session.remote.sendPing(ByteBuffer.allocate(1))
+        }, 30, 30, TimeUnit.SECONDS)
+        keepaliveTasks[session] = keepaliveTask
     }
 
     @OnWebSocketClose
     fun closed(session: Session, statusCode: Int, reason: String?) {
-        log(session, "<disconnect>")
+        log(session, "<$statusCode disconnect> $reason")
         close(session)
+        keepaliveTasks.remove(session)!!.cancel(true)
     }
 
     @OnWebSocketMessage
@@ -56,11 +68,6 @@ class SyncWebSocket {
                 cmd.size >= 3 && cmd[0] == "queue" && cmd[1] == "add" ->
                     enqueue(session, cmd.subList(2, cmd.size).joinToString(" "))
                 cmd.size == 3 && cmd[0] == "queue" && cmd[1] == "rm" -> dequeue(session, cmd[2])
-                cmd.size == 1 && cmd[0] == "ping" -> {
-                    session.remote.sendPing(ByteBuffer.allocate(0))
-                    session.remote.sendStringByFuture("pong")
-                    "pong"
-                }
                 else -> throw Disconnect()
             }
             log(session, "/ $cmdString -> $response")
