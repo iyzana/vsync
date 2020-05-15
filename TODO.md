@@ -4,3 +4,4 @@
 - backing yt playlists
 - playback speed
 - button for queuing instead of enter
+- Icons instead of text for play state
