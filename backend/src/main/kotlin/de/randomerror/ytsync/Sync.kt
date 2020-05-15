@@ -64,11 +64,11 @@ private fun isReady(state: SyncState, timestamp: TimeStamp): Boolean {
     return when (state) {
         is SyncState.Ready -> {
             val diff = abs(state.timestamp.second - timestamp.second)
-            diff <= 1
+            diff <= 1.5
         }
         is SyncState.Playing -> {
             val diff = abs(state.timestamp.second - timestamp.second)
-            diff <= 1
+            diff <= 1.5
         }
         is SyncState.Unstarted -> {
             true // ignore unstarted clients
@@ -138,7 +138,7 @@ fun sync(session: Session): String {
     }
 }
 
-fun setEnded(session: Session): String {
+fun setEnded(session: Session, videoId: String): String {
     val room = getRoom(session)
     val user = room.getUser(session)
 
@@ -147,9 +147,8 @@ fun setEnded(session: Session): String {
         return "end ignore"
     }
 
-    // queue should have at least one item since it contains the
-    // currently playing one and supposedly some video just ended
-    if (room.queue.isEmpty()) throw Disconnect("invalid command")
+    if (room.queue.isEmpty()) return "end empty"
+    if (room.queue[0].videoId != videoId) return "end old"
     room.queue.removeAt(0)
 
     if (room.queue.isNotEmpty()) {
@@ -170,6 +169,9 @@ fun handleBuffering(session: Session, timestamp: TimeStamp): String {
     val user = room.getUser(session)
     if (user.syncState is SyncState.Paused) {
         return "buffer deny"
+    }
+    if (user.syncState is SyncState.AwaitReady) {
+        return "buffer await ready"
     }
     user.syncState = SyncState.Paused(timestamp)
     coordinatePlay(session, timestamp)

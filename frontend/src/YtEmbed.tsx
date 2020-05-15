@@ -6,6 +6,7 @@ interface YtEmbedProps {
   videoId: string;
   onStateChange: () => void;
   setPlayer: (player: any) => void;
+  overlayText: string | null;
 }
 
 const opts: Options = {
@@ -18,19 +19,29 @@ const opts: Options = {
   },
 };
 
-function YtEmbed({ videoId, onStateChange, setPlayer }: YtEmbedProps) {
+function YtEmbed({
+  videoId,
+  onStateChange,
+  setPlayer,
+  overlayText,
+}: YtEmbedProps) {
   return (
     <div className="aspect-ratio">
       {videoId === '' ? (
         <div className="aspect-ratio-inner empty-player">NO VIDEO</div>
       ) : (
-        <YouTube
-          opts={opts}
-          containerClassName="aspect-ratio-inner"
-          videoId={videoId}
-          onReady={e => setPlayer(e.target)}
-          onStateChange={onStateChange}
-        ></YouTube>
+        <>
+          <YouTube
+            opts={opts}
+            containerClassName="aspect-ratio-inner"
+            videoId={videoId}
+            onReady={(e) => setPlayer(e.target)}
+            onStateChange={onStateChange}
+          ></YouTube>
+          {overlayText ? (
+            <div className="aspect-ratio-inner overlay">{overlayText}</div>
+          ) : null}
+        </>
       )}
     </div>
   );

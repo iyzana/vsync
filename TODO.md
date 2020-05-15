@@ -3,6 +3,4 @@
 - voting to skip
 - backing yt playlists
 - playback speed
-- syncing indicator
-- send end while empty is allowed (can press replay on last video)
-- some 'invalid command' bug when video ends
+- button for queuing instead of enter

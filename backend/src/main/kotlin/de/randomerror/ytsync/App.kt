@@ -63,7 +63,7 @@ class SyncWebSocket {
                 cmd.size == 2 && cmd[0] == "pause" -> coordinateClientPause(session, cmd[1].asTimeStamp())
                 cmd.size == 2 && cmd[0] == "ready" -> setReady(session, cmd[1].asTimeStamp())
                 cmd.size == 1 && cmd[0] == "sync" -> sync(session)
-                cmd.size == 1 && cmd[0] == "end" -> setEnded(session)
+                cmd.size == 2 && cmd[0] == "end" -> setEnded(session, cmd[1])
                 cmd.size == 2 && cmd[0] == "buffer" -> handleBuffering(session, cmd[1].asTimeStamp())
                 cmd.size >= 3 && cmd[0] == "queue" && cmd[1] == "add" ->
                     enqueue(session, cmd.subList(2, cmd.size).joinToString(" "))

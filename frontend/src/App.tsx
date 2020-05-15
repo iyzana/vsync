@@ -7,7 +7,11 @@ import QueueItem from './QueueItem';
 import Error from './Error';
 import Input from './Input';
 
-const ws = new WebSocket(`wss://yt.randomerror.de/api/room`);
+const server =
+  process.env.NODE_ENV !== 'development'
+    ? 'wss://yt.randomerror.de/api/room'
+    : 'ws://localhost:4567/room';
+const ws = new WebSocket(server);
 ws.onopen = () => {
   const path = window.location.pathname;
   if (path === '' || path === '/') {
@@ -30,7 +34,8 @@ function App() {
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const [errors, setErrors] = useState<Error[]>([]);
   const [numUsers, setNumUsers] = useState(1);
-  const [delayPauseTill, setDelayPauseTill] = useState<number | null>(null);
+  const [hasEverPlayed, setHasEverPlayed] = useState<boolean>(false);
+  const [pauseReason, setPauseReason] = useState<string | null>(null);
 
   useEffect(() => {
     ws.onclose = () => {
@@ -66,16 +71,21 @@ function App() {
         if (player?.getPlayerState() !== YouTube.PlayerState.PLAYING) {
           player?.playVideo();
         }
+        setPauseReason(null);
       } else if (msg.startsWith('pause')) {
         const timestamp = parseFloat(msg.split(' ')[1]);
         const shouldSeek = Math.abs(player?.getCurrentTime() - timestamp) > 1;
+        setPauseReason('PAUSED');
         if (shouldSeek) {
           setTimeout(() => {
             player?.seekTo(timestamp, true);
           }, 150);
         }
-        if (player?.getPlayerState() !== YouTube.PlayerState.PAUSED) {
-          if (delayPauseTill === null || delayPauseTill! < Date.now()) {
+        if (
+          player?.getPlayerState() === YouTube.PlayerState.PLAYING ||
+          player?.getPlayerState() === YouTube.PlayerState.BUFFERING
+        ) {
+          if (hasEverPlayed) {
             console.log('pause setting pause');
             player?.pauseVideo();
           }
@@ -84,10 +94,11 @@ function App() {
         const timestamp = parseFloat(msg.split(' ')[1]);
         setNextReadyCheck(100);
         setPreloadTime(timestamp);
+        setPauseReason('SYNCING');
       } else if (msg.startsWith('video')) {
         const videoId = msg.split(' ')[1];
         setVideoId(videoId);
-        setDelayPauseTill(Date.now() + 500);
+        setHasEverPlayed(false);
       } else if (msg.startsWith('queue add')) {
         const msgParts = msg.split(' ');
         const queueItem: QueueItem = JSON.parse(msgParts.slice(2).join(' '));
@@ -120,8 +131,9 @@ function App() {
     setNumUsers,
     setNextReadyCheck,
     setErrors,
-    delayPauseTill,
-    setDelayPauseTill,
+    hasEverPlayed,
+    setHasEverPlayed,
+    setPauseReason,
   ]);
 
   useEffect(() => {
@@ -130,18 +142,15 @@ function App() {
     }
 
     const readyCheck = setInterval(() => {
-      const currentFraction = player?.getCurrentTime() / player?.getDuration();
-      const targetPreload = 5 / player?.getDuration();
       if (preloadTime === null) {
         return;
       }
       console.log(
         `ready? ${player?.getPlayerState()} ${preloadTime} ${player?.getCurrentTime()} ${player?.getVideoLoadedFraction()}`,
       );
-      const loaded = player?.getVideoLoadedFraction();
       if (
         Math.abs(player?.getCurrentTime() - preloadTime) <= 1 &&
-        (loaded - currentFraction >= targetPreload || loaded === 1)
+        player?.getPlayerState() !== YouTube.PlayerState.BUFFERING
       ) {
         console.log(`sending ready ${player?.getCurrentTime()}`);
         ws.send(`ready ${player?.getCurrentTime()}`);
@@ -151,7 +160,7 @@ function App() {
           player?.getPlayerState() === YouTube.PlayerState.PLAYING ||
           player?.getPlayerState() === YouTube.PlayerState.BUFFERING
         ) {
-          if (delayPauseTill === null || delayPauseTill! < Date.now()) {
+          if (hasEverPlayed) {
             console.log('ready setting pause');
             player?.pauseVideo();
           }
@@ -169,7 +178,7 @@ function App() {
   }, [
     player,
     preloadTime,
-    delayPauseTill,
+    hasEverPlayed,
     setPreloadTime,
     nextReadyCheck,
     setNextReadyCheck,
@@ -181,11 +190,15 @@ function App() {
     setOldState(newState);
     console.log('player state changed to ' + newState);
     if (newState === YouTube.PlayerState.PAUSED) {
-      if (delayPauseTill === null || delayPauseTill! < Date.now()) {
+      if (preloadTime === null) {
+        setPauseReason('PAUSED');
+      }
+      if (hasEverPlayed) {
         console.log(`sending pause ${player.getCurrentTime()}`);
         ws.send(`pause ${player.getCurrentTime()}`);
       }
     } else if (newState === YouTube.PlayerState.PLAYING) {
+      setHasEverPlayed(true);
       if (initialized) {
         console.log(`sending play ${player.getCurrentTime()}`);
         ws.send(`play ${player.getCurrentTime()}`);
@@ -193,13 +206,12 @@ function App() {
         setInitialized(true);
         // the youtube player behaves strange if it is paused
         // almost immediately after starting, so delay sync
-        setDelayPauseTill(Date.now() + 500);
         console.log('sending sync');
         ws.send('sync');
       }
     } else if (newState === YouTube.PlayerState.ENDED) {
       console.log(`sending end`);
-      ws.send(`end`);
+      ws.send(`end ${videoId}`);
     } else if (
       newState === YouTube.PlayerState.BUFFERING &&
       memOldState === YouTube.PlayerState.PLAYING
@@ -209,9 +221,12 @@ function App() {
     }
   }, [
     player,
+    videoId,
     oldState,
     setOldState,
-    delayPauseTill,
+    hasEverPlayed,
+    setHasEverPlayed,
+    preloadTime,
     initialized,
     setInitialized,
   ]);
@@ -228,6 +243,7 @@ function App() {
               videoId={videoId}
               onStateChange={onStateChange}
               setPlayer={ready}
+              overlayText={pauseReason}
             />
           </main>
         </section>

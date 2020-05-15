@@ -23,3 +23,12 @@
   width: calc(100% - 32px);
   height: calc(100% - 32px);
 }
+
+.overlay {
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  font-size: 2rem;
+  justify-content: center;
+  text-shadow: 0 0 2px black;
+}
