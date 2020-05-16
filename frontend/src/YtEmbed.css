@@ -30,5 +30,10 @@
   align-items: center;
   font-size: 2rem;
   justify-content: center;
-  text-shadow: 0 0 2px black;
+  filter: drop-shadow(0px 0px 0.8px #222222) drop-shadow(0px 0px 0.8px #222222);
+}
+
+.overlay > svg {
+  margin-top: 4px;
+  margin-right: var(--s0);
 }

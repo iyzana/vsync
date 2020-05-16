@@ -10,7 +10,7 @@ import Input from './Input';
 const server =
   process.env.NODE_ENV !== 'development'
     ? 'wss://yt.randomerror.de/api/room'
-    : 'ws://localhost:4567/room';
+    : 'ws://succcubbus.ddns.net:4567/room';
 const ws = new WebSocket(server);
 ws.onopen = () => {
   const path = window.location.pathname;
@@ -35,7 +35,7 @@ function App() {
   const [errors, setErrors] = useState<Error[]>([]);
   const [numUsers, setNumUsers] = useState(1);
   const [hasEverPlayed, setHasEverPlayed] = useState<boolean>(false);
-  const [pauseReason, setPauseReason] = useState<string | null>(null);
+  const [overlay, setOverlay] = useState<'PAUSED' | 'SYNCING' | null>(null);
 
   useEffect(() => {
     ws.onclose = () => {
@@ -71,11 +71,11 @@ function App() {
         if (player?.getPlayerState() !== YouTube.PlayerState.PLAYING) {
           player?.playVideo();
         }
-        setPauseReason(null);
+        setOverlay(null);
       } else if (msg.startsWith('pause')) {
         const timestamp = parseFloat(msg.split(' ')[1]);
         const shouldSeek = Math.abs(player?.getCurrentTime() - timestamp) > 1;
-        setPauseReason('PAUSED');
+        setOverlay('PAUSED');
         if (shouldSeek) {
           setTimeout(() => {
             player?.seekTo(timestamp, true);
@@ -94,7 +94,7 @@ function App() {
         const timestamp = parseFloat(msg.split(' ')[1]);
         setNextReadyCheck(100);
         setPreloadTime(timestamp);
-        setPauseReason('SYNCING');
+        setOverlay('SYNCING');
       } else if (msg.startsWith('video')) {
         const videoId = msg.split(' ')[1];
         setVideoId(videoId);
@@ -133,7 +133,7 @@ function App() {
     setErrors,
     hasEverPlayed,
     setHasEverPlayed,
-    setPauseReason,
+    setOverlay,
   ]);
 
   useEffect(() => {
@@ -191,7 +191,7 @@ function App() {
     console.log('player state changed to ' + newState);
     if (newState === YouTube.PlayerState.PAUSED) {
       if (preloadTime === null) {
-        setPauseReason('PAUSED');
+        setOverlay('PAUSED');
       }
       if (hasEverPlayed) {
         console.log(`sending pause ${player.getCurrentTime()}`);
@@ -243,7 +243,7 @@ function App() {
               videoId={videoId}
               onStateChange={onStateChange}
               setPlayer={ready}
-              overlayText={pauseReason}
+              overlay={overlay}
             />
           </main>
         </section>

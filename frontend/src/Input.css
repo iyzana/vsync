@@ -1,12 +1,31 @@
-.url {
+.input-group {
+  display: flex;
+  flex-flow: row nowrap;
+  align-items: center;
+
   --bw: 1px;
-  width: calc(100% - var(--s0) * 2);
+  width: 100%;
+  border-top: 1px solid #888888;
+  background-color: #444444;
+  border-radius: 0 0 var(--radius) var(--radius);
+}
+
+.input-text {
+  width: calc(100% - 2rem);
+  padding: var(--s0);
+  color: var(--fg);
   background-color: #444444;
   border: none;
-  border-top: 1px solid #888888;
-  color: var(--fg);
   border-radius: 0 0 var(--radius) var(--radius);
+}
+
+.input-group > svg {
   padding: var(--s0);
+}
+
+.input-group > svg:hover {
+  color: #cc2222;
+  border-radius: 0 0 var(--radius) var(--radius);
 }
 
 .error {

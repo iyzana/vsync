@@ -1,12 +1,14 @@
 import React from 'react';
 import './YtEmbed.css';
 import YouTube, { Options } from 'react-youtube';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faPause, faSync, faSyncAlt } from '@fortawesome/free-solid-svg-icons';
 
 interface YtEmbedProps {
   videoId: string;
   onStateChange: () => void;
   setPlayer: (player: any) => void;
-  overlayText: string | null;
+  overlay: 'PAUSED' | 'SYNCING' | null;
 }
 
 const opts: Options = {
@@ -19,12 +21,28 @@ const opts: Options = {
   },
 };
 
-function YtEmbed({
-  videoId,
-  onStateChange,
-  setPlayer,
-  overlayText,
-}: YtEmbedProps) {
+function getOverlay(overlay: 'PAUSED' | 'SYNCING' | null) {
+  switch (overlay) {
+    case 'PAUSED':
+      return (
+        <div className="aspect-ratio-inner overlay">
+          <FontAwesomeIcon icon={faPause} />
+          <div>PAUSED</div>
+        </div>
+      );
+    case 'SYNCING':
+      return (
+        <div className="aspect-ratio-inner overlay">
+          <FontAwesomeIcon icon={faSyncAlt} spin />
+          <div>SYNCING</div>
+        </div>
+      );
+    default:
+      return null;
+  }
+}
+
+function YtEmbed({ videoId, onStateChange, setPlayer, overlay }: YtEmbedProps) {
   return (
     <div className="aspect-ratio">
       {videoId === '' ? (
@@ -38,9 +56,7 @@ function YtEmbed({
             onReady={(e) => setPlayer(e.target)}
             onStateChange={onStateChange}
           ></YouTube>
-          {overlayText ? (
-            <div className="aspect-ratio-inner overlay">{overlayText}</div>
-          ) : null}
+          {getOverlay(overlay)}
         </>
       )}
     </div>
