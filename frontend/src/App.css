@@ -24,7 +24,7 @@
   min-width: calc(70% - var(--s1));
 }
 
-.main {
+.video {
   display: flex;
   flex-flow: column nowrap;
   align-items: center;

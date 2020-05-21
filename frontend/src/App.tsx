@@ -235,17 +235,17 @@ function App() {
     setPlayer(player);
   }, []);
   return (
-    <div className="with-sidebar">
+    <main className="with-sidebar">
       <div>
-        <section className="main">
-          <main className="embed">
+        <section className="video">
+          <div className="embed">
             <YtEmbed
               videoId={videoId}
               onStateChange={onStateChange}
               setPlayer={ready}
               overlay={overlay}
             />
-          </main>
+          </div>
         </section>
         <section>
           <div className="control">
@@ -258,7 +258,7 @@ function App() {
           </div>
         </section>
       </div>
-    </div>
+    </main>
   );
 }
 
