@@ -16,14 +16,14 @@ sealed class SyncState {
     class AwaitReady(val timestamp: TimeStamp) : SyncState()
     class Ready(val timestamp: TimeStamp) : SyncState()
     class Playing(
-        private val realStartTime: Instant,
-        private val originalTimestamp: TimeStamp
+        private val startTime: Instant,
+        private val videoTimestamp: TimeStamp
     ) : SyncState() {
         val timestamp: TimeStamp
             get() {
                 // todo: calculate playback-speed
-                val timePlaying = Instant.now().epochSecond - realStartTime.epochSecond
-                val currentTime = originalTimestamp.second + timePlaying
+                val timePlaying = Instant.now().epochSecond - startTime.epochSecond
+                val currentTime = videoTimestamp.second + timePlaying
                 return TimeStamp(currentTime)
             }
     }
@@ -162,6 +162,10 @@ fun setEnded(session: Session, videoId: String): String {
 
 private fun ignoreUpcomingPause(room: Room) {
     room.participants.forEach { it.ignorePauseTill = Instant.now().plusSeconds(2) }
+}
+
+fun setSpeed(session: Session, speed: Double): String {
+    TODO()
 }
 
 fun handleBuffering(session: Session, timestamp: TimeStamp): String {

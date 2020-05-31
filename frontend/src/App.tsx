@@ -10,7 +10,7 @@ import Input from './Input';
 const server =
   process.env.NODE_ENV !== 'development'
     ? 'wss://yt.randomerror.de/api/room'
-    : 'ws://succcubbus.ddns.net:4567/room';
+    : 'ws://localhost:4567/room';
 const ws = new WebSocket(server);
 ws.onopen = () => {
   const path = window.location.pathname;
@@ -231,6 +231,10 @@ function App() {
     setInitialized,
   ]);
 
+  const onPlaybackRateChange = (event: { target: any; data: number }) => {
+    ws.send(`speed ${event.data}`);
+  };
+
   const ready = useCallback((player: any) => {
     setPlayer(player);
   }, []);
@@ -242,6 +246,7 @@ function App() {
             <YtEmbed
               videoId={videoId}
               onStateChange={onStateChange}
+              onPlaybackRateChange={onPlaybackRateChange}
               setPlayer={ready}
               overlay={overlay}
             />
