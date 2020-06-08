@@ -10,7 +10,8 @@ The YouTube player, including all its shortcuts, can be utilized fully.
 No popups asking you to create/join a room, no strange external control bar.
 
 Queue videos by YouTube-Link, Youtube-Id or any query.
-When entering a query the first result will be added to the queue.
+When entering a query the first search result will be added to the queue,
+use at your own risk.
 
 ![screenshot](./screenshot.png)
 
