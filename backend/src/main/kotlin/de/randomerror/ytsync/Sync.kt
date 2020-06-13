@@ -149,15 +149,21 @@ fun setEnded(session: Session, videoId: String): String {
 
     if (room.queue.isEmpty()) return "end empty"
     if (room.queue[0].videoId != videoId) return "end old"
+
+    room.participants.forEach { it.ignoreEndTill = Instant.now().plusSeconds(2) }
+    playNext(room)
+
+    return "end"
+}
+
+fun playNext(room: Room) {
     room.queue.removeAt(0)
 
     if (room.queue.isNotEmpty()) {
-        room.participants.forEach { it.ignoreEndTill = Instant.now().plusSeconds(2) }
         val next = room.queue[0]
         room.broadcastAll("queue rm ${next.videoId}")
         room.broadcastAll("video ${next.videoId}")
     }
-    return "end"
 }
 
 private fun ignoreUpcomingPause(room: Room) {

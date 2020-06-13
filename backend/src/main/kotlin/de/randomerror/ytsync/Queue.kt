@@ -90,3 +90,13 @@ private fun fetchVideoInfo(query: String): VideoInfo? {
         null
     }
 }
+
+fun skip(session: Session): String {
+    val room = getRoom(session)
+    // first in queue is currently playing song
+    if (room.queue.size < 2) {
+        return "skip deny"
+    }
+    playNext(room)
+    return "skip"
+}

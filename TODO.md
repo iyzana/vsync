@@ -1,6 +1,5 @@
 - handle unplayable videos
 - add and play immediately
-- voting to skip
 - backing yt playlists
 - playback speed
 - queue sorting

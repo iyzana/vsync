@@ -51,7 +51,9 @@ function Input({ ws, errors, setErrors }: InputProps) {
           onChange={(e) => setMessage(e.target.value)}
           onKeyUp={onKey}
         />
-        <FontAwesomeIcon icon={faPlus} onClick={send} />
+        <button className="input-send" onClick={send}>
+          <FontAwesomeIcon icon={faPlus} />
+        </button>
       </div>
     </div>
   );

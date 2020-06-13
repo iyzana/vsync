@@ -1,5 +1,6 @@
 .queue {
   padding: var(--s1);
+  padding-top: calc(var(--s1) - var(--s0));
 }
 
 .header {
@@ -8,8 +9,14 @@
   justify-content: space-between;
 }
 
-h3 {
-  margin-top: 0;
+.title {
+  margin: 0;
+  margin-top: var(--s0);
+  display: flex;
+}
+
+.skip {
+  margin-right: var(--s0);
 }
 
 .queue-list {
@@ -26,8 +33,11 @@ h3 {
 }
 
 .remove {
+  display: inline-flex;
+  align-items: flex-start;
   visibility: hidden;
-  cursor: pointer;
+  background-color: unset;
+  padding: 0.5rem;
 }
 
 .queue-item:hover > .remove {

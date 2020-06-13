@@ -19,7 +19,6 @@ use at your own risk.
 
 - playback speed synchronization
 - not sure what happens for people without an [ad blocker](https://github.com/gorhill/uBlock/)
-- skip button (until then just seek to the end of the video)
 - queue sorting
 - playlist support
 

@@ -69,6 +69,7 @@ class SyncWebSocket {
                     enqueue(session, cmd.subList(2, cmd.size).joinToString(" "))
                 cmd.size == 3 && cmd[0] == "queue" && cmd[1] == "rm" -> dequeue(session, cmd[2])
                 cmd.size == 2 && cmd[0] == "speed" -> setSpeed(session, cmd[1].toDouble())
+                cmd.size == 1 && cmd[0] == "skip" -> skip(session)
                 else -> throw Disconnect()
             }
             log(session, "/ $cmdString -> $response")

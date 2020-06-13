@@ -257,6 +257,7 @@ function App() {
             <Queue
               videos={queue}
               removeVideo={(video) => ws.send(`queue rm ${video}`)}
+              skip={() => ws.send('skip')}
               numUsers={numUsers}
             />
             <Input ws={ws} errors={errors} setErrors={setErrors} />

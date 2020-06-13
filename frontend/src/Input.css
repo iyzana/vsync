@@ -3,10 +3,9 @@
   flex-flow: row nowrap;
   align-items: center;
 
-  --bw: 1px;
   width: 100%;
-  border-top: 1px solid #888888;
-  background-color: #444444;
+  border-top: 1px solid var(--card-sep);
+  background-color: var(--card-alt);
   border-radius: 0 0 var(--radius) var(--radius);
 }
 
@@ -19,17 +18,16 @@
   border-radius: 0 0 var(--radius) var(--radius);
 }
 
-.input-group > svg {
-  padding: var(--s0);
-}
-
-.input-group > svg:hover {
-  color: #cc2222;
-  border-radius: 0 0 var(--radius) var(--radius);
-}
-
 .error {
   width: calc(100% - var(--s0) * 2);
   background-color: #880011;
   padding: var(--s0);
+}
+
+.input-send {
+  background-color: unset;
+}
+
+.input-send:hover {
+  color: #cc2222;
 }

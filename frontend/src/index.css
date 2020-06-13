@@ -3,6 +3,8 @@
   --s1: 2rem;
   --bg: #0a0a0a;
   --card: #222222;
+  --card-alt: #444444;
+  --card-sep: #888888;
   --fg: #dddddd;
   --radius: 5px;
 }
@@ -17,4 +19,13 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+button {
+    cursor: pointer;
+    color: var(--fg);
+    background-color: var(--card-alt);
+    border: none;
+    padding: var(--s0) var(--s0);
+    border-radius: var(--radius);
 }
