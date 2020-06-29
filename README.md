@@ -19,7 +19,6 @@ use at your own risk.
 
 - playback speed synchronization
 - not sure what happens for people without an [ad blocker](https://github.com/gorhill/uBlock/)
-- queue sorting
 - playlist support
 - kick clients that do not respond to `ready?` events
 

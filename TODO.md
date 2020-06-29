@@ -2,4 +2,3 @@
 - add and play immediately
 - backing yt playlists
 - playback speed
-- queue sorting

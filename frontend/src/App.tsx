@@ -105,7 +105,16 @@ function App() {
         setQueue((queue) => [...queue, queueItem]);
       } else if (msg.startsWith('queue rm')) {
         const videoId = msg.split(' ')[2];
-        setQueue((queue) => queue.filter((video) => video.videoId !== videoId));
+        setQueue((queue) => queue.filter((video) => video.id !== videoId));
+      } else if (msg.startsWith('queue order')) {
+        const order = msg.split(' ')[2].split(',');
+        setQueue((queue) => {
+          const sortedQueue = [...queue];
+          sortedQueue.sort((a, b) => {
+            return order.indexOf(a.id) - order.indexOf(b.id);
+          });
+          return sortedQueue;
+        });
       } else if (msg === 'queue err not-found') {
         setErrors((errors) => [
           ...errors,
@@ -238,6 +247,23 @@ function App() {
   const ready = useCallback((player: any) => {
     setPlayer(player);
   }, []);
+  const reorderQueue = useCallback(
+    (videos: QueueItem[]) => {
+      const oldOrder = queue.map((video) => video.id);
+      const newOrder = videos.map((video) => video.id);
+      if (
+        oldOrder.length !== newOrder.length ||
+        [...oldOrder].sort().join() !== [...newOrder].sort().join() ||
+        oldOrder.join() === newOrder.join()
+      ) {
+        return;
+      }
+
+      ws.send(`queue order ${newOrder.join(',')}`);
+      setQueue(videos);
+    },
+    [queue, setQueue],
+  );
   return (
     <main className="with-sidebar">
       <div>
@@ -256,6 +282,7 @@ function App() {
           <div className="control">
             <Queue
               videos={queue}
+              setVideos={reorderQueue}
               removeVideo={(video) => ws.send(`queue rm ${video}`)}
               skip={() => ws.send('skip')}
               numUsers={numUsers}

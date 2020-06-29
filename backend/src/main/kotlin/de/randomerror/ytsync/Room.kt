@@ -21,7 +21,7 @@ data class Room(
 )
 
 data class QueueItem(
-    val videoId: String,
+    val id: String,
     var title: String,
     var thumbnail: String
 )
@@ -86,7 +86,7 @@ fun joinRoom(roomId: RoomId, session: Session): String {
     }
     room.broadcastAll("users ${room.participants.size}")
     if (room.queue.isNotEmpty()) {
-        val playingId = room.queue[0].videoId
+        val playingId = room.queue[0].id
         log(session, "video $playingId")
         session.remote.sendStringByFuture("video $playingId")
         for (item in room.queue.drop(1)) {

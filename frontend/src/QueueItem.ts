@@ -1,5 +1,5 @@
 export default interface QueueItem {
-  videoId: string;
+  id: string;
   title: string;
   thumbnail: string;
 }

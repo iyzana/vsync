@@ -21,10 +21,15 @@
 
 .queue-list {
   padding: 0;
+  margin-top: var(--s0);
 }
 
 .queue-list > * {
   margin-bottom: var(--s0);
+}
+
+.queue-list > *:last-child {
+  margin-bottom: 0;
 }
 
 .queue-item {

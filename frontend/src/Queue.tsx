@@ -3,15 +3,17 @@ import './Queue.css';
 import QueueItem from './QueueItem';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes, faAngleDoubleRight } from '@fortawesome/free-solid-svg-icons';
+import { ReactSortable } from 'react-sortablejs';
 
 interface QueueProps {
   videos: QueueItem[];
+  setVideos: (videos: QueueItem[]) => void;
   removeVideo: (videoId: string) => void;
   skip: () => void;
   numUsers: number;
 }
 
-function Queue({ videos, removeVideo, skip, numUsers }: QueueProps) {
+function Queue({ videos, setVideos, removeVideo, skip, numUsers }: QueueProps) {
   return (
     <div className="queue">
       <div className="header">
@@ -27,19 +29,19 @@ function Queue({ videos, removeVideo, skip, numUsers }: QueueProps) {
           </span>
         </div>
       </div>
-      <ol className="queue-list">
-        {videos.map(({ videoId, title, thumbnail }) => (
-          <li key={videoId} className="queue-item">
+      <ReactSortable list={videos} setList={setVideos} className="queue-list">
+        {videos.map(({ id, title, thumbnail }) => (
+          <li key={id} className="queue-item">
             <div className="video-info">
               <img className="thumbnail" src={thumbnail} alt="" />
               <div>{title}</div>
             </div>
-            <button className="remove" onClick={() => removeVideo(videoId)}>
+            <button className="remove" onClick={() => removeVideo(id)}>
               <FontAwesomeIcon icon={faTimes} />
             </button>
           </li>
         ))}
-      </ol>
+      </ReactSortable>
     </div>
   );
 }

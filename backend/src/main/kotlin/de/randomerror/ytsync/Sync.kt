@@ -148,7 +148,7 @@ fun setEnded(session: Session, videoId: String): String {
     }
 
     if (room.queue.isEmpty()) return "end empty"
-    if (room.queue[0].videoId != videoId) return "end old"
+    if (room.queue[0].id != videoId) return "end old"
 
     room.participants.forEach { it.ignoreEndTill = Instant.now().plusSeconds(2) }
     playNext(room)
@@ -161,8 +161,8 @@ fun playNext(room: Room) {
 
     if (room.queue.isNotEmpty()) {
         val next = room.queue[0]
-        room.broadcastAll("queue rm ${next.videoId}")
-        room.broadcastAll("video ${next.videoId}")
+        room.broadcastAll("queue rm ${next.id}")
+        room.broadcastAll("video ${next.id}")
     }
 }
 

@@ -30,7 +30,7 @@ fun enqueue(session: Session, query: String): String {
         }
         val queueItem = QueueItem(video.id, video.title, video.thumbnail)
         synchronized(room.queue) {
-            if (room.queue.any { it.videoId == video.id }) {
+            if (room.queue.any { it.id == video.id }) {
                 session.remote.sendStringByFuture("queue err duplicate")
                 return@execute
             }
@@ -48,12 +48,31 @@ fun enqueue(session: Session, query: String): String {
 fun dequeue(session: Session, videoId: String): String {
     val room = getRoom(session)
     // first in queue is currently playing song
-    if (room.queue.isNotEmpty() && room.queue[0].videoId == videoId) {
+    if (room.queue.isNotEmpty() && room.queue[0].id == videoId) {
         return "queue rm deny"
     }
-    room.queue.removeAll { it.videoId == videoId }
+    room.queue.removeAll { it.id == videoId }
     room.broadcastAll("queue rm $videoId")
     return "queue rm"
+}
+
+fun reorder(session: Session, order: String): String {
+    val room = getRoom(session)
+    val queue = room.queue
+    val oldOrder = queue.drop(1).map { it.id }
+    val newOrder = order.split(',')
+
+    println(oldOrder)
+    println(newOrder)
+    println(oldOrder.toSet() == newOrder.toSet())
+    if (oldOrder.toSet() != newOrder.toSet()) {
+        return "queue order deny"
+    }
+
+    queue.subList(1, queue.size).sortBy { video -> newOrder.indexOf(video.id) }
+    room.broadcastAll("queue order $order")
+
+    return "queue order ok"
 }
 
 private fun fetchVideoInfo(query: String): VideoInfo? {
