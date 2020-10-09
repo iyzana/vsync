@@ -35,9 +35,11 @@ fun coordinatePlay(session: Session, timestamp: TimeStamp, isPlaying: Boolean = 
     if (isPlaying && user.syncState !is SyncState.AwaitReady) {
         user.syncState = SyncState.Playing(Instant.now(), timestamp)
     }
-    if (room.participants.all { isReady(it.syncState, timestamp) }) {
-        startPlay(room, timestamp)
-    } else {
+    if (room.participants.all { isReadyOrPlaying(it.syncState, timestamp) }) {
+        if (!room.participants.all { isPlaying(it.syncState, timestamp) }) {
+            startPlay(room, timestamp)
+        }
+    } else if (user.syncState !is SyncState.AwaitReady) {
         coordinateServerPause(room, timestamp)
         room.setSyncState(SyncState.AwaitReady(timestamp))
         room.broadcastActive("ready? ${timestamp.second}")
@@ -48,7 +50,7 @@ fun coordinatePlay(session: Session, timestamp: TimeStamp, isPlaying: Boolean = 
 fun setReady(session: Session, timestamp: TimeStamp): String {
     val room = getRoom(session)
     room.getUser(session).syncState = SyncState.Ready(timestamp)
-    if (room.participants.all { isReady(it.syncState, timestamp) }) {
+    if (room.participants.all { isReadyOrPlaying(it.syncState, timestamp) }) {
         startPlay(room, timestamp)
     }
     return "ready"
@@ -60,12 +62,25 @@ private fun startPlay(room: Room, timestamp: TimeStamp) {
     room.broadcastActive("play")
 }
 
-private fun isReady(state: SyncState, timestamp: TimeStamp): Boolean {
+private fun isReadyOrPlaying(state: SyncState, timestamp: TimeStamp): Boolean {
     return when (state) {
         is SyncState.Ready -> {
             val diff = abs(state.timestamp.second - timestamp.second)
             diff <= 1.5
         }
+        is SyncState.Playing -> {
+            val diff = abs(state.timestamp.second - timestamp.second)
+            diff <= 1.5
+        }
+        is SyncState.Unstarted -> {
+            true // ignore unstarted clients
+        }
+        else -> false
+    }
+}
+
+private fun isPlaying(state: SyncState, timestamp: TimeStamp): Boolean {
+    return when (state) {
         is SyncState.Playing -> {
             val diff = abs(state.timestamp.second - timestamp.second)
             diff <= 1.5
