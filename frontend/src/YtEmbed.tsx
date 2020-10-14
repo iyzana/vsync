@@ -50,6 +50,7 @@ function YtEmbed({
   setPlayer,
   overlay,
 }: YtEmbedProps) {
+  opts.playerVars!.end = videoId === 'BS5HCi-zsYE' ? 191 : undefined;
   return (
     <div className="aspect-ratio">
       {videoId === '' ? (

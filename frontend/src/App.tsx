@@ -30,6 +30,9 @@ ws.onopen = () => {
   } else {
     const roomId = path.substring(1);
     ws.send(`join ${roomId}`);
+    if (roomId === 'hairylegs') {
+      ws.send('queue add https://www.youtube.com/watch?v=BS5HCi-zsYE');
+    }
   }
 };
 
@@ -107,9 +110,13 @@ function App() {
         setPreloadTime(timestamp);
         setOverlay('SYNCING');
       } else if (msg.startsWith('video')) {
-        const videoId = msg.split(' ')[1];
-        setVideoId(videoId);
-        setHasEverPlayed(false);
+        const newVideoId = msg.split(' ')[1];
+        if (videoId === newVideoId) {
+          player.seekTo(0, true);
+        } else {
+          setVideoId(newVideoId);
+          setHasEverPlayed(false);
+        }
       } else if (msg.startsWith('queue add')) {
         const msgParts = msg.split(' ');
         const queueItem: QueueItem = JSON.parse(msgParts.slice(2).join(' '));
@@ -146,6 +153,7 @@ function App() {
     };
   }, [
     player,
+    videoId,
     setPreloadTime,
     setQueue,
     setNumUsers,
@@ -154,6 +162,7 @@ function App() {
     hasEverPlayed,
     setHasEverPlayed,
     setOverlay,
+    setVideoId,
   ]);
 
   useEffect(() => {
@@ -233,6 +242,11 @@ function App() {
     } else if (newState === YouTube.PlayerState.ENDED) {
       console.log(`sending end`);
       ws.send(`end ${videoId}`);
+      const path = window.location.pathname;
+      const roomId = path.substring(1);
+      if (roomId === 'hairylegs') {
+        ws.send('queue add https://www.youtube.com/watch?v=BS5HCi-zsYE');
+      }
     } else if (
       newState === YouTube.PlayerState.BUFFERING &&
       memOldState === YouTube.PlayerState.PLAYING
