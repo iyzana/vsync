@@ -211,6 +211,7 @@ function App() {
       if (initialized) {
         console.log(`sending play ${player.getCurrentTime()}`);
         ws.send(`play ${player.getCurrentTime()}`);
+        setOverlay(null);
       } else {
         setInitialized(true);
         // the youtube player behaves strange if it is paused
@@ -233,6 +234,7 @@ function App() {
     videoId,
     oldState,
     setOldState,
+    setOverlay,
     hasEverPlayed,
     setHasEverPlayed,
     preloadTime,
