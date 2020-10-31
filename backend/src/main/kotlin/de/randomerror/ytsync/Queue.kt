@@ -8,6 +8,7 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
+val youtubeUrlRegex: Regex = Regex("""https://(?:www)?\.youtu(?:\.be|be\.com)/watch\?v=([^&]+)(?:.*)?""")
 val videoInfoFetcher: ExecutorService = Executors.newCachedThreadPool()
 
 private val logger = KotlinLogging.logger {}
@@ -15,14 +16,14 @@ private val logger = KotlinLogging.logger {}
 private data class VideoInfo(
     val id: String,
     val title: String,
-    val thumbnail: String,
+    val thumbnail: String?,
     val extractor: String
 )
 
 fun enqueue(session: Session, query: String): String {
     val room = getRoom(session)
     videoInfoFetcher.execute {
-        val video = fetchVideoInfo(query)
+        val video = fetchVideoInfo(query) ?: tryExtractVideoId(query)
         if (video == null || video.extractor != "youtube") {
             log(session, "queue err not-found")
             session.remote.sendStringByFuture("queue err not-found")
@@ -43,6 +44,12 @@ fun enqueue(session: Session, query: String): String {
         }
     }
     return "queue"
+}
+
+private fun tryExtractVideoId(query: String): VideoInfo? {
+    val match = youtubeUrlRegex.find(query) ?: return null
+    val id = match.groups[1]!!.value
+    return VideoInfo(id, "unknown video $id", null, "youtube")
 }
 
 fun dequeue(session: Session, videoId: String): String {

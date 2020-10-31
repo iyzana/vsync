@@ -23,7 +23,7 @@ data class Room(
 data class QueueItem(
     val id: String,
     var title: String,
-    var thumbnail: String
+    var thumbnail: String?
 )
 
 data class User(
