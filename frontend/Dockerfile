@@ -1,6 +1,7 @@
 FROM node:14-alpine AS build
 
 WORKDIR /app
+ENV INLINE_RUNTIME_CHUNK=false
 
 COPY package.json package.json
 RUN npm install
