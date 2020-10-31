@@ -49,7 +49,12 @@ fun enqueue(session: Session, query: String): String {
 private fun tryExtractVideoId(query: String): VideoInfo? {
     val match = youtubeUrlRegex.find(query) ?: return null
     val id = match.groups[1]!!.value
-    return VideoInfo(id, "unknown video $id", null, "youtube")
+    return VideoInfo(
+        id,
+        "unknown video $id",
+        "https://i.ytimg.com/vi/$id/maxresdefault.jpg",
+        "youtube"
+    )
 }
 
 fun dequeue(session: Session, videoId: String): String {
