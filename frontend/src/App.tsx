@@ -7,14 +7,23 @@ import QueueItem from './QueueItem';
 import Error from './Error';
 import Input from './Input';
 
+const youtubeUrlRegex = new RegExp(
+  'https://(?:www)?\\.youtu(?:\\.be|be\\.com)/watch\\?v=([^&]+)(?:.*)?',
+);
+
 const server =
   process.env.NODE_ENV !== 'development'
     ? 'wss://yt.randomerror.de/api/room'
     : 'ws://localhost:4567/room';
 const ws = new WebSocket(server);
 ws.onopen = () => {
+  const tail = window.location.href.substr(window.location.origin.length + 1);
   const path = window.location.pathname;
-  if (path === '' || path === '/') {
+
+  if (youtubeUrlRegex.test(tail)) {
+    ws.send('create');
+    ws.send(`queue add ${tail}`);
+  } else if (path === '' || path === '/') {
     ws.send('create');
   } else {
     const roomId = path.substring(1);
