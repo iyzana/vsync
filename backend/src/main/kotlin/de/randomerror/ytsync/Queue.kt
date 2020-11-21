@@ -22,8 +22,19 @@ private data class VideoInfo(
 
 fun enqueue(session: Session, query: String): String {
     val room = getRoom(session)
+    val fallbackInfo = tryExtractVideoId(query)
+    if (fallbackInfo != null) {
+        synchronized(room.queue) {
+            if (room.queue.size == 0) {
+                val queueItem = QueueItem(fallbackInfo.id, fallbackInfo.title, fallbackInfo.thumbnail)
+                room.queue.add(queueItem)
+                room.broadcastAll("video ${fallbackInfo.id}")
+                return "queue"
+            }
+        }
+    }
     videoInfoFetcher.execute {
-        val video = fetchVideoInfo(query) ?: tryExtractVideoId(query)
+        val video = fetchVideoInfo(query) ?: fallbackInfo
         if (video == null || video.extractor != "youtube") {
             log(session, "queue err not-found")
             session.remote.sendStringByFuture("queue err not-found")
@@ -36,11 +47,11 @@ fun enqueue(session: Session, query: String): String {
                 return@execute
             }
             room.queue.add(queueItem)
-        }
-        if (room.queue.size == 1) {
-            room.broadcastAll("video ${video.id}")
-        } else {
-            room.broadcastAll("queue add ${gson.toJson(queueItem)}")
+            if (room.queue.size == 1) {
+                room.broadcastAll("video ${video.id}")
+            } else {
+                room.broadcastAll("queue add ${gson.toJson(queueItem)}")
+            }
         }
     }
     return "queue"
