@@ -3,6 +3,7 @@ import './Queue.css';
 import QueueItem from './QueueItem';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes, faAngleDoubleRight } from '@fortawesome/free-solid-svg-icons';
+import { faClipboard } from '@fortawesome/free-regular-svg-icons';
 import { ReactSortable } from 'react-sortablejs';
 
 interface QueueProps {
@@ -11,6 +12,13 @@ interface QueueProps {
   removeVideo: (videoId: string) => void;
   skip: () => void;
   numUsers: number;
+}
+
+function copyLink() {
+  if (!navigator.clipboard) {
+    return;
+  }
+  navigator.clipboard.writeText(window.location.href);
 }
 
 function Queue({ videos, setVideos, removeVideo, skip, numUsers }: QueueProps) {
@@ -24,9 +32,12 @@ function Queue({ videos, setVideos, removeVideo, skip, numUsers }: QueueProps) {
               SKIP <FontAwesomeIcon icon={faAngleDoubleRight} />
             </button>
           )}
-          <span style={{ display: 'inline-block', marginTop: 'var(--s0)' }}>
-            {numUsers + ' connected'}
-          </span>
+          <span className="connections">{numUsers + ' connected'}</span>
+          <FontAwesomeIcon
+            className="getlink"
+            icon={faClipboard}
+            onClick={copyLink}
+          />
         </div>
       </div>
       <ReactSortable list={videos} setList={setVideos} className="queue-list">

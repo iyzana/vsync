@@ -19,6 +19,20 @@
   margin-right: var(--s0);
 }
 
+.connections {
+  display: inline-block;
+  padding-top: var(--s0);
+  padding-bottom: var(--s0);
+  margin-right: var(--s0);
+}
+
+.getlink {
+  display: inline-block;
+  padding: var(--s0);
+  margin: calc(var(--s0) * -1);
+  cursor: pointer;
+}
+
 .queue-list {
   padding: 0;
   margin-top: var(--s0);
