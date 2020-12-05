@@ -36,6 +36,5 @@ use at your own risk.
   - requires `youtube-dl` to be installed for fetching video info
 
 - frontend
-  - change server address in `App.tsx` server constant
   - `cd frontend && yarn && yarn build`
   - serve the `build` folder contents from a webserver

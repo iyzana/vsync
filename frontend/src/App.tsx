@@ -15,7 +15,7 @@ const youtubeUrlRegex = new RegExp(
 
 const server =
   process.env.NODE_ENV !== 'development'
-    ? 'wss://yt.randomerror.de/api/room'
+    ? `wss://${window.location.host}/api/room`
     : 'ws://localhost:4567/room';
 const ws = new WebSocket(server);
 ws.onopen = () => {
