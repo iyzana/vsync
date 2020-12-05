@@ -49,6 +49,7 @@
 .queue-item {
   display: flex;
   flex-flow: row nowrap;
+  cursor: grab;
 }
 
 .remove {
