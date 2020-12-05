@@ -28,7 +28,6 @@
   display: flex;
   flex-flow: column nowrap;
   align-items: center;
-  max-height: 100%;
 }
 
 .embed {
@@ -43,4 +42,19 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+}
+
+.footer {
+  position: absolute;
+  bottom: var(--s0);
+  right: calc(var(--s0) / 2);
+}
+
+.social {
+  padding: calc(var(--s0) / 2);
+  color: var(--card-alt);
+}
+
+.social:hover {
+  color: var(--card-sep);
 }

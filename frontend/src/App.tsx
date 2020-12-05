@@ -6,6 +6,8 @@ import Queue from './Queue';
 import QueueItem from './QueueItem';
 import Error from './Error';
 import Input from './Input';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faGithub } from '@fortawesome/free-brands-svg-icons';
 
 const youtubeUrlRegex = new RegExp(
   'https://(?:www)?\\.youtu(?:\\.be|be\\.com)/watch\\?v=([^&]+)(?:.*)?',
@@ -276,33 +278,46 @@ function App() {
     [queue, setQueue],
   );
   return (
-    <main className="with-sidebar">
-      <div>
-        <section className="video">
-          <div className="embed">
-            <YtEmbed
-              videoId={videoId}
-              onStateChange={onStateChange}
-              onPlaybackRateChange={onPlaybackRateChange}
-              setPlayer={ready}
-              overlay={overlay}
-            />
-          </div>
-        </section>
-        <section>
-          <div className="control">
-            <Queue
-              videos={queue}
-              setVideos={reorderQueue}
-              removeVideo={(video) => ws.send(`queue rm ${video}`)}
-              skip={() => ws.send('skip')}
-              numUsers={numUsers}
-            />
-            <Input ws={ws} errors={errors} setErrors={setErrors} />
-          </div>
-        </section>
-      </div>
-    </main>
+    <>
+      <main className="with-sidebar">
+        <div>
+          <section className="video">
+            <div className="embed">
+              <YtEmbed
+                videoId={videoId}
+                onStateChange={onStateChange}
+                onPlaybackRateChange={onPlaybackRateChange}
+                setPlayer={ready}
+                overlay={overlay}
+              />
+            </div>
+          </section>
+          <section>
+            <div className="control">
+              <Queue
+                videos={queue}
+                setVideos={reorderQueue}
+                removeVideo={(video) => ws.send(`queue rm ${video}`)}
+                skip={() => ws.send('skip')}
+                numUsers={numUsers}
+              />
+              <Input ws={ws} errors={errors} setErrors={setErrors} />
+            </div>
+          </section>
+        </div>
+      </main>
+      <footer className="footer">
+        <a
+          className="social"
+          href="https://github.com/iyzana/yt-sync"
+          target="_blank"
+          rel="noreferrer"
+          aria-label="GitHub project"
+        >
+          <FontAwesomeIcon icon={faGithub} size="lg" />
+        </a>
+      </footer>
+    </>
   );
 }
 
