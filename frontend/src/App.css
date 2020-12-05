@@ -1,7 +1,14 @@
+.container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
 .with-sidebar {
+  flex-shrink: 0;
   overflow: hidden;
   padding: var(--s1);
-  height: calc(100% - var(--s1) * 2);
 }
 
 .with-sidebar > * {
@@ -45,9 +52,10 @@
 }
 
 .footer {
-  position: absolute;
-  bottom: var(--s0);
-  right: calc(var(--s0) / 2);
+  flex-shrink: 0;
+  display: flex;
+  justify-content: flex-end;
+  padding: calc(var(--s0) / 2);
 }
 
 .social {

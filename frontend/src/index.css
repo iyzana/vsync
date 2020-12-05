@@ -29,3 +29,7 @@ button {
   padding: var(--s0) var(--s0);
   border-radius: var(--radius);
 }
+
+#root {
+  height: 100%;
+}

@@ -278,7 +278,7 @@ function App() {
     [queue, setQueue],
   );
   return (
-    <>
+    <div className="container">
       <main className="with-sidebar">
         <div>
           <section className="video">
@@ -317,7 +317,7 @@ function App() {
           <FontAwesomeIcon icon={faGithub} size="lg" />
         </a>
       </footer>
-    </>
+    </div>
   );
 }
 
