@@ -16,6 +16,7 @@ import java.nio.ByteBuffer
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
+import kotlin.concurrent.thread
 
 val gson = Gson()
 private val logger = KotlinLogging.logger {}
@@ -23,9 +24,32 @@ private val logger = KotlinLogging.logger {}
 fun main() {
     (LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME) as Logger).level = Level.INFO
 
+    thread(isDaemon = true) {
+        while (true) {
+            updateYoutubeDl()
+            Thread.sleep(TimeUnit.DAYS.toMillis(1))
+        }
+    }
+
     webSocket("/room", SyncWebSocket::class.java)
     init()
 }
+
+private fun updateYoutubeDl() {
+    logger.info { "checking for youtube-dl updates" }
+    val process = Runtime.getRuntime().exec(
+        arrayOf("youtube-dl", "--update")
+    )
+    process.waitFor()
+    logger.info {
+        process.inputStream.bufferedReader().readLines().joinToString(separator = "\n") { "youtube-dl: $it" }
+    }
+    logger.warn {
+        process.errorStream.bufferedReader().readLines().joinToString(separator = "\n") { "youtube-dl: $it" }
+    }
+}
+
+private val local = ThreadLocal<String?>()
 
 @WebSocket
 class SyncWebSocket {
@@ -34,9 +58,9 @@ class SyncWebSocket {
 
     @OnWebSocketConnect
     fun connected(session: Session) {
+        local.set(null)
         log(session, "<connect>")
         val keepaliveTask = keepaliveScheduler.scheduleAtFixedRate({
-            log(session, "<ping>")
             session.remote.sendPing(ByteBuffer.allocate(1))
         }, 30, 30, TimeUnit.SECONDS)
         keepaliveTasks[session] = keepaliveTask
@@ -53,8 +77,14 @@ class SyncWebSocket {
     @Throws(IOException::class)
     fun message(session: Session, message: String) {
         val cmd = message.trim().split(' ')
+        if (cmd.isEmpty()) {
+            log(session, "empty command -> <err>")
+            kill(session)
+            return
+        }
         val cmdString = cmd.joinToString(" ")
-        log(session, "\\ $cmdString")
+        local.set(cmdString)
+        log(session, "<-")
         try {
             val response = when {
                 cmd.size == 1 && cmd[0] == "create" -> createRoom(session)
@@ -73,16 +103,19 @@ class SyncWebSocket {
                 cmd.size == 1 && cmd[0] == "skip" -> skip(session)
                 else -> throw Disconnect()
             }
-            log(session, "/ $cmdString -> $response")
+            log(session, "-> $response")
         } catch (e: Disconnect) {
-            log(session, "/ $cmdString -> <err>")
+            log(session, "<err>")
             kill(session)
         }
+        local.set(null)
     }
 }
 
 class Disconnect(message: String = "invalid command") : RuntimeException(message)
 
 fun log(session: Session, message: String) {
-    logger.info(session.remoteAddress.toString() + ": " + message)
+    val roomId = sessions[session]?.let { "@${it.roomId} " } ?: ""
+    val context = local.get()?.let { "[$it] " } ?: ""
+    logger.info("$roomId${session.remoteAddress.port}: $context$message")
 }

@@ -28,7 +28,7 @@ fun enqueue(session: Session, query: String): String {
             if (room.queue.size == 0) {
                 val queueItem = QueueItem(fallbackInfo.id, fallbackInfo.title, fallbackInfo.thumbnail)
                 room.queue.add(queueItem)
-                room.broadcastAll("video ${fallbackInfo.id}")
+                room.broadcastAll(session, "video ${fallbackInfo.id}")
                 return "queue"
             }
         }
@@ -48,9 +48,9 @@ fun enqueue(session: Session, query: String): String {
             }
             room.queue.add(queueItem)
             if (room.queue.size == 1) {
-                room.broadcastAll("video ${video.id}")
+                room.broadcastAll(session, "video ${video.id}")
             } else {
-                room.broadcastAll("queue add ${gson.toJson(queueItem)}")
+                room.broadcastAll(session, "queue add ${gson.toJson(queueItem)}")
             }
         }
     }
@@ -75,7 +75,7 @@ fun dequeue(session: Session, videoId: String): String {
         return "queue rm deny"
     }
     room.queue.removeAll { it.id == videoId }
-    room.broadcastAll("queue rm $videoId")
+    room.broadcastAll(session, "queue rm $videoId")
     return "queue rm"
 }
 
@@ -93,7 +93,7 @@ fun reorder(session: Session, order: String): String {
     }
 
     queue.subList(1, queue.size).sortBy { video -> newOrder.indexOf(video.id) }
-    room.broadcastAll("queue order $order")
+    room.broadcastAll(session, "queue order $order")
 
     return "queue order ok"
 }
@@ -139,6 +139,6 @@ fun skip(session: Session): String {
     if (room.queue.size < 2) {
         return "skip deny"
     }
-    playNext(room)
+    playNext(session, room)
     return "skip"
 }

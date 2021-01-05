@@ -37,12 +37,12 @@ fun coordinatePlay(session: Session, timestamp: TimeStamp, isPlaying: Boolean = 
     }
     if (room.participants.all { isReadyOrPlaying(it.syncState, timestamp) }) {
         if (!room.participants.all { isPlaying(it.syncState, timestamp) }) {
-            startPlay(room, timestamp)
+            startPlay(session, room, timestamp)
         }
     } else if (user.syncState !is SyncState.AwaitReady) {
-        coordinateServerPause(room, timestamp)
+        coordinateServerPause(session, room, timestamp)
         room.setSyncState(SyncState.AwaitReady(timestamp))
-        room.broadcastActive("ready? ${timestamp.second}")
+        room.broadcastActive(session, "ready? ${timestamp.second}")
     }
     return "play"
 }
@@ -51,15 +51,15 @@ fun setReady(session: Session, timestamp: TimeStamp): String {
     val room = getRoom(session)
     room.getUser(session).syncState = SyncState.Ready(timestamp)
     if (room.participants.all { isReadyOrPlaying(it.syncState, timestamp) }) {
-        startPlay(room, timestamp)
+        startPlay(session, room, timestamp)
     }
     return "ready"
 }
 
-private fun startPlay(room: Room, timestamp: TimeStamp) {
+private fun startPlay(session: Session, room: Room, timestamp: TimeStamp) {
     room.setSyncState(SyncState.Playing(Instant.now(), timestamp))
     room.participants.forEach { it.ignorePauseTill = null }
-    room.broadcastActive("play")
+    room.broadcastActive(session, "play")
 }
 
 private fun isReadyOrPlaying(state: SyncState, timestamp: TimeStamp): Boolean {
@@ -111,10 +111,10 @@ fun coordinateClientPause(session: Session, timestamp: TimeStamp): String {
     return "pause client"
 }
 
-private fun coordinateServerPause(room: Room, timestamp: TimeStamp) {
+private fun coordinateServerPause(session: Session, room: Room, timestamp: TimeStamp) {
     room.setSyncState(SyncState.Paused(timestamp))
     ignoreUpcomingPause(room)
-    room.broadcastActive("pause ${timestamp.second}")
+    room.broadcastActive(session, "pause ${timestamp.second}")
 }
 
 fun sync(session: Session): String {
@@ -131,7 +131,7 @@ fun sync(session: Session): String {
     } else {
         return when (val state = activeMembers.find { it.session != session }!!.syncState) {
             is SyncState.Paused -> {
-                coordinateServerPause(room, state.timestamp)
+                coordinateServerPause(session, room, state.timestamp)
                 "sync pause"
             }
             is SyncState.Ready -> {
@@ -144,7 +144,7 @@ fun sync(session: Session): String {
             }
             is SyncState.Playing -> {
                 coordinatePlay(session, state.timestamp)
-                "sync play"
+                "sync playing"
             }
             is SyncState.Unstarted -> {
                 throw IllegalStateException("sync to unstarted")
@@ -166,18 +166,18 @@ fun setEnded(session: Session, videoId: String): String {
     if (room.queue[0].id != videoId) return "end old"
 
     room.participants.forEach { it.ignoreEndTill = Instant.now().plusSeconds(2) }
-    playNext(room)
+    playNext(session, room)
 
     return "end"
 }
 
-fun playNext(room: Room) {
+fun playNext(session: Session, room: Room) {
     room.queue.removeAt(0)
 
     if (room.queue.isNotEmpty()) {
         val next = room.queue[0]
-        room.broadcastAll("queue rm ${next.id}")
-        room.broadcastAll("video ${next.id}")
+        room.broadcastAll(session, "queue rm ${next.id}")
+        room.broadcastAll(session, "video ${next.id}")
     }
 }
 
