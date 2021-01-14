@@ -33,6 +33,7 @@ fun main() {
         }
     }
 
+    webSocketIdleTimeoutMillis(SECONDS.toMillis(75).toInt())
     webSocket("/room", SyncWebSocket::class.java)
     init()
 }
@@ -61,7 +62,6 @@ class SyncWebSocket {
     @OnWebSocketConnect
     fun connected(session: Session) {
         local.set(null)
-        session.idleTimeout = SECONDS.toMillis(75)
         log(session, "<connect>")
         val keepaliveTask = keepaliveScheduler.scheduleAtFixedRate({
             session.remote.sendPing(ByteBuffer.allocate(1))
