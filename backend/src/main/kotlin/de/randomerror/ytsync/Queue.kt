@@ -8,7 +8,7 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
-val youtubeUrlRegex: Regex = Regex("""https://(?:www)?\.youtu(?:\.be|be\.com)/watch\?v=([^&]+)(?:.*)?""")
+val youtubeUrlRegex: Regex = Regex("""https://(?:www\.)?youtu(?:\.be|be\.com)/watch\?v=([^&]+)(?:.*)?""")
 val videoInfoFetcher: ExecutorService = Executors.newCachedThreadPool()
 
 private val logger = KotlinLogging.logger {}
@@ -26,6 +26,7 @@ fun enqueue(session: Session, query: String): String {
     if (fallbackInfo != null) {
         synchronized(room.queue) {
             if (room.queue.size == 0) {
+                // this is the first video it does not go into the queue, we don't need any video info
                 val queueItem = QueueItem(fallbackInfo.id, fallbackInfo.title, fallbackInfo.thumbnail)
                 room.queue.add(queueItem)
                 room.broadcastAll(session, "video ${fallbackInfo.id}")
@@ -34,6 +35,7 @@ fun enqueue(session: Session, query: String): String {
         }
     }
     videoInfoFetcher.execute {
+        // try to get video info, but if it fails, use the fallback info so that the video at least plays
         val video = fetchVideoInfo(query) ?: fallbackInfo
         if (video == null || video.extractor != "youtube") {
             log(session, "queue err not-found")
@@ -85,9 +87,7 @@ fun reorder(session: Session, order: String): String {
     val oldOrder = queue.drop(1).map { it.id }
     val newOrder = order.split(',')
 
-    println(oldOrder)
-    println(newOrder)
-    println(oldOrder.toSet() == newOrder.toSet())
+    // mustn't change queue using reorder
     if (oldOrder.toSet() != newOrder.toSet()) {
         return "queue order deny"
     }

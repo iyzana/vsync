@@ -16,6 +16,8 @@ import java.nio.ByteBuffer
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeUnit.MILLISECONDS
+import java.util.concurrent.TimeUnit.SECONDS
 import kotlin.concurrent.thread
 
 val gson = Gson()
@@ -59,10 +61,11 @@ class SyncWebSocket {
     @OnWebSocketConnect
     fun connected(session: Session) {
         local.set(null)
+        session.idleTimeout = SECONDS.toMillis(75)
         log(session, "<connect>")
         val keepaliveTask = keepaliveScheduler.scheduleAtFixedRate({
             session.remote.sendPing(ByteBuffer.allocate(1))
-        }, 30, 30, TimeUnit.SECONDS)
+        }, 30, 30, SECONDS)
         keepaliveTasks[session] = keepaliveTask
     }
 
