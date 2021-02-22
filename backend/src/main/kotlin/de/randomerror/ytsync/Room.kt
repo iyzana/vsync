@@ -15,7 +15,8 @@ inline class RoomId(val roomId: String)
 data class Room(
     val participants: MutableList<User>,
     val queue: MutableList<QueueItem> = mutableListOf(),
-    var shutdownThread: Thread? = null
+    var shutdownThread: Thread? = null,
+    var timeoutSyncAt: Instant? = null
 )
 
 data class QueueItem(
@@ -124,7 +125,7 @@ private fun scheduleRoomClose(
     }
 }
 
-fun kill(session: Session) {
-    session.remote.sendStringByFuture("invalid command")
-    session.close(400, "invalid command")
+fun kill(session: Session, reason: String = "invalid command") {
+    session.remote.sendStringByFuture(reason)
+    session.close(400, reason)
 }

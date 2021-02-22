@@ -32,6 +32,12 @@ sealed class SyncState {
 fun coordinatePlay(session: Session, timestamp: TimeStamp, isPlaying: Boolean = false): String {
     val room = getRoom(session)
     val user = room.getUser(session)
+    if (user.syncState is SyncState.Unstarted || user.syncState is SyncState.Paused) {
+        room.timeoutSyncAt = Instant.now().plusSeconds(20)
+    }
+    if (room.timeoutSyncAt != null && Instant.now() > room.timeoutSyncAt) {
+        kickSlowClients(room)
+    }
     if (isPlaying && user.syncState !is SyncState.AwaitReady) {
         user.syncState = SyncState.Playing(Instant.now(), timestamp)
     }
@@ -47,9 +53,16 @@ fun coordinatePlay(session: Session, timestamp: TimeStamp, isPlaying: Boolean = 
     return "play"
 }
 
+fun kickSlowClients(room: Room) {
+    room.participants
+        .filter { it.syncState is SyncState.AwaitReady }
+        .forEach { kill(it.session, "sync timed out") }
+}
+
 fun setReady(session: Session, timestamp: TimeStamp): String {
     val room = getRoom(session)
-    room.getUser(session).syncState = SyncState.Ready(timestamp)
+    val user = room.getUser(session)
+    user.syncState = SyncState.Ready(timestamp)
     if (room.participants.all { isReadyOrPlaying(it.syncState, timestamp) }) {
         startPlay(session, room, timestamp)
     }
