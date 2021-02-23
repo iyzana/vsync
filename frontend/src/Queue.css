@@ -1,15 +1,17 @@
 .queue {
-  padding: var(--s1);
-  max-height: 687px;
-  overflow-y: scroll;
-  padding-top: 0;
+  height: 100%;
+  padding: 0 var(--s1);
+  overflow-y: auto;
 }
 
 .header {
   padding-top: calc(var(--s1) - var(--s0));
+  padding-bottom: var(--s0);
+
   display: flex;
   flex-flow: row nowrap;
   justify-content: space-between;
+
   position: sticky;
   top: 0;
   background-color: var(--card);
@@ -21,27 +23,30 @@
   display: flex;
 }
 
+.status {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+}
+
 .skip {
   margin-right: var(--s0);
 }
 
 .connections {
-  display: inline-block;
-  padding-top: var(--s0);
-  padding-bottom: var(--s0);
   margin-right: var(--s0);
 }
 
 .getlink {
-  display: inline-block;
   padding: var(--s0);
   margin: calc(var(--s0) * -1);
   cursor: pointer;
 }
 
 .queue-list {
-  padding: 0;
   margin-top: var(--s0);
+  margin-bottom: var(--s1);
 }
 
 .queue-list > * {
@@ -74,6 +79,7 @@
   display: flex;
   flex-flow: row nowrap;
   margin-right: var(--s0);
+  align-items: start;
 }
 
 .thumbnail {

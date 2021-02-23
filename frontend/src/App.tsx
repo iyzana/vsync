@@ -292,7 +292,7 @@ function App() {
               />
             </div>
           </section>
-          <section>
+          <section className="aside">
             <div className="control">
               <Queue
                 videos={queue}

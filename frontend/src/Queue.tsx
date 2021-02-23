@@ -26,7 +26,7 @@ function Queue({ videos, setVideos, removeVideo, skip, numUsers }: QueueProps) {
     <div className="queue">
       <div className="header">
         <h3 className="title">Queue</h3>
-        <div>
+        <div className="status">
           {videos.length === 0 ? null : (
             <button className="skip" onClick={skip}>
               SKIP <FontAwesomeIcon icon={faAngleDoubleRight} />

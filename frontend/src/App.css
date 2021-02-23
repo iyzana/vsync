@@ -12,7 +12,6 @@
 }
 
 .with-sidebar > * {
-  height: 100%;
   display: flex;
   flex-wrap: wrap;
   margin: calc(var(--s1) / 2 * -1);
@@ -35,6 +34,16 @@
   display: flex;
   flex-flow: column nowrap;
   align-items: center;
+}
+
+.aside {
+  max-height: min(
+    max(
+      calc((100vw - 3 * var(--s1) - 30rem) * 9 / 16),
+      30rem
+    ),
+    calc(100vh - 2 * var(--s1))
+  );
 }
 
 .embed {
