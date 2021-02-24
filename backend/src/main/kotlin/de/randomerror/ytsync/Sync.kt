@@ -42,6 +42,7 @@ fun coordinatePlay(session: Session, timestamp: TimeStamp, isPlaying: Boolean = 
         user.syncState = SyncState.Playing(Instant.now(), timestamp)
     }
     if (room.participants.all { isReadyOrPlaying(it.syncState, timestamp) }) {
+        room.timeoutSyncAt = null
         if (!room.participants.all { isPlaying(it.syncState, timestamp) }) {
             startPlay(session, room, timestamp)
         }
