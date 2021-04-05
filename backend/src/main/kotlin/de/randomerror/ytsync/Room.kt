@@ -16,7 +16,9 @@ data class Room(
     val participants: MutableList<User>,
     val queue: MutableList<QueueItem> = mutableListOf(),
     var shutdownThread: Thread? = null,
-    var timeoutSyncAt: Instant? = null
+    var timeoutSyncAt: Instant? = null,
+    var ignorePauseTill: Instant? = null,
+    var ignoreEndTill: Instant? = null
 )
 
 data class QueueItem(
@@ -27,9 +29,7 @@ data class QueueItem(
 
 data class User(
     val session: Session,
-    var syncState: SyncState = SyncState.Unstarted,
-    var ignorePauseTill: Instant? = null,
-    var ignoreEndTill: Instant? = null
+    var syncState: SyncState = SyncState.NotStarted
 )
 
 fun getRoom(session: Session): Room {
@@ -44,7 +44,7 @@ fun Room.getUser(
 fun Room.broadcastActive(session: Session, message: String) {
     log(session, "broadcast: $message")
     participants
-        .filter { it.syncState != SyncState.Unstarted }
+        .filter { it.syncState != SyncState.NotStarted }
         .forEach { member -> member.session.remote.sendStringByFuture(message) }
 }
 

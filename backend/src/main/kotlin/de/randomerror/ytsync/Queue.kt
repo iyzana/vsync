@@ -4,6 +4,7 @@ import com.google.gson.JsonParser
 import mu.KotlinLogging
 import org.eclipse.jetty.websocket.api.Session
 import java.io.StringWriter
+import java.time.Instant
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -139,6 +140,14 @@ fun skip(session: Session): String {
     if (room.queue.size < 2) {
         return "skip deny"
     }
+
+    val ignoreEndTill = room.ignoreEndTill
+    if (ignoreEndTill != null && ignoreEndTill.isAfter(Instant.now())) {
+        return "skip ignore"
+    }
+
+    room.ignoreEndTill = Instant.now().plusSeconds(2)
     playNext(session, room)
+
     return "skip"
 }

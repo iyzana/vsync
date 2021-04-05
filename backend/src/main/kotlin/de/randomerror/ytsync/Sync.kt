@@ -11,7 +11,7 @@ fun String.asTimeStamp(): TimeStamp {
 }
 
 sealed class SyncState {
-    object Unstarted : SyncState()
+    object NotStarted : SyncState()
     class Paused(val timestamp: TimeStamp = TimeStamp(0.0)) : SyncState()
     class AwaitReady(val timestamp: TimeStamp) : SyncState()
     class Ready(val timestamp: TimeStamp) : SyncState()
@@ -32,7 +32,7 @@ sealed class SyncState {
 fun coordinatePlay(session: Session, timestamp: TimeStamp, isPlaying: Boolean = false): String {
     val room = getRoom(session)
     val user = room.getUser(session)
-    if (user.syncState is SyncState.Unstarted || user.syncState is SyncState.Paused) {
+    if (user.syncState is SyncState.NotStarted || user.syncState is SyncState.Paused) {
         room.timeoutSyncAt = Instant.now().plusSeconds(20)
     }
     if (room.timeoutSyncAt != null && Instant.now() > room.timeoutSyncAt) {
@@ -72,7 +72,7 @@ fun setReady(session: Session, timestamp: TimeStamp): String {
 
 private fun startPlay(session: Session, room: Room, timestamp: TimeStamp) {
     room.setSyncState(SyncState.Playing(Instant.now(), timestamp))
-    room.participants.forEach { it.ignorePauseTill = null }
+    room.ignorePauseTill = null
     room.broadcastActive(session, "play")
 }
 
@@ -86,7 +86,7 @@ private fun isReadyOrPlaying(state: SyncState, timestamp: TimeStamp): Boolean {
             val diff = abs(state.timestamp.second - timestamp.second)
             diff <= 1.5
         }
-        is SyncState.Unstarted -> {
+        is SyncState.NotStarted -> {
             true // ignore unstarted clients
         }
         else -> false
@@ -99,7 +99,7 @@ private fun isPlaying(state: SyncState, timestamp: TimeStamp): Boolean {
             val diff = abs(state.timestamp.second - timestamp.second)
             diff <= 1.5
         }
-        is SyncState.Unstarted -> {
+        is SyncState.NotStarted -> {
             true // ignore unstarted clients
         }
         else -> false
@@ -112,14 +112,14 @@ fun coordinateClientPause(session: Session, timestamp: TimeStamp): String {
     if (user.syncState is SyncState.AwaitReady) {
         return "pause ignore ready"
     }
-    val ignorePauseTill = user.ignorePauseTill
+    val ignorePauseTill = room.ignorePauseTill
     if (ignorePauseTill != null && ignorePauseTill.isAfter(Instant.now())) {
         return "pause ignore"
     }
     room.setSyncState(SyncState.Paused(timestamp))
     ignoreUpcomingPause(room)
     room.participants
-        .filter { it.syncState != SyncState.Unstarted }
+        .filter { it.syncState != SyncState.NotStarted }
         .filter { it.session != session }
         .forEach { it.session.remote.sendStringByFuture("pause ${timestamp.second}") }
     return "pause client"
@@ -134,12 +134,12 @@ private fun coordinateServerPause(session: Session, room: Room, timestamp: TimeS
 fun sync(session: Session): String {
     val room = getRoom(session)
     val user = room.getUser(session)
-    if (user.syncState != SyncState.Unstarted) {
+    if (user.syncState != SyncState.NotStarted) {
         return "sync deny"
     }
     user.syncState = SyncState.Playing(Instant.now(), TimeStamp(0.0))
 
-    val activeMembers = room.participants.filter { it.syncState != SyncState.Unstarted }
+    val activeMembers = room.participants.filter { it.syncState != SyncState.NotStarted }
     if (activeMembers.size == 1) {
         return "sync go"
     } else {
@@ -160,7 +160,7 @@ fun sync(session: Session): String {
                 coordinatePlay(session, state.timestamp)
                 "sync playing"
             }
-            is SyncState.Unstarted -> {
+            is SyncState.NotStarted -> {
                 throw IllegalStateException("sync to unstarted")
             }
         }
@@ -171,7 +171,7 @@ fun setEnded(session: Session, videoId: String): String {
     val room = getRoom(session)
     val user = room.getUser(session)
 
-    val ignoreEndTill = user.ignoreEndTill
+    val ignoreEndTill = room.ignoreEndTill
     if (ignoreEndTill != null && ignoreEndTill.isAfter(Instant.now())) {
         return "end ignore"
     }
@@ -179,7 +179,7 @@ fun setEnded(session: Session, videoId: String): String {
     if (room.queue.isEmpty()) return "end empty"
     if (room.queue[0].id != videoId) return "end old"
 
-    room.participants.forEach { it.ignoreEndTill = Instant.now().plusSeconds(2) }
+    room.ignoreEndTill = Instant.now().plusSeconds(2)
     playNext(session, room)
 
     return "end"
@@ -196,7 +196,7 @@ fun playNext(session: Session, room: Room) {
 }
 
 private fun ignoreUpcomingPause(room: Room) {
-    room.participants.forEach { it.ignorePauseTill = Instant.now().plusSeconds(2) }
+    room.ignorePauseTill = Instant.now().plusSeconds(2)
 }
 
 fun setSpeed(session: Session, speed: Double): String {
@@ -219,7 +219,7 @@ fun handleBuffering(session: Session, timestamp: TimeStamp): String {
 
 private fun Room.setSyncState(state: SyncState) {
     participants
-        .filter { it.syncState != SyncState.Unstarted }
+        .filter { it.syncState != SyncState.NotStarted }
         .forEach { it.syncState = state }
 }
 
