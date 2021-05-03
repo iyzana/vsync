@@ -2,7 +2,8 @@ name: Nightly Release
 on:
   push:
     branches:
-      - main
+      - master
+  workflow_dispatch: {}
 jobs:
   build-release:
     name: Build and release Docker image

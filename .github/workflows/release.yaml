@@ -2,7 +2,7 @@ name: Release
 on:
   push:
     branches:
-      - main
+      - master
 jobs:
   build-tag-release:
     name: Build, tag, and release Docker image
