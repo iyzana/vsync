@@ -15,7 +15,7 @@ jobs:
         id: release
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          release-type: node
+          release-type: simple
           changelog-path: CHANGELOG.md
           package-name: yt-sync
       - name: Login to GitHub Container Registry
