@@ -27,7 +27,7 @@
 .with-sidebar > * > :nth-child(1) {
   flex-basis: 0;
   flex-grow: 999;
-  min-width: calc(70% - var(--s1));
+  min-width: 70%;
 }
 
 .video {
@@ -37,12 +37,14 @@
 }
 
 .aside {
+  /* i'm using the view width in a max-height calculation and you can't stop me */
   max-height: min(
     max(
-      calc((100vw - 3 * var(--s1) - 30rem) * 9 / 16),
-      30rem
+      /* video height based on view width */
+        calc((100vw - 3 * var(--s1) - 30rem) * 9 / 16),
+      30rem /* ensure minimum height when control is below video */
     ),
-    calc(100vh - 2 * var(--s1))
+    calc(100vh - 2 * var(--s1)) /* cap to view height (minus vertical padding) */
   );
 }
 

@@ -1,7 +1,8 @@
 .aspect-ratio {
   height: 0;
   overflow: hidden;
-  padding-top: min(56.25%, calc(100vh - var(--s1) * 2)); /* 16:9 */
+  /* force container into 16:9 aspect ratio, but cap at viewport height (minus vertical padding) */
+  padding-top: min(100% * 9 / 16, calc(100vh - 2 * var(--s1)));
   position: relative;
 }
 
@@ -20,8 +21,8 @@
   justify-content: center;
   border-radius: var(--radius);
   border: 16px solid var(--card);
-  width: calc(100% - 32px);
-  height: calc(100% - 32px);
+  width: 100%;
+  height: 100%;
 }
 
 .overlay {

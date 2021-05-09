@@ -33,11 +33,9 @@ function Queue({ videos, setVideos, removeVideo, skip, numUsers }: QueueProps) {
             </button>
           )}
           <span className="connections">{numUsers + ' connected'}</span>
-          <FontAwesomeIcon
-            className="getlink"
-            icon={faClipboard}
-            onClick={copyLink}
-          />
+          <span className="getlink" onClick={copyLink}>
+            <FontAwesomeIcon icon={faClipboard} />
+          </span>
         </div>
       </div>
       <ReactSortable list={videos} setList={setVideos} className="queue-list">

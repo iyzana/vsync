@@ -10,7 +10,7 @@
 }
 
 .input-text {
-  width: calc(100% - 2rem);
+  width: 100%;
   padding: var(--s0);
   color: var(--fg);
   background-color: #444444;
@@ -19,7 +19,7 @@
 }
 
 .error {
-  width: calc(100% - var(--s0) * 2);
+  width: 100%;
   background-color: #880011;
   padding: var(--s0);
 }
