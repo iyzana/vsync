@@ -1,8 +1,8 @@
 plugins {
-    id("org.jetbrains.kotlin.jvm") version "1.4.31"
+    id("org.jetbrains.kotlin.jvm") version "1.5.30"
 
     application
-    id("com.github.johnrengelman.shadow") version "5.2.0"
+    id("com.github.johnrengelman.shadow") version "7.0.0"
 }
 
 repositories {
@@ -14,10 +14,10 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
 
     implementation("com.sparkjava:spark-kotlin:1.0.0-alpha")
-    implementation("com.google.code.gson:gson:2.8.6")
+    implementation("com.google.code.gson:gson:2.8.8")
 
-    implementation("ch.qos.logback:logback-classic:1.2.3")
-    implementation("io.github.microutils:kotlin-logging:1.7.9")
+    implementation("ch.qos.logback:logback-classic:1.2.6")
+    implementation("io.github.microutils:kotlin-logging:2.0.11")
 
     testImplementation("org.jetbrains.kotlin:kotlin-test")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit")
