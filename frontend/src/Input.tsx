@@ -51,7 +51,7 @@ function Input({ ws, errors, setErrors }: InputProps) {
           onChange={(e) => setMessage(e.target.value)}
           onKeyUp={onKey}
         />
-        <button className="input-send" onClick={send}>
+        <button className="input-send" onClick={send} alia-label="Add to queue">
           <FontAwesomeIcon icon={faPlus} />
         </button>
       </div>
