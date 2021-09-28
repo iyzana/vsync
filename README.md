@@ -33,7 +33,6 @@ use at your own risk.
 
   - to build `cd backend && ./gradlew shadowJar`
   - app will be at `build/libs/yt-sync-all.jar`
-  - requires `youtube-dl` to be installed for fetching video info
 
 - frontend
   - `cd frontend && yarn && yarn build`

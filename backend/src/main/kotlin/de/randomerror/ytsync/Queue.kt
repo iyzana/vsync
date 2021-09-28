@@ -3,6 +3,7 @@ package de.randomerror.ytsync
 import com.google.gson.JsonParser
 import mu.KotlinLogging
 import org.eclipse.jetty.websocket.api.Session
+import java.net.URL
 import java.io.StringWriter
 import java.time.Instant
 import java.util.concurrent.ExecutorService
@@ -17,8 +18,7 @@ private val logger = KotlinLogging.logger {}
 private data class VideoInfo(
     val id: String,
     val title: String,
-    val thumbnail: String?,
-    val extractor: String
+    val thumbnail: String?
 )
 
 fun enqueue(session: Session, query: String): String {
@@ -38,7 +38,7 @@ fun enqueue(session: Session, query: String): String {
     videoInfoFetcher.execute {
         // try to get video info, but if it fails, use the fallback info so that the video at least plays
         val video = fetchVideoInfo(query) ?: fallbackInfo
-        if (video == null || video.extractor != "youtube") {
+        if (video == null) {
             log(session, "queue err not-found")
             session.remote.sendStringByFuture("queue err not-found")
             return@execute
@@ -66,8 +66,7 @@ private fun tryExtractVideoId(query: String): VideoInfo? {
     return VideoInfo(
         id,
         "unknown video $id",
-        "https://i.ytimg.com/vi/$id/maxresdefault.jpg",
-        "youtube"
+        "https://i.ytimg.com/vi/$id/maxresdefault.jpg"
     )
 }
 
@@ -100,35 +99,19 @@ fun reorder(session: Session, order: String): String {
 }
 
 private fun fetchVideoInfo(query: String): VideoInfo? {
-    val process = Runtime.getRuntime().exec(
-        arrayOf(
-            "youtube-dl",
-            "--default-search", "ytsearch",
-            "--no-playlist",
-            "--dump-json",
-            query
-        )
-    )
-    val result = StringWriter()
-    process.inputStream.bufferedReader().copyTo(result)
-    if (!process.waitFor(5, TimeUnit.SECONDS)) {
-        logger.warn("ytdl timeout")
-        process.destroy()
+    //request oembed object
+    val videoData = URL("https://www.youtube.com/oembed?url=$query").readText()
+
+    if (videoData == "Not Found") {
         return null
     }
-    if (process.exitValue() != 0) {
-        logger.warn("ytdl err")
-        logger.warn(process.errorStream.bufferedReader().readText())
-        return null
-    }
-    val videoData = result.buffer.toString()
+
     val video = JsonParser.parseString(videoData).asJsonObject
     return try {
         val id = video.get("id").asString
         val title = video["title"].asString
-        val thumbnail = video["thumbnail"].asString
-        val extractor = video["extractor"].asString
-        VideoInfo(id, title, thumbnail, extractor)
+        val thumbnail = video["thumbnail_url"].asString
+        VideoInfo(id, title, thumbnail)
     } catch (e: Exception) {
         null
     }
