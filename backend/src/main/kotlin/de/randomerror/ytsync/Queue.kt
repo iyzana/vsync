@@ -106,6 +106,7 @@ private fun fetchVideoInfo(query: String): VideoInfo? {
             "--default-search", "ytsearch",
             "--no-playlist",
             "--dump-json",
+            "--",
             query
         )
     )
