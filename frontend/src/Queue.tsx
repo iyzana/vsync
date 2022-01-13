@@ -32,7 +32,11 @@ function Queue({ videos, setVideos, removeVideo, skip, numUsers }: QueueProps) {
               SKIP <FontAwesomeIcon icon={faAngleDoubleRight} />
             </button>
           )}
-          <span className="connections">{numUsers + ' connected'}</span>
+          <span className="connections">
+            {numUsers === 1
+              ? 'no one else watching'
+              : `${numUsers} humans watching`}
+          </span>
           <span className="getlink" onClick={copyLink}>
             <FontAwesomeIcon icon={faClipboard} />
           </span>

@@ -38,7 +38,7 @@ button {
   color: var(--fg);
   background-color: var(--card-alt);
   border: none;
-  padding: var(--s0) var(--s0);
+  padding: var(--s0);
   border-radius: var(--radius);
 }
 

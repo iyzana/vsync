@@ -19,8 +19,9 @@
 
 .title {
   margin: 0;
-  margin-top: var(--s0);
+  margin: var(--s0) 0;
   display: flex;
+  align-items: center;
 }
 
 .status {
