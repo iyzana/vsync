@@ -35,7 +35,8 @@ fun coordinatePlay(session: Session, timestamp: TimeStamp, isPlaying: Boolean = 
     if (user.syncState is SyncState.NotStarted || user.syncState is SyncState.Paused) {
         room.timeoutSyncAt = Instant.now().plusSeconds(20)
     }
-    if (room.timeoutSyncAt != null && Instant.now() > room.timeoutSyncAt) {
+    val timeout = room.timeoutSyncAt
+    if (timeout != null && Instant.now() > timeout) {
         kickSlowClients(room)
     }
     if (isPlaying && user.syncState !is SyncState.AwaitReady) {
@@ -171,16 +172,18 @@ fun setEnded(session: Session, videoId: String): String {
     val room = getRoom(session)
     val user = room.getUser(session)
 
-    val ignoreEndTill = room.ignoreEndTill
-    if (ignoreEndTill != null && ignoreEndTill.isAfter(Instant.now())) {
-        return "end ignore"
+    synchronized(room.queue) {
+        val ignoreEndTill = room.ignoreEndTill
+        if (ignoreEndTill != null && ignoreEndTill.isAfter(Instant.now())) {
+            return "end ignore"
+        }
+
+        if (room.queue.isEmpty()) return "end empty"
+        if (room.queue[0].id != videoId) return "end old"
+
+        room.ignoreEndTill = Instant.now().plusSeconds(2)
+        playNext(session, room)
     }
-
-    if (room.queue.isEmpty()) return "end empty"
-    if (room.queue[0].id != videoId) return "end old"
-
-    room.ignoreEndTill = Instant.now().plusSeconds(2)
-    playNext(session, room)
 
     return "end"
 }

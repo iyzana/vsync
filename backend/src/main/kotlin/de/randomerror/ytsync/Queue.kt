@@ -137,18 +137,20 @@ private fun fetchVideoInfo(query: String): VideoInfo? {
 
 fun skip(session: Session): String {
     val room = getRoom(session)
-    // first in queue is currently playing song
-    if (room.queue.size < 2) {
-        return "skip deny"
-    }
+    synchronized(room.queue) {
+        // first in queue is currently playing song
+        if (room.queue.size < 2) {
+            return "skip deny"
+        }
 
-    val ignoreEndTill = room.ignoreEndTill
-    if (ignoreEndTill != null && ignoreEndTill.isAfter(Instant.now())) {
-        return "skip ignore"
-    }
+        val ignoreEndTill = room.ignoreEndTill
+        if (ignoreEndTill != null && ignoreEndTill.isAfter(Instant.now())) {
+            return "skip ignore"
+        }
 
-    room.ignoreEndTill = Instant.now().plusSeconds(2)
-    playNext(session, room)
+        room.ignoreEndTill = Instant.now().plusSeconds(2)
+        playNext(session, room)
+    }
 
     return "skip"
 }
