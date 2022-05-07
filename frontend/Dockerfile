@@ -4,10 +4,11 @@ WORKDIR /app
 ENV INLINE_RUNTIME_CHUNK=false
 
 COPY package.json package.json
-RUN npm install
+COPY yarn.lock yarn.lock
+RUN yarn
 
 COPY . .
-RUN npm run build
+RUN yarn build
 
 FROM nginx:alpine
 
