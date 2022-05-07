@@ -20,7 +20,7 @@ jobs:
           package-name: yt-sync
       - name: Login to GitHub Container Registry
         if: ${{ steps.release.outputs.release_created }}
-        uses: docker/login-action@v1
+        uses: docker/login-action@v2
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
