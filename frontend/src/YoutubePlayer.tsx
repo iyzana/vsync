@@ -1,5 +1,5 @@
 import './YoutubePlayer.css';
-import YouTube, { Options } from 'react-youtube';
+import YouTube from 'react-youtube';
 import { useCallback, useEffect, useState } from 'react';
 
 interface YoutubePlayerProps {
@@ -9,7 +9,7 @@ interface YoutubePlayerProps {
   setOverlay: (state: 'PAUSED' | 'SYNCING' | null) => void;
 }
 
-const opts: Options = {
+const opts = {
   width: '100%',
   height: '100%',
   playerVars: {
@@ -174,7 +174,7 @@ function YoutubePlayer({
 
   return (
     <YouTube
-      containerClassName="youtube-player"
+      className="youtube-player"
       opts={opts}
       videoId={videoUrl}
       onReady={(e) => setPlayer(e.target)}
