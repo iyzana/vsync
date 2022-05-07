@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.1.0](https://github.com/iyzana/yt-sync/compare/v1.0.4...v1.1.0) (2022-05-07)
+
+
+### Features
+
+* change text that shows connected users ([39d3703](https://github.com/iyzana/yt-sync/commit/39d3703ac8e242e35251d430951653aca660d7ea))
+
+
+### Bug Fixes
+
+* take a lock for queue operations ([eb1e895](https://github.com/iyzana/yt-sync/commit/eb1e895e0214b9b5beb169a1386d582cec7601b3))
+* update frontend dependencies ([6fc5143](https://github.com/iyzana/yt-sync/commit/6fc5143e4099f5ed083a825973cdc12d500ce1aa))
+* update frontend dependencies ([926aede](https://github.com/iyzana/yt-sync/commit/926aede05251eca494e9b21201103f5a5d983be1))
+* update frontend dependencies ([8e197bd](https://github.com/iyzana/yt-sync/commit/8e197bd33f419da959f54d50960391bbb65f0bdf))
+* use yarn in Dockerfile build ([00acf7f](https://github.com/iyzana/yt-sync/commit/00acf7faabab91704831a0a5bc8d8621f510e066))
+
 ### [1.0.4](https://www.github.com/iyzana/yt-sync/compare/v1.0.3...v1.0.4) (2021-11-08)
 
 
