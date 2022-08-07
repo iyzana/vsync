@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.1](https://github.com/iyzana/yt-sync/compare/v1.1.0...v1.1.1) (2022-08-07)
+
+
+### Bug Fixes
+
+* player incorrectly believed it is paused ([f88570a](https://github.com/iyzana/yt-sync/commit/f88570a918899e8af845393dd6837997004d075d))
+* update frontend dependencies ([6679b3e](https://github.com/iyzana/yt-sync/commit/6679b3eeefcccc95693e40cc937a1df2ca5a752c))
+
 ## [1.1.0](https://github.com/iyzana/yt-sync/compare/v1.0.4...v1.1.0) (2022-05-07)
 
 
