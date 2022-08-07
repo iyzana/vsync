@@ -62,10 +62,14 @@ function YoutubePlayer({
       const timestamp = parseFloat(msg.split(' ')[1]);
       setNextReadyCheck(100);
       setPreloadTime(timestamp);
-    } else if (msg.startsWith('video')) {
-      setHasEverPlayed(false);
     }
   }, [msg, player, hasEverPlayed]);
+
+  useEffect(() => {
+    if (msg && msg.startsWith('video')) {
+      setHasEverPlayed(false);
+    }
+  }, [msg, setHasEverPlayed]);
 
   const onStateChange = useCallback(() => {
     const memOldState = oldState;
