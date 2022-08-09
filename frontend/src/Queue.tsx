@@ -1,4 +1,3 @@
-import React from 'react';
 import './Queue.css';
 import QueueItem from './QueueItem';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -43,7 +42,7 @@ function Queue({ videos, setVideos, removeVideo, skip, numUsers }: QueueProps) {
         </div>
       </div>
       <ReactSortable list={videos} setList={setVideos} className="queue-list">
-        {videos.map(({ id, title, thumbnail }) => (
+        {videos.map(({ title, thumbnail, id }) => (
           <li key={id} className="queue-item">
             <div className="video-info">
               <img className="thumbnail" src={thumbnail} alt="" />

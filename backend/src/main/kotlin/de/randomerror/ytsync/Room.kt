@@ -3,14 +3,14 @@ package de.randomerror.ytsync
 import org.eclipse.jetty.websocket.api.Session
 import java.time.Instant
 import java.util.*
-import kotlin.collections.HashMap
 import kotlin.concurrent.thread
 
 val sessions: MutableMap<Session, RoomId> = HashMap()
 val rooms: MutableMap<RoomId, Room> = HashMap()
 private val random = Random()
 
-inline class RoomId(val roomId: String)
+@JvmInline
+value class RoomId(val roomId: String)
 
 data class Room(
     val participants: MutableList<User>,
@@ -22,9 +22,11 @@ data class Room(
 )
 
 data class QueueItem(
-    val id: String,
-    var title: String,
-    var thumbnail: String?
+    val url: String,
+    val originalQuery: String,
+    val title: String,
+    val thumbnail: String?,
+    val id: String = UUID.nameUUIDFromBytes(url.toByteArray()).toString(),
 )
 
 data class User(
@@ -85,9 +87,9 @@ fun joinRoom(roomId: RoomId, session: Session): String {
     }
     room.broadcastAll(session, "users ${room.participants.size}")
     if (room.queue.isNotEmpty()) {
-        val playingId = room.queue[0].id
-        log(session, "video $playingId")
-        session.remote.sendStringByFuture("video $playingId")
+        val playingUrl = room.queue[0].url
+        log(session, "video $playingUrl")
+        session.remote.sendStringByFuture("video $playingUrl")
         for (item in room.queue.drop(1)) {
             val videoJson = gson.toJson(item)
             log(session, "queue add $videoJson")

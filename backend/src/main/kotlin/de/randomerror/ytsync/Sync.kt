@@ -4,7 +4,8 @@ import org.eclipse.jetty.websocket.api.Session
 import java.time.Instant
 import kotlin.math.abs
 
-inline class TimeStamp(val second: Double)
+@JvmInline
+value class TimeStamp(val second: Double)
 
 fun String.asTimeStamp(): TimeStamp {
     return TimeStamp(toDouble())
@@ -168,9 +169,8 @@ fun sync(session: Session): String {
     }
 }
 
-fun setEnded(session: Session, videoId: String): String {
+fun setEnded(session: Session, queueId: String): String {
     val room = getRoom(session)
-    val user = room.getUser(session)
 
     synchronized(room.queue) {
         val ignoreEndTill = room.ignoreEndTill
@@ -179,7 +179,7 @@ fun setEnded(session: Session, videoId: String): String {
         }
 
         if (room.queue.isEmpty()) return "end empty"
-        if (room.queue[0].id != videoId) return "end old"
+        if (room.queue[0].url != queueId) return "end old"
 
         room.ignoreEndTill = Instant.now().plusSeconds(2)
         playNext(session, room)
@@ -194,7 +194,7 @@ fun playNext(session: Session, room: Room) {
     if (room.queue.isNotEmpty()) {
         val next = room.queue[0]
         room.broadcastAll(session, "queue rm ${next.id}")
-        room.broadcastAll(session, "video ${next.id}")
+        room.broadcastAll(session, "video ${next.url}")
     }
 }
 

@@ -70,8 +70,8 @@ function App() {
         const queueItem: QueueItem = JSON.parse(msgParts.slice(2).join(' '));
         setQueue((queue) => [...queue, queueItem]);
       } else if (msg.startsWith('queue rm')) {
-        const videoId = msg.split(' ')[2];
-        setQueue((queue) => queue.filter((video) => video.id !== videoId));
+        const id = msg.split(' ')[2];
+        setQueue((queue) => queue.filter((video) => video.id !== id));
       } else if (msg.startsWith('queue order')) {
         const order = msg.split(' ')[2].split(',');
         setQueue((queue) => {
@@ -120,13 +120,14 @@ function App() {
     },
     [queue, setQueue],
   );
+  const sendMessage = useCallback((message: string) => ws.send(message), []);
   return (
     <div className="container">
       <main className="with-sidebar">
         <div>
           <section className="video">
             <div className="embed">
-              <Player msg={msg} sendMessage={(message) => ws.send(message)} />
+              <Player msg={msg} sendMessage={sendMessage} />
             </div>
           </section>
           <section className="aside">

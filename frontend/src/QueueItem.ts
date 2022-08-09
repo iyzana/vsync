@@ -1,5 +1,6 @@
 export default interface QueueItem {
-  id: string;
+  url: string;
   title: string;
   thumbnail: string;
+  id: string;
 }

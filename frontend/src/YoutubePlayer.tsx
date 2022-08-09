@@ -1,13 +1,7 @@
 import './YoutubePlayer.css';
 import YouTube from 'react-youtube';
 import { useCallback, useEffect, useState } from 'react';
-
-interface YoutubePlayerProps {
-  msg: string | null;
-  videoUrl: string;
-  sendMessage: (msg: string) => void;
-  setOverlay: (state: 'PAUSED' | 'SYNCING' | null) => void;
-}
+import { EmbeddedPlayerProps } from './Player';
 
 const opts = {
   width: '100%',
@@ -24,11 +18,14 @@ function YoutubePlayer({
   videoUrl,
   sendMessage,
   setOverlay,
-}: YoutubePlayerProps) {
+  volume,
+  setVolume,
+  initialized,
+  setInitialized,
+}: EmbeddedPlayerProps) {
   const [player, setPlayer] = useState<any | null>(null);
   const [preloadTime, setPreloadTime] = useState<number | null>(null);
   const [nextReadyCheck, setNextReadyCheck] = useState<number>(100);
-  const [initialized, setInitialized] = useState<boolean>(false);
   const [oldState, setOldState] = useState<number>(
     YouTube.PlayerState.UNSTARTED,
   );
@@ -42,13 +39,6 @@ function YoutubePlayer({
         player?.playVideo();
       }
     } else if (msg.startsWith('pause')) {
-      const timestamp = parseFloat(msg.split(' ')[1]);
-      const shouldSeek = Math.abs(player?.getCurrentTime() - timestamp) > 1;
-      if (shouldSeek) {
-        setTimeout(() => {
-          player?.seekTo(timestamp, true);
-        }, 150);
-      }
       if (
         player?.getPlayerState() === YouTube.PlayerState.PLAYING ||
         player?.getPlayerState() === YouTube.PlayerState.BUFFERING
@@ -57,6 +47,13 @@ function YoutubePlayer({
           console.log('pause setting pause');
           player?.pauseVideo();
         }
+      }
+      const timestamp = parseFloat(msg.split(' ')[1]);
+      const shouldSeek = Math.abs(player?.getCurrentTime() - timestamp) > 1;
+      if (shouldSeek) {
+        setTimeout(() => {
+          player?.seekTo(timestamp, true);
+        }, 150);
       }
     } else if (msg.startsWith('ready?')) {
       const timestamp = parseFloat(msg.split(' ')[1]);
@@ -170,18 +167,37 @@ function YoutubePlayer({
     sendMessage,
   ]);
 
+  // sync volume before disposing youtube player
+  useEffect(() => {
+    return () => {
+      if (player) {
+        setVolume(player.getVolume() / 100);
+      }
+    };
+  }, [player, setVolume]);
+
   const onPlaybackRateChange = (event: { target: any; data: number }) => {
     sendMessage(`speed ${event.data}`);
   };
 
-  // const videoId = new URL(videoUrl).searchParams.get('v') ?? videoUrl;
+  const videoId = new URL(videoUrl).searchParams.get('v') ?? videoUrl;
+
+  const onReady = useCallback(
+    ({ target: player }: { target: any }) => {
+      setPlayer(player);
+      if (volume) {
+        player.setVolume(volume * 100);
+      }
+    },
+    [setPlayer, volume],
+  );
 
   return (
     <YouTube
       className="youtube-player"
       opts={opts}
-      videoId={videoUrl}
-      onReady={(e) => setPlayer(e.target)}
+      videoId={videoId}
+      onReady={onReady}
       onStateChange={onStateChange}
       onPlaybackRateChange={onPlaybackRateChange}
     ></YouTube>

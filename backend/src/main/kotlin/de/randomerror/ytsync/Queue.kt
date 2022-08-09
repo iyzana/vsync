@@ -8,77 +8,71 @@ import java.time.Instant
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+import kotlin.text.RegexOption.IGNORE_CASE
 
-val youtubeUrlRegex: Regex = Regex("""https://(?:www\.)?youtu(?:\.be|be\.com)/watch\?v=([^&]+)(?:.*)?""")
+val youtubeUrlRegex: Regex =
+    Regex("""https://(?:www\.)?youtu(?:\.be|be\.com)/(?:watch\?v=|embed/)([^?&]+)(?:.*)?""", IGNORE_CASE)
 val videoInfoFetcher: ExecutorService = Executors.newCachedThreadPool()
 
 private val logger = KotlinLogging.logger {}
 
-private data class VideoInfo(
-    val id: String,
-    val title: String,
-    val thumbnail: String?,
-    val extractor: String
-)
-
 fun enqueue(session: Session, query: String): String {
     val room = getRoom(session)
-    val fallbackInfo = tryExtractVideoId(query)
-    if (fallbackInfo != null) {
+
+    val youtubeIdMatch = youtubeUrlRegex.find(query)?.let { it.groups[1]!!.value }
+    if (youtubeIdMatch != null) {
         synchronized(room.queue) {
             if (room.queue.size == 0) {
+                val fallbackVideo = getFallbackYoutubeVideo(query, youtubeIdMatch)
                 // this is the first video it does not go into the queue, we don't need any video info
-                val queueItem = QueueItem(fallbackInfo.id, fallbackInfo.title, fallbackInfo.thumbnail)
-                room.queue.add(queueItem)
-                room.broadcastAll(session, "video ${fallbackInfo.id}")
+                room.queue.add(fallbackVideo)
+                room.broadcastAll(session, "video ${fallbackVideo.url}")
                 return "queue"
             }
         }
     }
     videoInfoFetcher.execute {
+        val fromYoutube = youtubeIdMatch != null || !query.matches(Regex("^(ftp|https?)://.*"))
         // try to get video info, but if it fails, use the fallback info so that the video at least plays
-        val video = fetchVideoInfo(query) ?: fallbackInfo
-        if (video == null || video.extractor != "youtube") {
+        val video = fetchVideoInfo(query, fromYoutube) ?: youtubeIdMatch?.let { getFallbackYoutubeVideo(query, it) }
+        if (video == null) {
             log(session, "queue err not-found")
             session.remote.sendStringByFuture("queue err not-found")
             return@execute
         }
-        val queueItem = QueueItem(video.id, video.title, video.thumbnail)
         synchronized(room.queue) {
-            if (room.queue.any { it.id == video.id }) {
+            if (room.queue.any { it.url == video.url || it.originalQuery == query }) {
                 session.remote.sendStringByFuture("queue err duplicate")
                 return@execute
             }
-            room.queue.add(queueItem)
+            room.queue.add(video)
             if (room.queue.size == 1) {
-                room.broadcastAll(session, "video ${video.id}")
+                room.broadcastAll(session, "video ${video.url}")
             } else {
-                room.broadcastAll(session, "queue add ${gson.toJson(queueItem)}")
+                room.broadcastAll(session, "queue add ${gson.toJson(video)}")
             }
         }
     }
     return "queue"
 }
 
-private fun tryExtractVideoId(query: String): VideoInfo? {
-    val match = youtubeUrlRegex.find(query) ?: return null
-    val id = match.groups[1]!!.value
-    return VideoInfo(
-        id,
-        "unknown video $id",
-        "https://i.ytimg.com/vi/$id/maxresdefault.jpg",
-        "youtube"
+private fun getFallbackYoutubeVideo(query: String, match: String): QueueItem {
+    return QueueItem(
+        "https://www.youtube.com/watch?v=$match",
+        query,
+        "Unknown video $match",
+        "https://i.ytimg.com/vi/$match/maxresdefault.jpg"
     )
 }
 
-fun dequeue(session: Session, videoId: String): String {
+fun dequeue(session: Session, queueId: String): String {
     val room = getRoom(session)
     // first in queue is currently playing song
-    if (room.queue.isNotEmpty() && room.queue[0].id == videoId) {
+    if (room.queue.isNotEmpty() && room.queue[0].url == queueId) {
         return "queue rm deny"
     }
-    room.queue.removeAll { it.id == videoId }
-    room.broadcastAll(session, "queue rm $videoId")
+    room.queue.removeAll { it.id == queueId }
+    room.broadcastAll(session, "queue rm $queueId")
     return "queue rm"
 }
 
@@ -99,17 +93,8 @@ fun reorder(session: Session, order: String): String {
     return "queue order ok"
 }
 
-private fun fetchVideoInfo(query: String): VideoInfo? {
-    val process = Runtime.getRuntime().exec(
-        arrayOf(
-            "youtube-dl",
-            "--default-search", "ytsearch",
-            "--no-playlist",
-            "--dump-json",
-            "--",
-            query
-        )
-    )
+private fun fetchVideoInfo(query: String, fromYoutube: Boolean): QueueItem? {
+    val process = Runtime.getRuntime().exec(buildYtDlpCommand(fromYoutube, query))
     val result = StringWriter()
     process.inputStream.bufferedReader().copyTo(result)
     if (!process.waitFor(5, TimeUnit.SECONDS)) {
@@ -125,14 +110,36 @@ private fun fetchVideoInfo(query: String): VideoInfo? {
     val videoData = result.buffer.toString()
     val video = JsonParser.parseString(videoData).asJsonObject
     return try {
-        val id = video.get("id").asString
+        val urlElement = if (fromYoutube) {
+            video["webpage_url"]
+        } else {
+            video["manifest_url"] ?: video["url"] ?: return null
+        }
         val title = video["title"].asString
-        val thumbnail = video["thumbnail"].asString
-        val extractor = video["extractor"].asString
-        VideoInfo(id, title, thumbnail, extractor)
+        val thumbnail = video["thumbnail"]?.asString
+        QueueItem(urlElement.asString, query, title, thumbnail)
     } catch (e: Exception) {
         null
     }
+}
+
+private fun buildYtDlpCommand(fromYoutube: Boolean, query: String): Array<String> {
+    val command = mutableListOf(
+        "yt-dlp",
+        "--default-search", "ytsearch",
+        "--no-playlist",
+        "--dump-json",
+    )
+    if (!fromYoutube) {
+        // only allow pre-merged formats except from youtube
+        // m3u8 can be problematic if the hoster does not set a access-control-allow-origin header
+        command.add("-f")
+        command.add("b")
+    }
+    command.add("--")
+    command.add(query)
+    println("command = $command")
+    return command.toTypedArray()
 }
 
 fun skip(session: Session): String {

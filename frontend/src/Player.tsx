@@ -3,6 +3,7 @@ import { faPause, faSyncAlt } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useEffect, useState } from 'react';
 import YoutubePlayer from './YoutubePlayer';
+import VideoJsPlayer from './VideoJsPlayer';
 
 function getOverlay(overlay: 'PAUSED' | 'SYNCING' | null) {
   switch (overlay) {
@@ -30,9 +31,22 @@ interface PlayerProps {
   sendMessage: (message: string) => void;
 }
 
+export interface EmbeddedPlayerProps {
+  msg: string | null;
+  videoUrl: string;
+  sendMessage: (msg: string) => void;
+  setOverlay: (state: 'PAUSED' | 'SYNCING' | null) => void;
+  volume: number | null;
+  setVolume: (volume: number) => void;
+  initialized: boolean;
+  setInitialized: (initialized: boolean) => void;
+}
+
 function Player({ msg, sendMessage }: PlayerProps) {
   const [overlay, setOverlay] = useState<'PAUSED' | 'SYNCING' | null>(null);
-  const [videoUrl, setVideoUrl] = useState<string>('');
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [volume, setVolume] = useState<number | null>(null);
+  const [initialized, setInitialized] = useState<boolean>(false);
 
   useEffect(() => {
     if (!msg) {
@@ -50,16 +64,33 @@ function Player({ msg, sendMessage }: PlayerProps) {
 
   return (
     <div className="aspect-ratio">
-      {videoUrl === null || videoUrl === '' || videoUrl === undefined ? (
+      {videoUrl === null ? (
         <div className="aspect-ratio-inner empty-player">NO VIDEO</div>
       ) : (
         <div className="aspect-ratio-inner">
-          <YoutubePlayer
-            msg={msg}
-            videoUrl={videoUrl}
-            sendMessage={sendMessage}
-            setOverlay={setOverlay}
-          />
+          {videoUrl.startsWith('https://www.youtube.com/') ? (
+            <YoutubePlayer
+              msg={msg}
+              videoUrl={videoUrl}
+              sendMessage={sendMessage}
+              setOverlay={setOverlay}
+              volume={volume}
+              setVolume={setVolume}
+              initialized={initialized}
+              setInitialized={setInitialized}
+            />
+          ) : (
+            <VideoJsPlayer
+              msg={msg}
+              videoUrl={videoUrl}
+              sendMessage={sendMessage}
+              setOverlay={setOverlay}
+              volume={volume}
+              setVolume={setVolume}
+              initialized={initialized}
+              setInitialized={setInitialized}
+            />
+          )}
           {getOverlay(overlay)}
         </div>
       )}

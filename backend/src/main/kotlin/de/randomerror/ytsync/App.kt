@@ -38,16 +38,16 @@ fun main() {
 }
 
 private fun updateYoutubeDl() {
-    logger.info { "checking for youtube-dl updates" }
+    logger.info { "checking for yt-dlp updates" }
     val process = Runtime.getRuntime().exec(
-        arrayOf("youtube-dl", "--update")
+        arrayOf("yt-dlp", "--update")
     )
     process.waitFor()
     logger.info {
-        process.inputStream.bufferedReader().readLines().joinToString(separator = "\n") { "youtube-dl: $it" }
+        process.inputStream.bufferedReader().readLines().joinToString(separator = "\n") { "yt-dlp: $it" }
     }
     logger.warn {
-        process.errorStream.bufferedReader().readLines().joinToString(separator = "\n") { "youtube-dl: $it" }
+        process.errorStream.bufferedReader().readLines().joinToString(separator = "\n") { "yt-dlp: $it" }
     }
 }
 
