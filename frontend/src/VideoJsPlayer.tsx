@@ -61,7 +61,11 @@ export const VideoJsPlayer = ({
     player.ready(() => {
       videoUrlRef.current = videoUrl;
       player.src(videoUrl);
-      if (volume) {
+      if (volume === 0) {
+        player.volume(0);
+        player.muted(true);
+      } else if (volume) {
+        player.muted(false);
         player.volume(volume);
       }
     });
@@ -73,7 +77,11 @@ export const VideoJsPlayer = ({
 
     return () => {
       if (player) {
-        setVolume(player.volume());
+        if (player.muted()) {
+          setVolume(0);
+        } else {
+          setVolume(player.volume());
+        }
         player.dispose();
         playerRef.current = null;
         waitReadyRef.current = false;
