@@ -175,12 +175,15 @@ function YoutubePlayer({
       }
     };
   }, [player, setVolume]);
+  useEffect(() => {
+    if (player) {
+      setVolume(player.getVolume() / 100);
+    }
+  }, [player, videoUrl, setVolume]);
 
   const onPlaybackRateChange = (event: { target: any; data: number }) => {
     sendMessage(`speed ${event.data}`);
   };
-
-  const videoId = new URL(videoUrl).searchParams.get('v') ?? videoUrl;
 
   const onReady = useCallback(
     ({ target: player }: { target: any }) => {
@@ -191,6 +194,8 @@ function YoutubePlayer({
     },
     [setPlayer, volume],
   );
+
+  const videoId = new URL(videoUrl).searchParams.get('v') ?? videoUrl;
 
   return (
     <YouTube
