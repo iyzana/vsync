@@ -33,7 +33,7 @@ sealed class SyncState {
 fun coordinatePlay(session: Session, timestamp: TimeStamp, isPlaying: Boolean = false): String {
     val room = getRoom(session)
     val user = room.getUser(session)
-    if (user.syncState is SyncState.NotStarted || user.syncState is SyncState.Paused) {
+    if (room.timeoutSyncAt == null) {
         room.timeoutSyncAt = Instant.now().plusSeconds(20)
     }
     val timeout = room.timeoutSyncAt
@@ -118,6 +118,7 @@ fun coordinateClientPause(session: Session, timestamp: TimeStamp): String {
     if (ignorePauseTill != null && ignorePauseTill.isAfter(Instant.now())) {
         return "pause ignore"
     }
+    room.timeoutSyncAt = null
     room.setSyncState(SyncState.Paused(timestamp))
     ignoreUpcomingPause(room)
     room.participants
@@ -193,6 +194,7 @@ fun playNext(session: Session, room: Room) {
 
     if (room.queue.isNotEmpty()) {
         val next = room.queue[0]
+        room.timeoutSyncAt = null
         room.broadcastAll(session, "queue rm ${next.id}")
         room.broadcastAll(session, "video ${next.url}")
     }
