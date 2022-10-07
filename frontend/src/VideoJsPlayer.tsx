@@ -113,7 +113,6 @@ export const VideoJsPlayer = ({
         waitReadyRef.current = true;
         console.log({ readyState: player.readyState() });
         if (player.readyState() >= 3) {
-          waitReadyRef.current = false;
           sendMessage(`ready ${player.currentTime()}`);
         }
       }
@@ -144,9 +143,9 @@ export const VideoJsPlayer = ({
         }
       });
       player.on('pause', function () {
-        console.log('pause');
-        sendMessage(`pause ${player.currentTime()}`);
         if (!waitReadyRef.current) {
+          console.log('pause');
+          sendMessage(`pause ${player.currentTime()}`);
           setOverlay('PAUSED');
         }
       });
@@ -156,7 +155,7 @@ export const VideoJsPlayer = ({
       });
       player.on('seeked', function () {
         console.log('seeked');
-        if (player.paused()) {
+        if (player.paused() && !waitReadyRef.current) {
           sendMessage(`pause ${player.currentTime()}`);
         } else {
           sendMessage(`play ${player.currentTime()}`);
@@ -172,7 +171,7 @@ export const VideoJsPlayer = ({
       });
       player.on('canplay', function () {
         if (waitReadyRef.current) {
-          console.log('canplaythrough');
+          console.log('canplay');
           sendMessage(`ready ${player.currentTime()}`);
         }
       });
