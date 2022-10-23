@@ -1,5 +1,24 @@
 # Changelog
 
+## [2.0.0](https://github.com/iyzana/yt-sync/compare/v1.1.1...v2.0.0) (2022-10-23)
+
+
+### ⚠ BREAKING CHANGES
+
+* use yt-dlp, add video.js player, use ids and urls in queue
+
+### Features
+
+* update noscript text ([8516ce7](https://github.com/iyzana/yt-sync/commit/8516ce7e1cb242d8adb50ef7934f205569efa3d1))
+* use yt-dlp, add video.js player, use ids and urls in queue ([42ec7bf](https://github.com/iyzana/yt-sync/commit/42ec7bfef6784d6dfbded56db7e9a6e1080a975b))
+
+
+### Bug Fixes
+
+* possible disconnect when pausing early after video switch ([24fb547](https://github.com/iyzana/yt-sync/commit/24fb5470b4579876f6c20544fb59f3e812820e5b))
+* update frontend dependencies ([30f50ee](https://github.com/iyzana/yt-sync/commit/30f50ee80b5af7c511d7ad5a1393c61442a5e006))
+* videojs player volume syncing when muted ([7ef64a5](https://github.com/iyzana/yt-sync/commit/7ef64a5b81dc0b6ef8f1bc9177660d41217efdd4))
+
 ## [1.1.1](https://github.com/iyzana/yt-sync/compare/v1.1.0...v1.1.1) (2022-08-07)
 
 
