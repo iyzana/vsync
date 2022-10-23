@@ -52,6 +52,8 @@ fun coordinatePlay(session: Session, timestamp: TimeStamp, isPlaying: Boolean = 
         coordinateServerPause(session, room, timestamp)
         room.setSyncState(SyncState.AwaitReady(timestamp))
         room.broadcastActive(session, "ready? ${timestamp.second}")
+    } else {
+        return "play ignore await ready"
     }
     return "play"
 }
@@ -197,6 +199,7 @@ fun playNext(session: Session, room: Room) {
         room.timeoutSyncAt = null
         room.broadcastAll(session, "queue rm ${next.id}")
         room.broadcastAll(session, "video ${next.url}")
+        room.setSyncState(SyncState.Playing(Instant.now(), TimeStamp(0.0)))
     }
 }
 
