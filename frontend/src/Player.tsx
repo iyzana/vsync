@@ -42,6 +42,13 @@ export interface EmbeddedPlayerProps {
   setInitialized: (initialized: boolean) => void;
 }
 
+function isYoutubeUrl(url: string): boolean {
+  return (
+    url.startsWith('https://www.youtube.com/') ||
+    url.startsWith('https://youtu.be/')
+  );
+}
+
 function Player({ msg, sendMessage }: PlayerProps) {
   const [overlay, setOverlay] = useState<'PAUSED' | 'SYNCING' | null>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
@@ -68,7 +75,7 @@ function Player({ msg, sendMessage }: PlayerProps) {
         <div className="aspect-ratio-inner empty-player">NO VIDEO</div>
       ) : (
         <div className="aspect-ratio-inner">
-          {videoUrl.startsWith('https://www.youtube.com/') ? (
+          {isYoutubeUrl(videoUrl) ? (
             <YoutubePlayer
               msg={msg}
               videoUrl={videoUrl}
