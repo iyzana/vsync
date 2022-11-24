@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit
 import kotlin.text.RegexOption.IGNORE_CASE
 
 val youtubeUrlRegex: Regex =
-    Regex("""https://(?:www\.)?youtu(?:\.be|be\.com)/(?:watch\?v=|embed/)([^?&]+)(?:.*)?""", IGNORE_CASE)
+    Regex("""https://(?:www\.)?youtu(?:\.be|be\.com)/(?:watch\?v=|embed/)?([^?&]+)(?:.*)?""", IGNORE_CASE)
 val videoInfoFetcher: ExecutorService = Executors.newCachedThreadPool()
 
 private val logger = KotlinLogging.logger {}

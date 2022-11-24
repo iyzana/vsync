@@ -8,9 +8,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faGithub } from '@fortawesome/free-brands-svg-icons';
 import Player from './Player';
 
-const youtubeUrlRegex = new RegExp(
-  'https://(?:www)?\\.youtu(?:\\.be|be\\.com)/watch\\?v=([^&]+)(?:.*)?',
-);
+const urlRegex = new RegExp('^(ftp|https?)://.*');
 
 const server =
   process.env.NODE_ENV !== 'development'
@@ -20,7 +18,7 @@ const ws = new WebSocket(server);
 ws.onopen = () => {
   const path = (window.location.pathname + window.location.search).substring(1);
 
-  if (youtubeUrlRegex.test(path)) {
+  if (urlRegex.test(path)) {
     ws.send('create');
     ws.send(`queue add ${path}`);
   } else if (path === '') {
