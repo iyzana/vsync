@@ -85,7 +85,6 @@ export const VideoJsPlayer = ({
         player.dispose();
         playerRef.current = null;
         waitReadyRef.current = false;
-        initializedRef.current = false;
       }
     };
   }, [playerRef, setVolume]);
