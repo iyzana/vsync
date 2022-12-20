@@ -12,7 +12,8 @@ const opts: VideoJsPlayerOptions = {
 };
 
 export const VideoJsPlayer = ({
-  msg,
+  messages,
+  clearMessages,
   videoUrl,
   sendMessage,
   setOverlay,
@@ -28,6 +29,46 @@ export const VideoJsPlayer = ({
   const videoUrlRef = useRef(videoUrl);
 
   useEffect(() => {
+    const player = playerRef.current;
+    if (!player || messages.length === 0) {
+      return;
+    }
+    player.ready(function () {
+      for (const msg of messages) {
+        if (msg === 'play') {
+          console.log('processing server message play');
+          player.play();
+        } else if (msg.startsWith('pause')) {
+          console.log('processing server message pause');
+          player.pause();
+          const timestamp = parseFloat(msg.split(' ')[1]);
+          const shouldSeek = Math.abs(player.currentTime() - timestamp) > 0.5;
+          if (shouldSeek) {
+            console.log('seeking due to pause');
+            player.currentTime(timestamp);
+          }
+        } else if (msg.startsWith('ready?')) {
+          console.log('processing server message ready');
+          player.pause();
+          const timestamp = parseFloat(msg.split(' ')[1]);
+          const shouldSeek = Math.abs(player.currentTime() - timestamp) > 0.5;
+          if (shouldSeek) {
+            console.log('seeking due to ready');
+            player.currentTime(timestamp);
+          }
+
+          waitReadyRef.current = true;
+          console.log({ readyState: player.readyState() });
+          if (player.readyState() >= 3) {
+            sendMessage(`ready ${player.currentTime()}`);
+          }
+        }
+      }
+      clearMessages(messages.length);
+    });
+  }, [playerRef, messages, clearMessages, waitReadyRef, sendMessage]);
+
+  useEffect(() => {
     // make sure video.js is only initialized once
     if (!playerRef.current) {
       const placeholderElement = placeholderRef.current;
@@ -38,16 +79,84 @@ export const VideoJsPlayer = ({
 
       if (!videoElement) return;
 
-      playerRef.current = videojs(videoElement, opts, () => {
-        videojs.log('player is ready');
-        // onReady
+      playerRef.current = videojs(videoElement, opts);
+
+      const player = playerRef.current;
+      player.ready(() => {
+        console.log('registering player hooks');
+        player.on('play', function () {
+          console.log('player hook play');
+          if (initializedRef.current) {
+            sendMessage(`play ${player.currentTime()}`);
+            waitReadyRef.current = false;
+            setOverlay(null);
+          } else {
+            setInitialized(true);
+            sendMessage('sync');
+          }
+        });
+        player.on('pause', function () {
+          console.log('player hook pause');
+          if (!waitReadyRef.current) {
+            sendMessage(`pause ${player.currentTime()}`);
+            setOverlay('PAUSED');
+          }
+        });
+        player.on('stalled', function () {
+          console.log('player hook stalled');
+          sendMessage(`buffer ${player.currentTime()}`);
+        });
+        player.on('seeked', function () {
+          console.log('player hook seeked');
+          if (player.paused()) {
+            if (waitReadyRef.current) {
+              sendMessage(`play ${player.currentTime()}`);
+            } else {
+              sendMessage(`pause ${player.currentTime()}`);
+            }
+          }
+        });
+        player.on('ended', function () {
+          console.log('player hook ended');
+          sendMessage(`end ${videoUrlRef.current}`);
+        });
+        player.on('ratechange', function () {
+          console.log('player hook ratechange');
+          sendMessage(`speed ${player.playbackRate()}`);
+        });
+        player.on('canplay', function () {
+          console.log('player hook canplay');
+          if (waitReadyRef.current) {
+            console.log('canplay');
+            sendMessage(`ready ${player.currentTime()}`);
+          }
+        });
+        player.on('volumechange', function () {
+          console.log('player hook volumechange');
+          console.log(
+            'storing videojs player volume ' +
+              player.muted() +
+              ' ' +
+              player.volume(),
+          );
+          if (player.muted()) {
+            setVolume(0);
+          } else {
+            setVolume(player.volume());
+          }
+        });
+
+        console.log('setting videojs player volume ' + volume);
+        if (volume === 0) {
+          player.volume(0);
+          player.muted(true);
+        } else if (volume) {
+          player.muted(false);
+          player.volume(volume);
+        }
       });
-    } else {
-      // You could update an existing player in the `else` block here
-      // on prop change, for example:
-      // const player = playerRef.current;
     }
-  }, [placeholderRef]);
+  });
 
   useEffect(() => {
     initializedRef.current = initialized;
@@ -61,130 +170,21 @@ export const VideoJsPlayer = ({
     player.ready(() => {
       videoUrlRef.current = videoUrl;
       player.src(videoUrl);
-      if (volume === 0) {
-        player.volume(0);
-        player.muted(true);
-      } else if (volume) {
-        player.muted(false);
-        player.volume(volume);
-      }
     });
-  }, [playerRef, videoUrl, volume]);
+  }, [playerRef, videoUrl]);
 
   // dispose video.js when the component unmounts
   useEffect(() => {
-    const player = playerRef.current;
-
     return () => {
+      const player = playerRef.current;
+
       if (player) {
-        if (player.muted()) {
-          setVolume(0);
-        } else {
-          setVolume(player.volume());
-        }
         player.dispose();
         playerRef.current = null;
         waitReadyRef.current = false;
       }
     };
   }, [playerRef, setVolume]);
-
-  useEffect(() => {
-    const player = playerRef.current;
-    if (!msg || !player) {
-      return;
-    }
-    console.log({ msg });
-    player.ready(function () {
-      if (msg === 'play') {
-        player.play();
-      } else if (msg.startsWith('pause')) {
-        player.pause();
-        const timestamp = parseFloat(msg.split(' ')[1]);
-        const shouldSeek = Math.abs(player.currentTime() - timestamp) > 1;
-        if (shouldSeek) {
-          player.currentTime(timestamp);
-        }
-      } else if (msg.startsWith('ready?')) {
-        const timestamp = parseFloat(msg.split(' ')[1]);
-        player.pause();
-        player.currentTime(timestamp);
-        waitReadyRef.current = true;
-        console.log({ readyState: player.readyState() });
-        if (player.readyState() >= 3) {
-          sendMessage(`ready ${player.currentTime()}`);
-        }
-      }
-    });
-  }, [playerRef, msg, waitReadyRef, sendMessage]);
-
-  useEffect(() => {
-    const player = playerRef.current;
-    if (!player) {
-      return;
-    }
-    player.ready(function () {
-      if (initializedRef.current) {
-        // the user event listeners can't be removed without removing the internal videojs listeners as well
-        // https://github.com/videojs/video.js/issues/5648
-        console.warn('The player hooks should not be reregistered');
-      }
-      console.log('registering');
-      player.on('play', function () {
-        console.log('play');
-        if (initializedRef.current) {
-          sendMessage(`play ${player.currentTime()}`);
-          waitReadyRef.current = false;
-          setOverlay(null);
-        } else {
-          setInitialized(true);
-          sendMessage('sync');
-        }
-      });
-      player.on('pause', function () {
-        if (!waitReadyRef.current) {
-          console.log('pause');
-          sendMessage(`pause ${player.currentTime()}`);
-          setOverlay('PAUSED');
-        }
-      });
-      player.on('stalled', function () {
-        console.log('stalled');
-        sendMessage(`buffer ${player.currentTime()}`);
-      });
-      player.on('seeked', function () {
-        console.log('seeked');
-        if (player.paused() && !waitReadyRef.current) {
-          sendMessage(`pause ${player.currentTime()}`);
-        } else {
-          sendMessage(`play ${player.currentTime()}`);
-        }
-      });
-      player.on('ended', function () {
-        console.log('ended');
-        sendMessage(`end ${videoUrlRef.current}`);
-      });
-      player.on('ratechange', function () {
-        console.log('ratechange');
-        sendMessage(`speed ${player.playbackRate()}`);
-      });
-      player.on('canplay', function () {
-        if (waitReadyRef.current) {
-          console.log('canplay');
-          sendMessage(`ready ${player.currentTime()}`);
-        }
-      });
-    });
-  }, [
-    playerRef,
-    sendMessage,
-    waitReadyRef,
-    videoUrlRef,
-    setVolume,
-    setOverlay,
-    initializedRef,
-    setInitialized,
-  ]);
 
   // video.js </3 react
   return <div className="video-player" ref={placeholderRef}></div>;

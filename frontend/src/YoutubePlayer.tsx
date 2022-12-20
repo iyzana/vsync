@@ -1,5 +1,5 @@
 import './YoutubePlayer.css';
-import YouTube from 'react-youtube';
+import YouTube, { YouTubePlayer } from 'react-youtube';
 import { useCallback, useEffect, useState } from 'react';
 import { EmbeddedPlayerProps } from './Player';
 
@@ -14,7 +14,8 @@ const opts = {
 };
 
 function YoutubePlayer({
-  msg,
+  messages,
+  clearMessages,
   videoUrl,
   sendMessage,
   setOverlay,
@@ -23,7 +24,7 @@ function YoutubePlayer({
   initialized,
   setInitialized,
 }: EmbeddedPlayerProps) {
-  const [player, setPlayer] = useState<any | null>(null);
+  const [player, setPlayer] = useState<YouTubePlayer | null>(null);
   const [preloadTime, setPreloadTime] = useState<number | null>(null);
   const [nextReadyCheck, setNextReadyCheck] = useState<number>(100);
   const [oldState, setOldState] = useState<number>(
@@ -32,41 +33,66 @@ function YoutubePlayer({
   const [hasEverPlayed, setHasEverPlayed] = useState<boolean>(false);
 
   useEffect(() => {
-    if (!msg) {
+    console.log({ messages });
+    if (messages.length === 0 || !player) {
       return;
-    } else if (msg === 'play') {
-      if (player?.getPlayerState() !== YouTube.PlayerState.PLAYING) {
-        player?.playVideo();
-      }
-    } else if (msg.startsWith('pause')) {
-      if (
-        player?.getPlayerState() === YouTube.PlayerState.PLAYING ||
-        player?.getPlayerState() === YouTube.PlayerState.BUFFERING
-      ) {
-        if (hasEverPlayed) {
-          console.log('pause setting pause');
-          player?.pauseVideo();
+    }
+    for (const msg of messages) {
+      if (msg === 'play') {
+        console.log('processing server message play');
+        if (player?.getPlayerState() !== YouTube.PlayerState.PLAYING) {
+          player?.playVideo();
         }
+      } else if (msg.startsWith('pause')) {
+        console.log('processing server message pause');
+        if (
+          player?.getPlayerState() === YouTube.PlayerState.PLAYING ||
+          player?.getPlayerState() === YouTube.PlayerState.BUFFERING
+        ) {
+          if (hasEverPlayed) {
+            console.log('pause setting pause');
+            player?.pauseVideo();
+          }
+        }
+        const timestamp = parseFloat(msg.split(' ')[1]);
+        const shouldSeek = Math.abs(player?.getCurrentTime() - timestamp) > 1;
+        if (shouldSeek) {
+          setTimeout(() => {
+            player?.seekTo(timestamp, true);
+          }, 150);
+        }
+      } else if (msg.startsWith('ready?')) {
+        console.log('processing server message ready');
+        const timestamp = parseFloat(msg.split(' ')[1]);
+        setNextReadyCheck(100);
+        setPreloadTime(timestamp);
+      } else if (msg.startsWith('video')) {
+        console.log('processing server message video');
+        if (hasEverPlayed) {
+          console.log(
+            'storing player volume live ' +
+              player.isMuted() +
+              ' ' +
+              player.getVolume() / 100,
+          );
+          if (player.isMuted()) {
+            setVolume(0);
+          } else {
+            setVolume(player.getVolume() / 100);
+          }
+        }
+        setHasEverPlayed(false);
       }
-      const timestamp = parseFloat(msg.split(' ')[1]);
-      const shouldSeek = Math.abs(player?.getCurrentTime() - timestamp) > 1;
-      if (shouldSeek) {
-        setTimeout(() => {
-          player?.seekTo(timestamp, true);
-        }, 150);
-      }
-    } else if (msg.startsWith('ready?')) {
-      const timestamp = parseFloat(msg.split(' ')[1]);
-      setNextReadyCheck(100);
-      setPreloadTime(timestamp);
     }
-  }, [msg, player, hasEverPlayed]);
-
-  useEffect(() => {
-    if (msg && msg.startsWith('video')) {
-      setHasEverPlayed(false);
-    }
-  }, [msg, setHasEverPlayed]);
+    clearMessages(messages.length);
+  }, [
+    messages,
+    clearMessages,
+    player,
+    hasEverPlayed,
+    setHasEverPlayed,
+    setVolume,
+  ]);
 
   const onStateChange = useCallback(() => {
     const memOldState = oldState;
@@ -78,30 +104,25 @@ function YoutubePlayer({
         setOverlay('PAUSED');
       }
       if (hasEverPlayed) {
-        console.log(`sending pause ${player.getCurrentTime()}`);
         sendMessage(`pause ${player.getCurrentTime()}`);
       }
     } else if (newState === YouTube.PlayerState.PLAYING) {
       setHasEverPlayed(true);
       if (initialized) {
-        console.log(`sending play ${player.getCurrentTime()}`);
         sendMessage(`play ${player.getCurrentTime()}`);
         setOverlay(null);
       } else {
         setInitialized(true);
         // the youtube player behaves strange if it is paused
         // almost immediately after starting, so delay sync
-        console.log('sending sync');
         sendMessage('sync');
       }
     } else if (newState === YouTube.PlayerState.ENDED) {
-      console.log(`sending end`);
       sendMessage(`end ${videoUrl}`);
     } else if (
       newState === YouTube.PlayerState.BUFFERING &&
       memOldState === YouTube.PlayerState.PLAYING
     ) {
-      console.log(`sending buffer ${player.getCurrentTime()}`);
       sendMessage(`buffer ${player.getCurrentTime()}`);
     }
   }, [
@@ -134,7 +155,6 @@ function YoutubePlayer({
         Math.abs(player?.getCurrentTime() - preloadTime) <= 1 &&
         player?.getPlayerState() !== YouTube.PlayerState.BUFFERING
       ) {
-        console.log(`sending ready ${player?.getCurrentTime()}`);
         sendMessage(`ready ${player?.getCurrentTime()}`);
         setPreloadTime(null);
       } else {
@@ -171,15 +191,20 @@ function YoutubePlayer({
   useEffect(() => {
     return () => {
       if (player) {
-        setVolume(player.getVolume() / 100);
+        console.log(
+          'storing player volume live ' +
+            player.isMuted() +
+            ' ' +
+            player.getVolume() / 100,
+        );
+        if (player.isMuted()) {
+          setVolume(0);
+        } else {
+          setVolume(player.getVolume() / 100);
+        }
       }
     };
   }, [player, setVolume]);
-  useEffect(() => {
-    if (player) {
-      setVolume(player.getVolume() / 100);
-    }
-  }, [player, videoUrl, setVolume]);
 
   const onPlaybackRateChange = (event: { target: any; data: number }) => {
     sendMessage(`speed ${event.data}`);
@@ -189,7 +214,15 @@ function YoutubePlayer({
     ({ target: player }: { target: any }) => {
       setPlayer(player);
       if (volume) {
-        player.setVolume(volume * 100);
+        console.log('setting yt player volume ' + volume);
+
+        if (volume === 0) {
+          player.setVolume(0);
+          player.mute();
+        } else if (volume) {
+          player.unMute();
+          player.setVolume(volume * 100);
+        }
       }
     },
     [setPlayer, volume],

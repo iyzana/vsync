@@ -48,12 +48,10 @@ fun coordinatePlay(session: Session, timestamp: TimeStamp, isPlaying: Boolean = 
         if (!room.participants.all { isPlaying(it.syncState, timestamp) }) {
             startPlay(session, room, timestamp)
         }
-    } else if (user.syncState !is SyncState.AwaitReady) {
+    } else {
         coordinateServerPause(session, room, timestamp)
         room.setSyncState(SyncState.AwaitReady(timestamp))
         room.broadcastActive(session, "ready? ${timestamp.second}")
-    } else {
-        return "play ignore await ready"
     }
     return "play"
 }

@@ -29,7 +29,7 @@ ws.onopen = () => {
 };
 
 function App() {
-  const [msg, setMsg] = useState<string | null>(null);
+  const [messages, setMessages] = useState<string[]>([]);
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const [errors, setErrors] = useState<Error[]>([]);
   const [numUsers, setNumUsers] = useState(1);
@@ -49,7 +49,7 @@ function App() {
   useEffect(() => {
     ws.onmessage = (ev: MessageEvent) => {
       const msg = ev.data as string;
-      console.log(`received ${msg}`);
+      console.log(`received websocket message: ${msg}`);
       if (msg.startsWith('create')) {
         const roomId = msg.split(' ')[1];
         window.history.pushState(roomId, '', `/${roomId}`);
@@ -93,13 +93,13 @@ function App() {
         const users = parseInt(msg.split(' ')[1]);
         setNumUsers(users);
       } else {
-        setMsg(msg);
+        setMessages((messages) => messages.concat(msg));
       }
     };
     return () => {
       ws.onmessage = null;
     };
-  }, [setQueue, setNumUsers, setErrors, setMsg]);
+  }, [setQueue, setNumUsers, setErrors, setMessages]);
 
   const reorderQueue = useCallback(
     (videos: QueueItem[]) => {
@@ -118,14 +118,23 @@ function App() {
     },
     [queue, setQueue],
   );
-  const sendMessage = useCallback((message: string) => ws.send(message), []);
+  const sendMessage = useCallback((message: string) => {
+    console.log('sending websocket message: ' + message);
+    ws.send(message);
+  }, []);
   return (
     <div className="container">
       <main className="with-sidebar">
         <div>
           <section className="video">
             <div className="embed">
-              <Player msg={msg} sendMessage={sendMessage} />
+              <Player
+                messages={messages}
+                clearMessages={(count) =>
+                  setMessages((messages) => messages.slice(count))
+                }
+                sendMessage={sendMessage}
+              />
             </div>
           </section>
           <section className="aside">

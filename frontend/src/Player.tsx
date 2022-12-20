@@ -27,12 +27,14 @@ function getOverlay(overlay: 'PAUSED' | 'SYNCING' | null) {
 }
 
 interface PlayerProps {
-  msg: string | null;
+  messages: string[];
+  clearMessages: (count: number) => void;
   sendMessage: (message: string) => void;
 }
 
 export interface EmbeddedPlayerProps {
-  msg: string | null;
+  messages: string[];
+  clearMessages: (count: number) => void;
   videoUrl: string;
   sendMessage: (msg: string) => void;
   setOverlay: (state: 'PAUSED' | 'SYNCING' | null) => void;
@@ -49,25 +51,25 @@ function isYoutubeUrl(url: string): boolean {
   );
 }
 
-function Player({ msg, sendMessage }: PlayerProps) {
+function Player({ messages, clearMessages, sendMessage }: PlayerProps) {
   const [overlay, setOverlay] = useState<'PAUSED' | 'SYNCING' | null>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [volume, setVolume] = useState<number | null>(null);
   const [initialized, setInitialized] = useState<boolean>(false);
 
   useEffect(() => {
-    if (!msg) {
-      return;
-    } else if (msg === 'play') {
-      setOverlay(null);
-    } else if (msg.startsWith('pause')) {
-      setOverlay('PAUSED');
-    } else if (msg.startsWith('ready?')) {
-      setOverlay('SYNCING');
-    } else if (msg.startsWith('video')) {
-      setVideoUrl(msg.split(' ')[1]);
+    for (const msg of messages) {
+      if (msg === 'play') {
+        setOverlay(null);
+      } else if (msg.startsWith('pause')) {
+        setOverlay('PAUSED');
+      } else if (msg.startsWith('ready?')) {
+        setOverlay('SYNCING');
+      } else if (msg.startsWith('video')) {
+        setVideoUrl(msg.split(' ')[1]);
+      }
     }
-  }, [msg, setOverlay, setVideoUrl]);
+  }, [messages, setOverlay, setVideoUrl]);
 
   return (
     <div className="aspect-ratio">
@@ -77,7 +79,8 @@ function Player({ msg, sendMessage }: PlayerProps) {
         <div className="aspect-ratio-inner">
           {isYoutubeUrl(videoUrl) ? (
             <YoutubePlayer
-              msg={msg}
+              messages={messages}
+              clearMessages={clearMessages}
               videoUrl={videoUrl}
               sendMessage={sendMessage}
               setOverlay={setOverlay}
@@ -88,7 +91,8 @@ function Player({ msg, sendMessage }: PlayerProps) {
             />
           ) : (
             <VideoJsPlayer
-              msg={msg}
+              messages={messages}
+              clearMessages={clearMessages}
               videoUrl={videoUrl}
               sendMessage={sendMessage}
               setOverlay={setOverlay}
