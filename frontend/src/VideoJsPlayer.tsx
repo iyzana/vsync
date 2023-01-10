@@ -1,5 +1,5 @@
 import './VideoJsPlayer.css';
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import videojs, { VideoJsPlayerOptions } from 'video.js';
 import 'video.js/dist/video-js.css';
 import { EmbeddedPlayerProps } from './Player';
@@ -12,8 +12,8 @@ const opts: VideoJsPlayerOptions = {
 };
 
 export const VideoJsPlayer = ({
-  messages,
-  clearMessages,
+  addMessageCallback,
+  removeMessageCallback,
   videoUrl,
   sendMessage,
   setOverlay,
@@ -28,13 +28,13 @@ export const VideoJsPlayer = ({
   const initializedRef = useRef(initialized);
   const videoUrlRef = useRef(videoUrl);
 
-  useEffect(() => {
-    const player = playerRef.current;
-    if (!player || messages.length === 0) {
-      return;
-    }
-    player.ready(function () {
-      for (const msg of messages) {
+  const messageCallback = useCallback(
+    (msg: string) => {
+      const player = playerRef.current;
+      if (!player) {
+        return;
+      }
+      player.ready(function () {
         if (msg === 'play') {
           console.log('processing server message play');
           player.play();
@@ -63,10 +63,15 @@ export const VideoJsPlayer = ({
             sendMessage(`ready ${player.currentTime()}`);
           }
         }
-      }
-      clearMessages(messages.length);
-    });
-  }, [playerRef, messages, clearMessages, waitReadyRef, sendMessage]);
+      });
+    },
+    [playerRef, waitReadyRef, sendMessage],
+  );
+
+  useEffect(() => {
+    addMessageCallback('videojs', messageCallback);
+    return () => removeMessageCallback('videojs');
+  }, [messageCallback, addMessageCallback, removeMessageCallback]);
 
   useEffect(() => {
     // make sure video.js is only initialized once

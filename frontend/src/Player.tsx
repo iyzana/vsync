@@ -1,7 +1,7 @@
 import './Player.css';
 import { faPause, faSyncAlt } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import YoutubePlayer from './YoutubePlayer';
 import VideoJsPlayer from './VideoJsPlayer';
 
@@ -27,14 +27,20 @@ function getOverlay(overlay: 'PAUSED' | 'SYNCING' | null) {
 }
 
 interface PlayerProps {
-  messages: string[];
-  clearMessages: (count: number) => void;
+  addMessageCallback: (
+    name: string,
+    callback: (message: string) => void,
+  ) => void;
+  removeMessageCallback: (name: string) => void;
   sendMessage: (message: string) => void;
 }
 
 export interface EmbeddedPlayerProps {
-  messages: string[];
-  clearMessages: (count: number) => void;
+  addMessageCallback: (
+    name: string,
+    callback: (message: string) => void,
+  ) => void;
+  removeMessageCallback: (name: string) => void;
   videoUrl: string;
   sendMessage: (msg: string) => void;
   setOverlay: (state: 'PAUSED' | 'SYNCING' | null) => void;
@@ -51,14 +57,18 @@ function isYoutubeUrl(url: string): boolean {
   );
 }
 
-function Player({ messages, clearMessages, sendMessage }: PlayerProps) {
+function Player({
+  addMessageCallback,
+  removeMessageCallback,
+  sendMessage,
+}: PlayerProps) {
   const [overlay, setOverlay] = useState<'PAUSED' | 'SYNCING' | null>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [volume, setVolume] = useState<number | null>(null);
   const [initialized, setInitialized] = useState<boolean>(false);
 
-  useEffect(() => {
-    for (const msg of messages) {
+  const messageCallback = useCallback(
+    (msg: string) => {
       if (msg === 'play') {
         setOverlay(null);
       } else if (msg.startsWith('pause')) {
@@ -68,8 +78,14 @@ function Player({ messages, clearMessages, sendMessage }: PlayerProps) {
       } else if (msg.startsWith('video')) {
         setVideoUrl(msg.split(' ')[1]);
       }
-    }
-  }, [messages, setOverlay, setVideoUrl]);
+    },
+    [setOverlay, setVideoUrl],
+  );
+
+  useEffect(() => {
+    addMessageCallback('player', messageCallback);
+    return () => removeMessageCallback('player');
+  }, [messageCallback, addMessageCallback, removeMessageCallback]);
 
   return (
     <div className="aspect-ratio">
@@ -79,8 +95,8 @@ function Player({ messages, clearMessages, sendMessage }: PlayerProps) {
         <div className="aspect-ratio-inner">
           {isYoutubeUrl(videoUrl) ? (
             <YoutubePlayer
-              messages={messages}
-              clearMessages={clearMessages}
+              addMessageCallback={addMessageCallback}
+              removeMessageCallback={removeMessageCallback}
               videoUrl={videoUrl}
               sendMessage={sendMessage}
               setOverlay={setOverlay}
@@ -91,8 +107,8 @@ function Player({ messages, clearMessages, sendMessage }: PlayerProps) {
             />
           ) : (
             <VideoJsPlayer
-              messages={messages}
-              clearMessages={clearMessages}
+              addMessageCallback={addMessageCallback}
+              removeMessageCallback={removeMessageCallback}
               videoUrl={videoUrl}
               sendMessage={sendMessage}
               setOverlay={setOverlay}

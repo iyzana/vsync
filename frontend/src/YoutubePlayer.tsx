@@ -14,8 +14,8 @@ const opts = {
 };
 
 function YoutubePlayer({
-  messages,
-  clearMessages,
+  addMessageCallback,
+  removeMessageCallback,
   videoUrl,
   sendMessage,
   setOverlay,
@@ -32,12 +32,11 @@ function YoutubePlayer({
   );
   const [hasEverPlayed, setHasEverPlayed] = useState<boolean>(false);
 
-  useEffect(() => {
-    console.log({ messages });
-    if (messages.length === 0 || !player) {
-      return;
-    }
-    for (const msg of messages) {
+  const messageCallback = useCallback(
+    (msg: string) => {
+      if (!player) {
+        return;
+      }
       if (msg === 'play') {
         console.log('processing server message play');
         if (player?.getPlayerState() !== YouTube.PlayerState.PLAYING) {
@@ -83,19 +82,16 @@ function YoutubePlayer({
         }
         setHasEverPlayed(false);
       }
-    }
-    clearMessages(messages.length);
-  }, [
-    messages,
-    clearMessages,
-    player,
-    hasEverPlayed,
-    setHasEverPlayed,
-    setVolume,
-  ]);
+    },
+    [player, hasEverPlayed, setHasEverPlayed, setVolume],
+  );
+
+  useEffect(() => {
+    addMessageCallback('youtube', messageCallback);
+    return () => removeMessageCallback('youtube');
+  }, [messageCallback, addMessageCallback, removeMessageCallback]);
 
   const onStateChange = useCallback(() => {
-    const memOldState = oldState;
     const newState = player.getPlayerState();
     setOldState(newState);
     console.log('player state changed to ' + newState);
@@ -121,7 +117,7 @@ function YoutubePlayer({
       sendMessage(`end ${videoUrl}`);
     } else if (
       newState === YouTube.PlayerState.BUFFERING &&
-      memOldState === YouTube.PlayerState.PLAYING
+      oldState === YouTube.PlayerState.PLAYING
     ) {
       sendMessage(`buffer ${player.getCurrentTime()}`);
     }
@@ -206,9 +202,12 @@ function YoutubePlayer({
     };
   }, [player, setVolume]);
 
-  const onPlaybackRateChange = (event: { target: any; data: number }) => {
-    sendMessage(`speed ${event.data}`);
-  };
+  const onPlaybackRateChange = useCallback(
+    (event: { target: any; data: number }) => {
+      sendMessage(`speed ${event.data}`);
+    },
+    [sendMessage],
+  );
 
   const onReady = useCallback(
     ({ target: player }: { target: any }) => {

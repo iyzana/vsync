@@ -29,10 +29,12 @@ ws.onopen = () => {
 };
 
 function App() {
-  const [messages, setMessages] = useState<string[]>([]);
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const [errors, setErrors] = useState<Error[]>([]);
   const [numUsers, setNumUsers] = useState(1);
+  const [messageCallbacks, setMessageCallbacks] = useState<{
+    [key: string]: (msg: string) => void;
+  }>({});
 
   useEffect(() => {
     ws.onclose = () => {
@@ -93,13 +95,13 @@ function App() {
         const users = parseInt(msg.split(' ')[1]);
         setNumUsers(users);
       } else {
-        setMessages((messages) => messages.concat(msg));
+        Object.values(messageCallbacks).forEach((callback) => callback(msg));
       }
     };
     return () => {
       ws.onmessage = null;
     };
-  }, [setQueue, setNumUsers, setErrors, setMessages]);
+  }, [setQueue, setNumUsers, setErrors, messageCallbacks]);
 
   const reorderQueue = useCallback(
     (videos: QueueItem[]) => {
@@ -129,10 +131,20 @@ function App() {
           <section className="video">
             <div className="embed">
               <Player
-                messages={messages}
-                clearMessages={(count) =>
-                  setMessages((messages) => messages.slice(count))
-                }
+                addMessageCallback={(
+                  name: string,
+                  callback: (msg: string) => void,
+                ) => {
+                  setMessageCallbacks((callbacks) =>
+                    Object.assign(callbacks, { [name]: callback }),
+                  );
+                }}
+                removeMessageCallback={(name: string) => {
+                  setMessageCallbacks((callbacks) => {
+                    const { [name]: removed, ...remaining } = callbacks;
+                    return remaining;
+                  });
+                }}
                 sendMessage={sendMessage}
               />
             </div>
