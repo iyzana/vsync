@@ -1,6 +1,6 @@
 {
-  "short_name": "yt sync",
-  "name": "YouTube Sync",
+  "short_name": "vsync",
+  "name": "Video Sync",
   "icons": [
     {
       "src": "favicon.ico",
