@@ -1,12 +1,18 @@
 .queue {
-  height: 100%;
+  min-height: 0;
+  flex-grow: 1;
   padding: 0 var(--s1);
+  background-color: var(--card);
+  border-radius: var(--radius);
   overflow-y: auto;
+  display: flex;
+  flex-flow: column nowrap;
 }
 
-.header {
+.queue-header {
   padding-top: calc(var(--s1) - var(--s0));
   padding-bottom: var(--s0);
+  background-color: var(--card);
 
   display: flex;
   flex-flow: row nowrap;
@@ -14,7 +20,6 @@
 
   position: sticky;
   top: 0;
-  background-color: var(--card);
 }
 
 .title {
@@ -32,7 +37,7 @@
 }
 
 .skip {
-  margin-right: var(--s0);
+  margin: calc(-1 * var(--s0)) 0;
 }
 
 .connections {
@@ -87,4 +92,8 @@
   min-width: 35%;
   max-width: 35%;
   margin-right: var(--s0);
+}
+
+.favicon {
+  display: inline;
 }

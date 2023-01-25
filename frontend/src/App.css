@@ -44,22 +44,13 @@
         calc((100vw - 3 * var(--s1) - 30rem) * 9 / 16),
       30rem /* ensure minimum height when control is below video */
     ),
-    calc(100vh - 2 * var(--s1)) /* cap to view height (minus vertical padding) */
+    calc(100vh - 2 * var(--s1))
+      /* cap to view height (minus vertical padding) */
   );
 }
 
 .embed {
   width: 100%;
-}
-
-.control {
-  border-radius: var(--radius);
-  background-color: var(--card);
-  height: 100%;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
 }
 
 .footer {
@@ -75,5 +66,5 @@
 }
 
 .social:hover {
-  color: var(--card-sep);
+  color: var(--hover);
 }

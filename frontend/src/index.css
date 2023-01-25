@@ -4,7 +4,7 @@
   --bg: #0a0a0a;
   --card: #222222;
   --card-alt: #444444;
-  --card-sep: #888888;
+  --hover: #555555;
   --fg: #dddddd;
   --radius: 5px;
 }
@@ -40,6 +40,14 @@ button {
   border: none;
   padding: var(--s0);
   border-radius: var(--radius);
+}
+
+button:hover:not(:disabled) {
+  background-color: var(--hover);
+}
+
+button:disabled {
+  cursor: default;
 }
 
 #root {

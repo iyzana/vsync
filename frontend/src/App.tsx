@@ -1,12 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import './App.css';
-import Queue from './Queue';
-import QueueItem from './QueueItem';
-import Error from './Error';
-import Input from './Input';
+import Notification from './Notification';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faGithub } from '@fortawesome/free-brands-svg-icons';
 import Player from './Player';
+import Sidebar from './Sidebar';
 
 const urlRegex = new RegExp('^(ftp|https?)://.*');
 
@@ -29,24 +27,32 @@ ws.onopen = () => {
 };
 
 function App() {
-  const [queue, setQueue] = useState<QueueItem[]>([]);
-  const [errors, setErrors] = useState<Error[]>([]);
-  const [numUsers, setNumUsers] = useState(1);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [messageCallbacks, setMessageCallbacks] = useState<{
     [key: string]: (msg: string) => void;
   }>({});
 
+  const addNotification = useCallback(
+    (notification: Notification) => {
+      setNotifications((notifications) => [...notifications, notification]);
+    },
+    [setNotifications],
+  );
+
   useEffect(() => {
     ws.onclose = () => {
       console.log('disconnected');
-      setTimeout(() => {
-        setErrors((errors) => [
-          ...errors,
-          { message: 'Connection lost', permanent: true },
-        ]);
-      }, 200);
+      setTimeout(
+        () =>
+          addNotification({
+            message: 'Connection lost',
+            level: 'error',
+            permanent: true,
+          }),
+        200,
+      );
     };
-  }, [setErrors]);
+  }, [addNotification]);
 
   useEffect(() => {
     ws.onmessage = (ev: MessageEvent) => {
@@ -56,44 +62,17 @@ function App() {
         const roomId = msg.split(' ')[1];
         window.history.pushState(roomId, '', `/${roomId}`);
       } else if (msg === 'invalid command') {
-        setErrors((errors) => [
-          ...errors,
-          { message: 'You found a bug', permanent: false },
-        ]);
-      } else if (msg === 'server full') {
-        setErrors((errors) => [
-          ...errors,
-          { message: 'Server is too full', permanent: false },
-        ]);
-      } else if (msg.startsWith('queue add')) {
-        const msgParts = msg.split(' ');
-        const queueItem: QueueItem = JSON.parse(msgParts.slice(2).join(' '));
-        setQueue((queue) => [...queue, queueItem]);
-      } else if (msg.startsWith('queue rm')) {
-        const id = msg.split(' ')[2];
-        setQueue((queue) => queue.filter((video) => video.id !== id));
-      } else if (msg.startsWith('queue order')) {
-        const order = msg.split(' ')[2].split(',');
-        setQueue((queue) => {
-          const sortedQueue = [...queue];
-          sortedQueue.sort((a, b) => {
-            return order.indexOf(a.id) - order.indexOf(b.id);
-          });
-          return sortedQueue;
+        addNotification({
+          message: 'You found a bug',
+          level: 'error',
+          permanent: false,
         });
-      } else if (msg === 'queue err not-found') {
-        setErrors((errors) => [
-          ...errors,
-          { message: 'Video not found', permanent: false },
-        ]);
-      } else if (msg === 'queue err duplicate') {
-        setErrors((errors) => [
-          ...errors,
-          { message: 'Already in queue', permanent: false },
-        ]);
-      } else if (msg.startsWith('users')) {
-        const users = parseInt(msg.split(' ')[1]);
-        setNumUsers(users);
+      } else if (msg === 'server full') {
+        addNotification({
+          message: 'Server is too full',
+          level: 'error',
+          permanent: false,
+        });
       } else {
         Object.values(messageCallbacks).forEach((callback) => callback(msg));
       }
@@ -101,29 +80,44 @@ function App() {
     return () => {
       ws.onmessage = null;
     };
-  }, [setQueue, setNumUsers, setErrors, messageCallbacks]);
+  }, [addNotification, messageCallbacks]);
 
-  const reorderQueue = useCallback(
-    (videos: QueueItem[]) => {
-      const oldOrder = queue.map((video) => video.id);
-      const newOrder = videos.map((video) => video.id);
-      if (
-        oldOrder.length !== newOrder.length ||
-        [...oldOrder].sort().join() !== [...newOrder].sort().join() ||
-        oldOrder.join() === newOrder.join()
-      ) {
-        return;
-      }
+  useEffect(() => {
+    if (notifications.length === 0) {
+      return;
+    }
+    const timeout = setTimeout(() => {
+      setNotifications((notifications) =>
+        notifications.filter((notification) => notification.permanent),
+      );
+    }, 3000);
+    return () => clearTimeout(timeout);
+  }, [notifications, setNotifications]);
 
-      ws.send(`queue order ${newOrder.join(',')}`);
-      setQueue(videos);
+  const addMessageCallback = useCallback(
+    (name: string, callback: (msg: string) => void) => {
+      console.log(`adding callback ${name}`);
+      setMessageCallbacks((callbacks) =>
+        Object.assign(callbacks, { [name]: callback }),
+      );
     },
-    [queue, setQueue],
+    [setMessageCallbacks],
+  );
+  const removeMessageCallback = useCallback(
+    (name: string) => {
+      console.log(`removing callback ${name}`);
+      setMessageCallbacks((callbacks) => {
+        const { [name]: removed, ...remaining } = callbacks;
+        return remaining;
+      });
+    },
+    [setMessageCallbacks],
   );
   const sendMessage = useCallback((message: string) => {
     console.log('sending websocket message: ' + message);
     ws.send(message);
   }, []);
+
   return (
     <div className="container">
       <main className="with-sidebar">
@@ -131,35 +125,20 @@ function App() {
           <section className="video">
             <div className="embed">
               <Player
-                addMessageCallback={(
-                  name: string,
-                  callback: (msg: string) => void,
-                ) => {
-                  setMessageCallbacks((callbacks) =>
-                    Object.assign(callbacks, { [name]: callback }),
-                  );
-                }}
-                removeMessageCallback={(name: string) => {
-                  setMessageCallbacks((callbacks) => {
-                    const { [name]: removed, ...remaining } = callbacks;
-                    return remaining;
-                  });
-                }}
+                addMessageCallback={addMessageCallback}
+                removeMessageCallback={removeMessageCallback}
                 sendMessage={sendMessage}
               />
             </div>
           </section>
           <section className="aside">
-            <div className="control">
-              <Queue
-                videos={queue}
-                setVideos={reorderQueue}
-                removeVideo={(video) => ws.send(`queue rm ${video}`)}
-                skip={() => ws.send('skip')}
-                numUsers={numUsers}
-              />
-              <Input ws={ws} errors={errors} setErrors={setErrors} />
-            </div>
+            <Sidebar
+              addMessageCallback={addMessageCallback}
+              removeMessageCallback={removeMessageCallback}
+              sendMessage={sendMessage}
+              notifications={notifications}
+              addNotification={addNotification}
+            />
           </section>
         </div>
       </main>
