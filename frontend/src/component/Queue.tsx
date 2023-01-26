@@ -1,10 +1,10 @@
 import './Queue.css';
-import QueueItem from './QueueItem';
+import QueueItem from '../model/QueueItem';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes, faAngleDoubleRight } from '@fortawesome/free-solid-svg-icons';
 import { ReactSortable } from 'react-sortablejs';
 import { useCallback, useEffect, useState } from 'react';
-import Notification from './Notification';
+import Notification from '../model/Notification';
 
 interface QueueProps {
   addMessageCallback: (

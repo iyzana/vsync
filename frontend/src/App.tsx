@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import './App.css';
-import Notification from './Notification';
+import Notification from './model/Notification';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faGithub } from '@fortawesome/free-brands-svg-icons';
-import Player from './Player';
-import Sidebar from './Sidebar';
+import Player from './component/Player';
+import Sidebar from './component/Sidebar';
 
 const urlRegex = new RegExp('^(ftp|https?)://.*');
 

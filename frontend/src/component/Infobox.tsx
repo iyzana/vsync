@@ -1,6 +1,6 @@
 import './Infobox.css';
 import { useCallback, useEffect, useState } from 'react';
-import Notification from './Notification';
+import Notification from '../model/Notification';
 
 interface InfoboxProps {
   addMessageCallback: (

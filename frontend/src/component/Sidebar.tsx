@@ -1,7 +1,7 @@
 import './Sidebar.css';
 import Input from './Input';
 import Queue from './Queue';
-import Notification from './Notification';
+import Notification from '../model/Notification';
 import Infobox from './Infobox';
 import { useCallback, useState } from 'react';
 
