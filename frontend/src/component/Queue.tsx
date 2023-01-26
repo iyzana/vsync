@@ -28,7 +28,9 @@ function Queue({
 
   const messageCallback = useCallback(
     (msg: string) => {
-      if (msg.startsWith('queue add')) {
+      if (msg.startsWith('video')) {
+        setWorking(false);
+      } else if (msg.startsWith('queue add')) {
         const msgParts = msg.split(' ');
         const queueItem: QueueItem = JSON.parse(msgParts.slice(2).join(' '));
         setQueue((queue) => [...queue, queueItem]);
