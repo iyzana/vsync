@@ -1,7 +1,9 @@
 import './YoutubePlayer.css';
 import YouTube, { YouTubePlayer } from 'react-youtube';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useContext, useEffect, useState } from 'react';
 import { EmbeddedPlayerProps } from './Player';
+import { useWebsocketMessages } from '../hook/websocket-messages';
+import { WebsocketContext } from '../context/websocket';
 
 const opts = {
   width: '100%',
@@ -14,10 +16,7 @@ const opts = {
 };
 
 function YoutubePlayer({
-  addMessageCallback,
-  removeMessageCallback,
   videoUrl,
-  sendMessage,
   setOverlay,
   volume,
   setVolume,
@@ -31,65 +30,64 @@ function YoutubePlayer({
     YouTube.PlayerState.UNSTARTED,
   );
   const [hasEverPlayed, setHasEverPlayed] = useState<boolean>(false);
+  const { sendMessage } = useContext(WebsocketContext);
 
-  const messageCallback = useCallback(
-    (msg: string) => {
-      if (!player) {
-        return;
-      }
-      if (msg === 'play') {
-        console.log('processing server message play');
-        if (player?.getPlayerState() !== YouTube.PlayerState.PLAYING) {
-          player?.playVideo();
+  useWebsocketMessages(
+    'youtube',
+    useCallback(
+      (msg: string) => {
+        if (!player) {
+          return;
         }
-      } else if (msg.startsWith('pause')) {
-        console.log('processing server message pause');
-        if (
-          player?.getPlayerState() === YouTube.PlayerState.PLAYING ||
-          player?.getPlayerState() === YouTube.PlayerState.BUFFERING
-        ) {
+        if (msg === 'play') {
+          console.log('processing server message play');
+          if (player?.getPlayerState() !== YouTube.PlayerState.PLAYING) {
+            player?.playVideo();
+          }
+        } else if (msg.startsWith('pause')) {
+          console.log('processing server message pause');
+          if (
+            player?.getPlayerState() === YouTube.PlayerState.PLAYING ||
+            player?.getPlayerState() === YouTube.PlayerState.BUFFERING
+          ) {
+            if (hasEverPlayed) {
+              console.log('pause setting pause');
+              player?.pauseVideo();
+            }
+          }
+          const timestamp = parseFloat(msg.split(' ')[1]);
+          const shouldSeek = Math.abs(player?.getCurrentTime() - timestamp) > 1;
+          if (shouldSeek) {
+            setTimeout(() => {
+              player?.seekTo(timestamp, true);
+            }, 150);
+          }
+        } else if (msg.startsWith('ready?')) {
+          console.log('processing server message ready');
+          const timestamp = parseFloat(msg.split(' ')[1]);
+          setNextReadyCheck(100);
+          setPreloadTime(timestamp);
+        } else if (msg.startsWith('video')) {
+          console.log('processing server message video');
           if (hasEverPlayed) {
-            console.log('pause setting pause');
-            player?.pauseVideo();
+            console.log(
+              'storing player volume live ' +
+                player.isMuted() +
+                ' ' +
+                player.getVolume() / 100,
+            );
+            if (player.isMuted()) {
+              setVolume(0);
+            } else {
+              setVolume(player.getVolume() / 100);
+            }
           }
+          setHasEverPlayed(false);
         }
-        const timestamp = parseFloat(msg.split(' ')[1]);
-        const shouldSeek = Math.abs(player?.getCurrentTime() - timestamp) > 1;
-        if (shouldSeek) {
-          setTimeout(() => {
-            player?.seekTo(timestamp, true);
-          }, 150);
-        }
-      } else if (msg.startsWith('ready?')) {
-        console.log('processing server message ready');
-        const timestamp = parseFloat(msg.split(' ')[1]);
-        setNextReadyCheck(100);
-        setPreloadTime(timestamp);
-      } else if (msg.startsWith('video')) {
-        console.log('processing server message video');
-        if (hasEverPlayed) {
-          console.log(
-            'storing player volume live ' +
-              player.isMuted() +
-              ' ' +
-              player.getVolume() / 100,
-          );
-          if (player.isMuted()) {
-            setVolume(0);
-          } else {
-            setVolume(player.getVolume() / 100);
-          }
-        }
-        setHasEverPlayed(false);
-      }
-    },
-    [player, hasEverPlayed, setHasEverPlayed, setVolume],
+      },
+      [player, hasEverPlayed, setHasEverPlayed, setVolume],
+    ),
   );
-
-  useEffect(() => {
-    addMessageCallback('youtube', messageCallback);
-    return () => removeMessageCallback('youtube');
-  }, [messageCallback, addMessageCallback, removeMessageCallback]);
 
   const onStateChange = useCallback(() => {
     const newState = player.getPlayerState();

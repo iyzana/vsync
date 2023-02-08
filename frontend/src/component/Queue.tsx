@@ -3,74 +3,75 @@ import QueueItem from '../model/QueueItem';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes, faAngleDoubleRight } from '@fortawesome/free-solid-svg-icons';
 import { ReactSortable } from 'react-sortablejs';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useContext, useState } from 'react';
 import Notification from '../model/Notification';
+import { useWebsocketMessages } from '../hook/websocket-messages';
+import { WebsocketContext } from '../context/websocket';
+
+const faviconUrl = (url: string, originalQuery: string) => {
+  let baseUrl;
+  try {
+    baseUrl = new URL(originalQuery);
+  } catch (e) {
+    baseUrl = new URL(url);
+  }
+  baseUrl.search = '';
+  baseUrl.pathname = 'favicon.ico';
+  return baseUrl;
+};
 
 interface QueueProps {
-  addMessageCallback: (
-    name: string,
-    callback: (message: string) => void,
-  ) => void;
-  removeMessageCallback: (name: string) => void;
-  sendMessage: (message: string) => void;
   addNotification: (notification: Notification) => void;
   setWorking: (working: boolean) => void;
 }
 
-function Queue({
-  addMessageCallback,
-  removeMessageCallback,
-  sendMessage,
-  addNotification,
-  setWorking,
-}: QueueProps) {
+function Queue({ addNotification, setWorking }: QueueProps) {
   const [queue, setQueue] = useState<QueueItem[]>([]);
 
-  const messageCallback = useCallback(
-    (msg: string) => {
-      if (msg.startsWith('video')) {
-        setWorking(false);
-      } else if (msg.startsWith('queue add')) {
-        const msgParts = msg.split(' ');
-        const queueItem: QueueItem = JSON.parse(msgParts.slice(2).join(' '));
-        setQueue((queue) => [...queue, queueItem]);
-        setWorking(false);
-      } else if (msg.startsWith('queue rm')) {
-        const id = msg.split(' ')[2];
-        setQueue((queue) => queue.filter((video) => video.id !== id));
-      } else if (msg.startsWith('queue order')) {
-        const order = msg.split(' ')[2].split(',');
-        setQueue((queue) => {
-          const sortedQueue = [...queue];
-          sortedQueue.sort((a, b) => {
-            return order.indexOf(a.id) - order.indexOf(b.id);
+  useWebsocketMessages(
+    'queue',
+    useCallback(
+      (msg: string) => {
+        if (msg.startsWith('video')) {
+          setWorking(false);
+        } else if (msg.startsWith('queue add')) {
+          const msgParts = msg.split(' ');
+          const queueItem: QueueItem = JSON.parse(msgParts.slice(2).join(' '));
+          setQueue((queue) => [...queue, queueItem]);
+          setWorking(false);
+        } else if (msg.startsWith('queue rm')) {
+          const id = msg.split(' ')[2];
+          setQueue((queue) => queue.filter((video) => video.id !== id));
+        } else if (msg.startsWith('queue order')) {
+          const order = msg.split(' ')[2].split(',');
+          setQueue((queue) => {
+            const sortedQueue = [...queue];
+            sortedQueue.sort((a, b) => {
+              return order.indexOf(a.id) - order.indexOf(b.id);
+            });
+            return sortedQueue;
           });
-          return sortedQueue;
-        });
-      } else if (msg === 'queue err not-found') {
-        addNotification({
-          message: 'No video found',
-          level: 'error',
-          permanent: false,
-        });
-        setWorking(false);
-      } else if (msg === 'queue err duplicate') {
-        addNotification({
-          message: 'Already in queue',
-          level: 'error',
-          permanent: false,
-        });
-        setWorking(false);
-      }
-    },
-    [setQueue, addNotification, setWorking],
+        } else if (msg === 'queue err not-found') {
+          addNotification({
+            message: 'No video found',
+            level: 'error',
+            permanent: false,
+          });
+          setWorking(false);
+        } else if (msg === 'queue err duplicate') {
+          addNotification({
+            message: 'Already in queue',
+            level: 'error',
+            permanent: false,
+          });
+          setWorking(false);
+        }
+      },
+      [setQueue, addNotification, setWorking],
+    ),
   );
 
-  useEffect(() => {
-    addMessageCallback('queue', messageCallback);
-    return () => removeMessageCallback('queue');
-  }, [messageCallback, addMessageCallback, removeMessageCallback]);
-
+  const { sendMessage } = useContext(WebsocketContext);
   const skip = () => sendMessage('skip');
   const reorderQueue = useCallback(
     (videos: QueueItem[]) => {
@@ -91,18 +92,6 @@ function Queue({
   );
 
   const removeVideo = (id: string) => sendMessage(`queue rm ${id}`);
-
-  const faviconUrl = useCallback((url: string, originalQuery: string) => {
-    let baseUrl;
-    try {
-      baseUrl = new URL(originalQuery);
-    } catch (e) {
-      baseUrl = new URL(url);
-    }
-    baseUrl.search = '';
-    baseUrl.pathname = 'favicon.ico';
-    return baseUrl;
-  }, []);
 
   return (
     <>

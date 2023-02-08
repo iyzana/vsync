@@ -5,6 +5,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faGithub } from '@fortawesome/free-brands-svg-icons';
 import Player from './component/Player';
 import Sidebar from './component/Sidebar';
+import { WebsocketContext } from './context/websocket';
 
 const urlRegex = new RegExp('^(ftp|https?)://.*');
 
@@ -42,15 +43,11 @@ function App() {
   useEffect(() => {
     ws.onclose = () => {
       console.log('disconnected');
-      setTimeout(
-        () =>
-          addNotification({
-            message: 'Connection lost',
-            level: 'error',
-            permanent: true,
-          }),
-        200,
-      );
+      addNotification({
+        message: 'Connection lost',
+        level: 'error',
+        permanent: true,
+      });
     };
   }, [addNotification]);
 
@@ -71,7 +68,7 @@ function App() {
         addNotification({
           message: 'Server is too full',
           level: 'error',
-          permanent: false,
+          permanent: true,
         });
       } else {
         Object.values(messageCallbacks).forEach((callback) => callback(msg));
@@ -87,9 +84,12 @@ function App() {
       return;
     }
     const timeout = setTimeout(() => {
-      setNotifications((notifications) =>
-        notifications.filter((notification) => notification.permanent),
-      );
+      setNotifications((notifications) => {
+        const dismissIndex = notifications.findIndex(
+          (notification) => !notification.permanent,
+        );
+        return notifications.splice(dismissIndex, 1);
+      });
     }, 3000);
     return () => clearTimeout(timeout);
   }, [notifications, setNotifications]);
@@ -119,41 +119,38 @@ function App() {
   }, []);
 
   return (
-    <div className="container">
-      <main className="with-sidebar">
-        <div>
-          <section className="video">
-            <div className="embed">
-              <Player
-                addMessageCallback={addMessageCallback}
-                removeMessageCallback={removeMessageCallback}
-                sendMessage={sendMessage}
+    <WebsocketContext.Provider
+      value={{ addMessageCallback, removeMessageCallback, sendMessage }}
+    >
+      <div className="container">
+        <main className="with-sidebar">
+          <div>
+            <section className="video">
+              <div className="embed">
+                <Player />
+              </div>
+            </section>
+            <section className="aside">
+              <Sidebar
+                notifications={notifications}
+                addNotification={addNotification}
               />
-            </div>
-          </section>
-          <section className="aside">
-            <Sidebar
-              addMessageCallback={addMessageCallback}
-              removeMessageCallback={removeMessageCallback}
-              sendMessage={sendMessage}
-              notifications={notifications}
-              addNotification={addNotification}
-            />
-          </section>
-        </div>
-      </main>
-      <footer className="footer">
-        <a
-          className="social"
-          href="https://github.com/iyzana/yt-sync"
-          target="_blank"
-          rel="noreferrer"
-          aria-label="GitHub project"
-        >
-          <FontAwesomeIcon icon={faGithub} size="lg" />
-        </a>
-      </footer>
-    </div>
+            </section>
+          </div>
+        </main>
+        <footer className="footer">
+          <a
+            className="social"
+            href="https://github.com/iyzana/yt-sync"
+            target="_blank"
+            rel="noreferrer"
+            aria-label="GitHub project"
+          >
+            <FontAwesomeIcon icon={faGithub} size="lg" />
+          </a>
+        </footer>
+      </div>
+    </WebsocketContext.Provider>
   );
 }
 

@@ -1,40 +1,28 @@
 import './Infobox.css';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import Notification from '../model/Notification';
+import { useWebsocketMessages } from '../hook/websocket-messages';
 
 interface InfoboxProps {
-  addMessageCallback: (
-    name: string,
-    callback: (message: string) => void,
-  ) => void;
-  removeMessageCallback: (name: string) => void;
-  sendMessage: (message: string) => void;
   notifications: Notification[];
   addNotification: (notification: Notification) => void;
 }
 
-function Infobox({
-  addMessageCallback,
-  removeMessageCallback,
-  notifications,
-  addNotification,
-}: InfoboxProps) {
+function Infobox({ notifications, addNotification }: InfoboxProps) {
   const [numUsers, setNumUsers] = useState(1);
 
-  const messageCallback = useCallback(
-    (msg: string) => {
-      if (msg.startsWith('users')) {
-        const users = parseInt(msg.split(' ')[1]);
-        setNumUsers(users);
-      }
-    },
-    [setNumUsers],
+  useWebsocketMessages(
+    'infobox',
+    useCallback(
+      (msg: string) => {
+        if (msg.startsWith('users')) {
+          const users = parseInt(msg.split(' ')[1]);
+          setNumUsers(users);
+        }
+      },
+      [setNumUsers],
+    ),
   );
-
-  useEffect(() => {
-    addMessageCallback('infobox', messageCallback);
-    return () => removeMessageCallback('infobox');
-  }, [messageCallback, addMessageCallback, removeMessageCallback]);
 
   const copyLink = () => {
     if (!navigator.clipboard) {

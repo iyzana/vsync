@@ -1,8 +1,10 @@
 import './VideoJsPlayer.css';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useContext, useEffect, useRef } from 'react';
 import videojs, { VideoJsPlayerOptions } from 'video.js';
 import 'video.js/dist/video-js.css';
 import { EmbeddedPlayerProps } from './Player';
+import { useWebsocketMessages } from '../hook/websocket-messages';
+import { WebsocketContext } from '../context/websocket';
 
 const opts: VideoJsPlayerOptions = {
   autoplay: true,
@@ -12,10 +14,7 @@ const opts: VideoJsPlayerOptions = {
 };
 
 export const VideoJsPlayer = ({
-  addMessageCallback,
-  removeMessageCallback,
   videoUrl,
-  sendMessage,
   setOverlay,
   volume,
   setVolume,
@@ -27,51 +26,50 @@ export const VideoJsPlayer = ({
   const waitReadyRef = useRef(false);
   const initializedRef = useRef(initialized);
   const videoUrlRef = useRef(videoUrl);
+  const { sendMessage } = useContext(WebsocketContext);
 
-  const messageCallback = useCallback(
-    (msg: string) => {
-      const player = playerRef.current;
-      if (!player) {
-        return;
-      }
-      player.ready(function () {
-        if (msg === 'play') {
-          console.log('processing server message play');
-          player.play();
-        } else if (msg.startsWith('pause')) {
-          console.log('processing server message pause');
-          player.pause();
-          const timestamp = parseFloat(msg.split(' ')[1]);
-          const shouldSeek = Math.abs(player.currentTime() - timestamp) > 0.5;
-          if (shouldSeek) {
-            console.log('seeking due to pause');
-            player.currentTime(timestamp);
-          }
-        } else if (msg.startsWith('ready?')) {
-          console.log('processing server message ready');
-          player.pause();
-          const timestamp = parseFloat(msg.split(' ')[1]);
-          const shouldSeek = Math.abs(player.currentTime() - timestamp) > 0.5;
-          if (shouldSeek) {
-            console.log('seeking due to ready');
-            player.currentTime(timestamp);
-          }
-
-          waitReadyRef.current = true;
-          console.log({ readyState: player.readyState() });
-          if (player.readyState() >= 3) {
-            sendMessage(`ready ${player.currentTime()}`);
-          }
+  useWebsocketMessages(
+    'videojs',
+    useCallback(
+      (msg: string) => {
+        const player = playerRef.current;
+        if (!player) {
+          return;
         }
-      });
-    },
-    [playerRef, waitReadyRef, sendMessage],
-  );
+        player.ready(function () {
+          if (msg === 'play') {
+            console.log('processing server message play');
+            player.play();
+          } else if (msg.startsWith('pause')) {
+            console.log('processing server message pause');
+            player.pause();
+            const timestamp = parseFloat(msg.split(' ')[1]);
+            const shouldSeek = Math.abs(player.currentTime() - timestamp) > 0.5;
+            if (shouldSeek) {
+              console.log('seeking due to pause');
+              player.currentTime(timestamp);
+            }
+          } else if (msg.startsWith('ready?')) {
+            console.log('processing server message ready');
+            player.pause();
+            const timestamp = parseFloat(msg.split(' ')[1]);
+            const shouldSeek = Math.abs(player.currentTime() - timestamp) > 0.5;
+            if (shouldSeek) {
+              console.log('seeking due to ready');
+              player.currentTime(timestamp);
+            }
 
-  useEffect(() => {
-    addMessageCallback('videojs', messageCallback);
-    return () => removeMessageCallback('videojs');
-  }, [messageCallback, addMessageCallback, removeMessageCallback]);
+            waitReadyRef.current = true;
+            console.log({ readyState: player.readyState() });
+            if (player.readyState() >= 3) {
+              sendMessage(`ready ${player.currentTime()}`);
+            }
+          }
+        });
+      },
+      [playerRef, waitReadyRef, sendMessage],
+    ),
+  );
 
   useEffect(() => {
     // make sure video.js is only initialized once
