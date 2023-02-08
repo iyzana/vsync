@@ -67,7 +67,7 @@ export const VideoJsPlayer = ({
           }
         });
       },
-      [playerRef, waitReadyRef, sendMessage],
+      [sendMessage],
     ),
   );
 
@@ -174,7 +174,7 @@ export const VideoJsPlayer = ({
       videoUrlRef.current = videoUrl;
       player.src(videoUrl);
     });
-  }, [playerRef, videoUrl]);
+  }, [videoUrl]);
 
   // dispose video.js when the component unmounts
   useEffect(() => {
@@ -187,7 +187,7 @@ export const VideoJsPlayer = ({
         waitReadyRef.current = false;
       }
     };
-  }, [playerRef, setVolume]);
+  }, [setVolume]);
 
   // video.js </3 react
   return <div className="video-player" ref={placeholderRef}></div>;

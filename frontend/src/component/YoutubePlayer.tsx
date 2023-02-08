@@ -123,9 +123,7 @@ function YoutubePlayer({
     player,
     videoUrl,
     oldState,
-    setOldState,
     hasEverPlayed,
-    setHasEverPlayed,
     preloadTime,
     initialized,
     setInitialized,
@@ -171,15 +169,7 @@ function YoutubePlayer({
     }, nextReadyCheck);
 
     return () => clearInterval(readyCheck);
-  }, [
-    player,
-    preloadTime,
-    hasEverPlayed,
-    setPreloadTime,
-    nextReadyCheck,
-    setNextReadyCheck,
-    sendMessage,
-  ]);
+  }, [player, preloadTime, hasEverPlayed, nextReadyCheck, sendMessage]);
 
   // sync volume before disposing youtube player
   useEffect(() => {
