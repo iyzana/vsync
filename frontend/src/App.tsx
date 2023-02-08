@@ -33,12 +33,9 @@ function App() {
     [key: string]: (msg: string) => void;
   }>({});
 
-  const addNotification = useCallback(
-    (notification: Notification) => {
-      setNotifications((notifications) => [...notifications, notification]);
-    },
-    [setNotifications],
-  );
+  const addNotification = useCallback((notification: Notification) => {
+    setNotifications((notifications) => [...notifications, notification]);
+  }, []);
 
   useEffect(() => {
     ws.onclose = () => {
@@ -92,7 +89,7 @@ function App() {
       });
     }, 3000);
     return () => clearTimeout(timeout);
-  }, [notifications, setNotifications]);
+  }, [notifications]);
 
   const addMessageCallback = useCallback(
     (name: string, callback: (msg: string) => void) => {
@@ -101,18 +98,15 @@ function App() {
         Object.assign(callbacks, { [name]: callback }),
       );
     },
-    [setMessageCallbacks],
+    [],
   );
-  const removeMessageCallback = useCallback(
-    (name: string) => {
-      console.log(`removing callback ${name}`);
-      setMessageCallbacks((callbacks) => {
-        const { [name]: removed, ...remaining } = callbacks;
-        return remaining;
-      });
-    },
-    [setMessageCallbacks],
-  );
+  const removeMessageCallback = useCallback((name: string) => {
+    console.log(`removing callback ${name}`);
+    setMessageCallbacks((callbacks) => {
+      const { [name]: removed, ...remaining } = callbacks;
+      return remaining;
+    });
+  }, []);
   const sendMessage = useCallback((message: string) => {
     console.log('sending websocket message: ' + message);
     ws.send(message);

@@ -13,15 +13,12 @@ function Infobox({ notifications, addNotification }: InfoboxProps) {
 
   useWebsocketMessages(
     'infobox',
-    useCallback(
-      (msg: string) => {
-        if (msg.startsWith('users')) {
-          const users = parseInt(msg.split(' ')[1]);
-          setNumUsers(users);
-        }
-      },
-      [setNumUsers],
-    ),
+    useCallback((msg: string) => {
+      if (msg.startsWith('users')) {
+        const users = parseInt(msg.split(' ')[1]);
+        setNumUsers(users);
+      }
+    }, []),
   );
 
   const copyLink = () => {

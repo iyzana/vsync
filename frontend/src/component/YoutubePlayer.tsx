@@ -85,7 +85,7 @@ function YoutubePlayer({
           setHasEverPlayed(false);
         }
       },
-      [player, hasEverPlayed, setHasEverPlayed, setVolume],
+      [player, hasEverPlayed, setVolume],
     ),
   );
 
@@ -222,7 +222,7 @@ function YoutubePlayer({
         }
       }
     },
-    [setPlayer, volume],
+    [volume],
   );
 
   const videoId = new URL(videoUrl).searchParams.get('v') ?? videoUrl;

@@ -20,7 +20,7 @@ function Sidebar({ notifications, addNotification }: SidebarProps) {
       sendMessage(`queue add ${input}`);
       setWorking(true);
     },
-    [sendMessage, setWorking],
+    [sendMessage],
   );
 
   return (

@@ -67,7 +67,7 @@ function Queue({ addNotification, setWorking }: QueueProps) {
           setWorking(false);
         }
       },
-      [setQueue, addNotification, setWorking],
+      [addNotification, setWorking],
     ),
   );
 
@@ -88,7 +88,7 @@ function Queue({ addNotification, setWorking }: QueueProps) {
       sendMessage(`queue order ${newOrder.join(',')}`);
       setQueue(videos);
     },
-    [queue, setQueue, sendMessage],
+    [queue, sendMessage],
   );
 
   const removeVideo = (id: string) => sendMessage(`queue rm ${id}`);

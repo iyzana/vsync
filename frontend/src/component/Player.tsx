@@ -46,20 +46,17 @@ function Player() {
 
   useWebsocketMessages(
     'player',
-    useCallback(
-      (msg: string) => {
-        if (msg === 'play') {
-          setOverlay(null);
-        } else if (msg.startsWith('pause')) {
-          setOverlay('PAUSED');
-        } else if (msg.startsWith('ready?')) {
-          setOverlay('SYNCING');
-        } else if (msg.startsWith('video')) {
-          setVideoUrl(msg.split(' ')[1]);
-        }
-      },
-      [setOverlay, setVideoUrl],
-    ),
+    useCallback((msg: string) => {
+      if (msg === 'play') {
+        setOverlay(null);
+      } else if (msg.startsWith('pause')) {
+        setOverlay('PAUSED');
+      } else if (msg.startsWith('ready?')) {
+        setOverlay('SYNCING');
+      } else if (msg.startsWith('video')) {
+        setVideoUrl(msg.split(' ')[1]);
+      }
+    }, []),
   );
 
   return (
