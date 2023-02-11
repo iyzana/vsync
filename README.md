@@ -1,17 +1,17 @@
-# yt-sync
+# vsync
 
-Allows for synchronous watching of YouTube videos with other humans.
+Allows for synchronous watching of online-videos with other humans.
+Supports YouTube videos as well as videos from many other websites.
 Provides a queue to watch multiple videos one after another.
-Go to `https://yt.randomerror.de/` and share the generated link for others to join.
+Go to `https://vsync.randomerror.de/` and share the generated link for others to join.
 
 All connected humans can queue, play/pause or seek in the video,
 the control is not limited to the creator of the room.
-The YouTube player, including all its shortcuts, can be utilized fully.
+For YouTube videos the YouTube player, including all its shortcuts, can be utilized fully.
 No pop-ups asking you to create/join a room, no strange external control bar.
 
-Queue videos by YouTube-Link, Youtube-Id or any query.
-When entering a query the first search result will be added to the queue,
-use at your own risk.
+Queue videos by Link, Youtube-Id or any query.
+When entering a query the first YouTube result will be added to the queue, use at your own risk.
 
 ![screenshot](./screenshot.png)
 
@@ -20,7 +20,6 @@ use at your own risk.
 - playback speed synchronization
 - not sure what happens for people without an [ad blocker](https://github.com/gorhill/uBlock/)
 - playlist support
-- kick clients that do not respond to `ready?` events
 - handle unplayable videos
 
 ## running using docker
@@ -37,7 +36,7 @@ a reverse proxy for these services.
 
 ## manually building and running the backend
 
-The backend is a Kotlin application, a Java installation is required to compile and run it.
+The backend is a Kotlin application, a Java 17 installation is required to compile and run it.
 
 To compile the backend on Linux run the following commands:
 
@@ -48,7 +47,7 @@ cd backend
 
 The Jar-file of the application will be written to `build/libs/yt-sync-all.jar`.
 Copy it to your preferred location and then run it using `java -jar yt-sync-all.jar`.
-The application requires `youtube-dl` to be installed for fetching video information.
+The application requires `yt-dlp` to be installed for fetching video information.
 
 ## manually building and running the frontend
 
