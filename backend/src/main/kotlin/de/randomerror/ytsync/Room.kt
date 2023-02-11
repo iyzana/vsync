@@ -1,59 +1,20 @@
 package de.randomerror.ytsync
 
+import org.eclipse.jetty.http.HttpStatus
 import org.eclipse.jetty.websocket.api.Session
-import java.time.Instant
 import java.util.*
 import kotlin.concurrent.thread
+
+private const val ROOM_CLOSE_TIMEOUT_MS = 15L * 1000
+private const val ROOM_ID_BYTES = 3
 
 val sessions: MutableMap<Session, RoomId> = HashMap()
 val rooms: MutableMap<RoomId, Room> = HashMap()
 private val random = Random()
 
-@JvmInline
-value class RoomId(val roomId: String)
-
-data class Room(
-    val participants: MutableList<User>,
-    val queue: MutableList<QueueItem> = mutableListOf(),
-    var shutdownThread: Thread? = null,
-    var timeoutSyncAt: Instant? = null,
-    var ignorePauseTill: Instant? = null,
-    var ignoreEndTill: Instant? = null
-)
-
-data class QueueItem(
-    val url: String,
-    val originalQuery: String,
-    val title: String,
-    val thumbnail: String?,
-    val id: String = UUID.nameUUIDFromBytes(url.toByteArray()).toString(),
-)
-
-data class User(
-    val session: Session,
-    var syncState: SyncState = SyncState.NotStarted
-)
-
 fun getRoom(session: Session): Room {
     val roomId = sessions[session] ?: throw Disconnect()
     return rooms[roomId]!!
-}
-
-fun Room.getUser(
-    session: Session
-) = participants.find { it.session == session }!!
-
-fun Room.broadcastActive(session: Session, message: String) {
-    log(session, "broadcast: $message")
-    participants
-        .filter { it.syncState != SyncState.NotStarted }
-        .forEach { member -> member.session.remote.sendStringByFuture(message) }
-}
-
-fun Room.broadcastAll(session: Session, message: String) {
-    log(session, "broadcast all: $message")
-    participants
-        .forEach { member -> member.session.remote.sendStringByFuture(message) }
 }
 
 fun createRoom(session: Session, roomId: RoomId = generateRoomId()): String {
@@ -67,7 +28,7 @@ fun createRoom(session: Session, roomId: RoomId = generateRoomId()): String {
 }
 
 private fun generateRoomId(): RoomId {
-    val bytes = ByteArray(3)
+    val bytes = ByteArray(ROOM_ID_BYTES)
     random.nextBytes(bytes)
     return RoomId(String(Base64.getUrlEncoder().encode(bytes)))
 }
@@ -117,7 +78,7 @@ private fun scheduleRoomClose(
 ) {
     room.shutdownThread = thread {
         try {
-            Thread.sleep(15 * 1000)
+            Thread.sleep(ROOM_CLOSE_TIMEOUT_MS)
         } catch (e: InterruptedException) {
             // interrupt the shutdown
             return@thread
@@ -129,5 +90,5 @@ private fun scheduleRoomClose(
 
 fun kill(session: Session, reason: String = "invalid command") {
     session.remote.sendStringByFuture(reason)
-    session.close(400, reason)
+    session.close(HttpStatus.BAD_REQUEST_400, reason)
 }

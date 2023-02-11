@@ -10,7 +10,9 @@ import org.eclipse.jetty.websocket.api.annotations.OnWebSocketConnect
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage
 import org.eclipse.jetty.websocket.api.annotations.WebSocket
 import org.slf4j.LoggerFactory
-import spark.Spark.*
+import spark.Spark.init
+import spark.Spark.webSocket
+import spark.Spark.webSocketIdleTimeoutMillis
 import java.io.IOException
 import java.nio.ByteBuffer
 import java.util.concurrent.Executors
@@ -22,6 +24,9 @@ import kotlin.concurrent.thread
 val gson = Gson()
 private val logger = KotlinLogging.logger {}
 
+private const val WEBSOCKET_IDLE_TIMEOUT = 75L
+private const val WEBSOCKET_KEEPALIVE = 30L
+
 fun main() {
     (LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME) as Logger).level = Level.INFO
 
@@ -32,7 +37,7 @@ fun main() {
         }
     }
 
-    webSocketIdleTimeoutMillis(SECONDS.toMillis(75).toInt())
+    webSocketIdleTimeoutMillis(SECONDS.toMillis(WEBSOCKET_IDLE_TIMEOUT).toInt())
     webSocket("/room", SyncWebSocket::class.java)
     init()
 }
@@ -55,24 +60,24 @@ private val local = ThreadLocal<String?>()
 
 @WebSocket
 class SyncWebSocket {
-    private val keepaliveScheduler = Executors.newScheduledThreadPool(1)
-    private val keepaliveTasks = mutableMapOf<Session, ScheduledFuture<*>>()
+    private val keepAliveScheduler = Executors.newScheduledThreadPool(1)
+    private val keepAliveTasks = mutableMapOf<Session, ScheduledFuture<*>>()
 
     @OnWebSocketConnect
     fun connected(session: Session) {
         local.set(null)
         log(session, "<connect>")
-        val keepaliveTask = keepaliveScheduler.scheduleAtFixedRate({
+        val keepaliveTask = keepAliveScheduler.scheduleAtFixedRate({
             session.remote.sendPing(ByteBuffer.allocate(1))
-        }, 30, 30, SECONDS)
-        keepaliveTasks[session] = keepaliveTask
+        }, WEBSOCKET_KEEPALIVE, WEBSOCKET_KEEPALIVE, SECONDS)
+        keepAliveTasks[session] = keepaliveTask
     }
 
     @OnWebSocketClose
     fun closed(session: Session, statusCode: Int, reason: String?) {
         log(session, "<$statusCode disconnect> $reason")
         close(session)
-        keepaliveTasks.remove(session)!!.cancel(true)
+        keepAliveTasks.remove(session)!!.cancel(true)
     }
 
     @OnWebSocketMessage
@@ -88,33 +93,40 @@ class SyncWebSocket {
         local.set(cmdString)
         log(session, "<-")
         try {
-            val response = when {
-                cmd.size == 1 && cmd[0] == "create" -> createRoom(session)
-                cmd.size == 2 && cmd[0] == "join" -> joinRoom(RoomId(cmd[1]), session)
-                cmd.size == 2 && cmd[0] == "play" -> coordinatePlay(session, cmd[1].asTimeStamp(), isPlaying = true)
-                cmd.size == 2 && cmd[0] == "pause" -> coordinateClientPause(session, cmd[1].asTimeStamp())
-                cmd.size == 2 && cmd[0] == "ready" -> setReady(session, cmd[1].asTimeStamp())
-                cmd.size == 1 && cmd[0] == "sync" -> sync(session)
-                cmd.size == 2 && cmd[0] == "end" -> setEnded(session, cmd[1])
-                cmd.size == 2 && cmd[0] == "buffer" -> handleBuffering(session, cmd[1].asTimeStamp())
-                cmd.size >= 3 && cmd[0] == "queue" && cmd[1] == "add" ->
-                    enqueue(session, cmd.subList(2, cmd.size).joinToString(" "))
-                cmd.size == 3 && cmd[0] == "queue" && cmd[1] == "rm" -> dequeue(session, cmd[2])
-                cmd.size == 3 && cmd[0] == "queue" && cmd[1] == "order" -> reorder(session, cmd[2])
-                cmd.size == 2 && cmd[0] == "speed" -> setSpeed(session, cmd[1].toDouble())
-                cmd.size == 1 && cmd[0] == "skip" -> skip(session)
-                else -> throw Disconnect()
-            }
+            val response = dispatchCommand(cmd, session)
             log(session, "-> $response")
-        } catch (e: Disconnect) {
+        } catch (_: Disconnect) {
             log(session, "<err>")
             kill(session)
         }
         local.set(null)
     }
-}
 
-class Disconnect(message: String = "invalid command") : RuntimeException(message)
+    private fun dispatchCommand(cmd: List<String>, session: Session) = when {
+        matches(cmd, "create") -> createRoom(session)
+        matches(cmd, "join", 1) -> joinRoom(RoomId(cmd[1]), session)
+        matches(cmd, "play", 1) -> coordinatePlay(session, cmd[1].asTimeStamp(), isPlaying = true)
+        matches(cmd, "pause", 1) -> coordinateClientPause(session, cmd[1].asTimeStamp())
+        matches(cmd, "ready", 1) -> clientIsReady(session, cmd[1].asTimeStamp())
+        matches(cmd, "sync") -> sync(session)
+        matches(cmd, "end", 1) -> setEnded(session, cmd[1])
+        matches(cmd, "buffer", 1) -> handleBuffering(session, cmd[1].asTimeStamp())
+        matchesMinArgs(cmd, "queue", "add") -> enqueue(session, cmd.subList(2, cmd.size).joinToString(" "))
+        matches(cmd, "queue", "rm", 1) -> dequeue(session, cmd[2])
+        matches(cmd, "queue", "order", 1) -> reorder(session, cmd[2])
+        // args == 2 && command == "speed" -> setSpeed(session, cmd[1].toDouble())
+        matches(cmd, "skip") -> skip(session)
+        else -> throw Disconnect()
+    }
+
+    private fun matches(cmd: List<String>, command: String, args: Int = 0) = (cmd.size - 1) == args && cmd[0] == command
+
+    private fun matches(cmd: List<String>, command: String, subcommand: String, args: Int = 0) =
+        (cmd.size - 2) == args && cmd[0] == command && cmd[1] == subcommand
+
+    private fun matchesMinArgs(cmd: List<String>, command: String, subcommand: String, minArgs: Int = 1) =
+        (cmd.size - 2) >= minArgs && cmd[0] == command && cmd[1] == subcommand
+}
 
 fun log(session: Session, message: String) {
     val roomId = sessions[session]?.let { "@${it.roomId} " } ?: ""

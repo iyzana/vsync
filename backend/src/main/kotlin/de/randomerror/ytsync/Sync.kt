@@ -2,39 +2,15 @@ package de.randomerror.ytsync
 
 import org.eclipse.jetty.websocket.api.Session
 import java.time.Instant
-import kotlin.math.abs
 
-@JvmInline
-value class TimeStamp(val second: Double)
-
-fun String.asTimeStamp(): TimeStamp {
-    return TimeStamp(toDouble())
-}
-
-sealed class SyncState {
-    object NotStarted : SyncState()
-    class Paused(val timestamp: TimeStamp = TimeStamp(0.0)) : SyncState()
-    class AwaitReady(val timestamp: TimeStamp) : SyncState()
-    class Ready(val timestamp: TimeStamp) : SyncState()
-    class Playing(
-        private val startTime: Instant,
-        private val videoTimestamp: TimeStamp
-    ) : SyncState() {
-        val timestamp: TimeStamp
-            get() {
-                // todo: calculate playback-speed
-                val timePlaying = Instant.now().epochSecond - startTime.epochSecond
-                val currentTime = videoTimestamp.second + timePlaying
-                return TimeStamp(currentTime)
-            }
-    }
-}
+private const val SYNC_TIMEOUT = 20L
+private const val IGNORE_DURATION = 2L
 
 fun coordinatePlay(session: Session, timestamp: TimeStamp, isPlaying: Boolean = false): String {
     val room = getRoom(session)
     val user = room.getUser(session)
     if (room.timeoutSyncAt == null) {
-        room.timeoutSyncAt = Instant.now().plusSeconds(20)
+        room.timeoutSyncAt = Instant.now().plusSeconds(SYNC_TIMEOUT)
     }
     val timeout = room.timeoutSyncAt
     if (timeout != null && Instant.now() > timeout) {
@@ -43,13 +19,13 @@ fun coordinatePlay(session: Session, timestamp: TimeStamp, isPlaying: Boolean = 
     if (isPlaying && user.syncState !is SyncState.AwaitReady) {
         user.syncState = SyncState.Playing(Instant.now(), timestamp)
     }
-    if (room.participants.all { isReadyOrPlaying(it.syncState, timestamp) }) {
+    if (room.participants.all { it.syncState.isReadyOrPlayingAt(timestamp) }) {
         room.timeoutSyncAt = null
-        if (!room.participants.all { isPlaying(it.syncState, timestamp) }) {
-            startPlay(session, room, timestamp)
+        if (!room.participants.all { it.syncState.isPlayingAt(timestamp) }) {
+            setPlaying(session, room, timestamp)
         }
     } else {
-        coordinateServerPause(session, room, timestamp)
+        setPaused(session, room, timestamp)
         room.setSyncState(SyncState.AwaitReady(timestamp))
         room.broadcastActive(session, "ready? ${timestamp.second}")
     }
@@ -62,50 +38,26 @@ fun kickSlowClients(room: Room) {
         .forEach { kill(it.session, "sync timed out") }
 }
 
-fun setReady(session: Session, timestamp: TimeStamp): String {
+fun clientIsReady(session: Session, timestamp: TimeStamp): String {
     val room = getRoom(session)
     val user = room.getUser(session)
     user.syncState = SyncState.Ready(timestamp)
-    if (room.participants.all { isReadyOrPlaying(it.syncState, timestamp) }) {
-        startPlay(session, room, timestamp)
+    if (room.participants.all { it.syncState.isReadyOrPlayingAt(timestamp) }) {
+        setPlaying(session, room, timestamp)
     }
     return "ready"
 }
 
-private fun startPlay(session: Session, room: Room, timestamp: TimeStamp) {
+private fun setPlaying(session: Session, room: Room, timestamp: TimeStamp) {
     room.setSyncState(SyncState.Playing(Instant.now(), timestamp))
     room.ignorePauseTill = null
     room.broadcastActive(session, "play")
 }
 
-private fun isReadyOrPlaying(state: SyncState, timestamp: TimeStamp): Boolean {
-    return when (state) {
-        is SyncState.Ready -> {
-            val diff = abs(state.timestamp.second - timestamp.second)
-            diff <= 1.5
-        }
-        is SyncState.Playing -> {
-            val diff = abs(state.timestamp.second - timestamp.second)
-            diff <= 1.5
-        }
-        is SyncState.NotStarted -> {
-            true // ignore unstarted clients
-        }
-        else -> false
-    }
-}
-
-private fun isPlaying(state: SyncState, timestamp: TimeStamp): Boolean {
-    return when (state) {
-        is SyncState.Playing -> {
-            val diff = abs(state.timestamp.second - timestamp.second)
-            diff <= 1.5
-        }
-        is SyncState.NotStarted -> {
-            true // ignore unstarted clients
-        }
-        else -> false
-    }
+private fun setPaused(session: Session, room: Room, timestamp: TimeStamp) {
+    room.setSyncState(SyncState.Paused(timestamp))
+    room.ignorePauseTill = Instant.now().plusSeconds(IGNORE_DURATION)
+    room.broadcastActive(session, "pause ${timestamp.second}")
 }
 
 fun coordinateClientPause(session: Session, timestamp: TimeStamp): String {
@@ -119,19 +71,8 @@ fun coordinateClientPause(session: Session, timestamp: TimeStamp): String {
         return "pause ignore"
     }
     room.timeoutSyncAt = null
-    room.setSyncState(SyncState.Paused(timestamp))
-    ignoreUpcomingPause(room)
-    room.participants
-        .filter { it.syncState != SyncState.NotStarted }
-        .filter { it.session != session }
-        .forEach { it.session.remote.sendStringByFuture("pause ${timestamp.second}") }
+    setPaused(session,room, timestamp)
     return "pause client"
-}
-
-private fun coordinateServerPause(session: Session, room: Room, timestamp: TimeStamp) {
-    room.setSyncState(SyncState.Paused(timestamp))
-    ignoreUpcomingPause(room)
-    room.broadcastActive(session, "pause ${timestamp.second}")
 }
 
 fun sync(session: Session): String {
@@ -148,23 +89,27 @@ fun sync(session: Session): String {
     } else {
         return when (val state = activeMembers.find { it.session != session }!!.syncState) {
             is SyncState.Paused -> {
-                coordinateServerPause(session, room, state.timestamp)
+                setPaused(session, room, state.timestamp)
                 "sync pause"
             }
+
             is SyncState.Ready -> {
                 coordinatePlay(session, state.timestamp)
                 "sync ready"
             }
+
             is SyncState.AwaitReady -> {
                 coordinatePlay(session, state.timestamp)
                 "sync awaitready"
             }
+
             is SyncState.Playing -> {
                 coordinatePlay(session, state.timestamp)
                 "sync playing"
             }
+
             is SyncState.NotStarted -> {
-                throw IllegalStateException("sync to unstarted")
+                error("sync to unstarted")
             }
         }
     }
@@ -182,7 +127,7 @@ fun setEnded(session: Session, queueId: String): String {
         if (room.queue.isEmpty()) return "end empty"
         if (room.queue[0].url != queueId) return "end old"
 
-        room.ignoreEndTill = Instant.now().plusSeconds(2)
+        room.ignoreEndTill = Instant.now().plusSeconds(IGNORE_DURATION)
         playNext(session, room)
     }
 
@@ -201,13 +146,9 @@ fun playNext(session: Session, room: Room) {
     }
 }
 
-private fun ignoreUpcomingPause(room: Room) {
-    room.ignorePauseTill = Instant.now().plusSeconds(2)
-}
-
-fun setSpeed(session: Session, speed: Double): String {
-    TODO()
-}
+//fun setSpeed(session: Session, speed: Double): String {
+//    TODO()
+//}
 
 fun handleBuffering(session: Session, timestamp: TimeStamp): String {
     val room = getRoom(session)
@@ -221,11 +162,5 @@ fun handleBuffering(session: Session, timestamp: TimeStamp): String {
     user.syncState = SyncState.Paused(timestamp)
     coordinatePlay(session, timestamp)
     return "buffer"
-}
-
-private fun Room.setSyncState(state: SyncState) {
-    participants
-        .filter { it.syncState != SyncState.NotStarted }
-        .forEach { it.syncState = state }
 }
 

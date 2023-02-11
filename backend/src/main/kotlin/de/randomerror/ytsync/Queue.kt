@@ -4,15 +4,19 @@ import com.google.gson.JsonParser
 import mu.KotlinLogging
 import org.eclipse.jetty.websocket.api.Session
 import java.io.StringWriter
+import java.lang.AssertionError
+import java.lang.UnsupportedOperationException
 import java.time.Instant
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import kotlin.text.RegexOption.IGNORE_CASE
 
-val youtubeUrlRegex: Regex =
+private const val YT_DLP_TIMEOUT = 5L
+
+private val youtubeUrlRegex: Regex =
     Regex("""https://(?:www\.)?youtu(?:\.be|be\.com)/(?:watch\?v=|embed/)?([^?&]+)(?:.*)?""", IGNORE_CASE)
-val videoInfoFetcher: ExecutorService = Executors.newCachedThreadPool()
+private val videoInfoFetcher: ExecutorService = Executors.newCachedThreadPool()
 
 private val logger = KotlinLogging.logger {}
 
@@ -97,7 +101,7 @@ private fun fetchVideoInfo(query: String, fromYoutube: Boolean): QueueItem? {
     val process = Runtime.getRuntime().exec(buildYtDlpCommand(fromYoutube, query))
     val result = StringWriter()
     process.inputStream.bufferedReader().copyTo(result)
-    if (!process.waitFor(5, TimeUnit.SECONDS)) {
+    if (!process.waitFor(YT_DLP_TIMEOUT, TimeUnit.SECONDS)) {
         logger.warn("ytdl timeout")
         process.destroy()
         return null
@@ -113,12 +117,14 @@ private fun fetchVideoInfo(query: String, fromYoutube: Boolean): QueueItem? {
         val urlElement = if (fromYoutube) {
             video["webpage_url"]
         } else {
-            video["manifest_url"] ?: video["url"] ?: return null
-        }
-        val title = video["title"].asString
+            video["manifest_url"] ?: video["url"]
+        }?.asString ?: return null
+        val title = video["title"]?.asString
         val thumbnail = video["thumbnail"]?.asString
-        QueueItem(urlElement.asString, query, title, thumbnail)
-    } catch (e: Exception) {
+        QueueItem(urlElement, query, title, thumbnail)
+    } catch (_: AssertionError) {
+        null
+    } catch (_: UnsupportedOperationException) {
         null
     }
 }
