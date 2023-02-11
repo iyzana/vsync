@@ -7,7 +7,7 @@ RUN ./gradlew build
 COPY src ./src
 RUN ./gradlew shadowJar
 
-FROM openjdk:14-alpine
+FROM eclipse-temurin:17-jre-alpine
 RUN apk update
 RUN apk add python3
 RUN ln -s /usr/bin/python3 /usr/bin/python
