@@ -116,14 +116,18 @@ function Queue({ addNotification, setWorking }: QueueProps) {
             return (
               <li key={id} className="queue-item">
                 <div className="video-info">
-                  <img className="thumbnail" src={thumbnail} alt="" />
+                  <img
+                    className="thumbnail"
+                    src={thumbnail || undefined}
+                    alt="Video thumbnail, content unknown"
+                  />
                   <div>
                     <img
                       className="favicon"
                       src={favicon.toString()}
                       alt={`favicon of ${favicon.host}`}
                     ></img>{' '}
-                    {title}
+                    {title || 'No title'}
                   </div>
                 </div>
                 <button className="remove" onClick={() => removeVideo(id)}>
