@@ -67,6 +67,7 @@
   display: flex;
   flex-flow: row nowrap;
   cursor: grab;
+  align-items: flex-start;
 }
 
 .remove {
