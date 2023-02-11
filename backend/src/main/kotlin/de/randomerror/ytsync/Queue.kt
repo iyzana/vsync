@@ -1,33 +1,24 @@
 package de.randomerror.ytsync
 
-import com.google.gson.JsonParser
 import mu.KotlinLogging
 import org.eclipse.jetty.websocket.api.Session
-import java.io.StringWriter
-import java.lang.AssertionError
-import java.lang.UnsupportedOperationException
 import java.time.Instant
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
 import kotlin.text.RegexOption.IGNORE_CASE
-
-private const val YT_DLP_TIMEOUT = 5L
 
 private val youtubeUrlRegex: Regex =
     Regex("""https://(?:www\.)?youtu(?:\.be|be\.com)/(?:watch\?v=|embed/)?([^?&]+)(?:.*)?""", IGNORE_CASE)
 private val videoInfoFetcher: ExecutorService = Executors.newCachedThreadPool()
 
-private val logger = KotlinLogging.logger {}
-
 fun enqueue(session: Session, query: String): String {
     val room = getRoom(session)
 
-    val youtubeIdMatch = youtubeUrlRegex.find(query)?.let { it.groups[1]!!.value }
-    if (youtubeIdMatch != null) {
+    val youtubeId = youtubeUrlRegex.find(query)?.let { it.groups[1]!!.value }
+    if (youtubeId != null) {
         synchronized(room.queue) {
             if (room.queue.size == 0) {
-                val fallbackVideo = getFallbackYoutubeVideo(query, youtubeIdMatch)
+                val fallbackVideo = getFallbackYoutubeVideo(query, youtubeId)
                 // this is the first video it does not go into the queue, we don't need any video info
                 room.queue.add(fallbackVideo)
                 room.broadcastAll(session, "video ${fallbackVideo.url}")
@@ -36,9 +27,8 @@ fun enqueue(session: Session, query: String): String {
         }
     }
     videoInfoFetcher.execute {
-        val fromYoutube = youtubeIdMatch != null || !query.matches(Regex("^(ftp|https?)://.*"))
         // try to get video info, but if it fails, use the fallback info so that the video at least plays
-        val video = fetchVideoInfo(query, fromYoutube) ?: youtubeIdMatch?.let { getFallbackYoutubeVideo(query, it) }
+        val video = fetchVideoInfo(query, youtubeId) ?: youtubeId?.let { getFallbackYoutubeVideo(query, it) }
         if (video == null) {
             log(session, "queue err not-found")
             session.remote.sendStringByFuture("queue err not-found")
@@ -58,15 +48,6 @@ fun enqueue(session: Session, query: String): String {
         }
     }
     return "queue"
-}
-
-private fun getFallbackYoutubeVideo(query: String, match: String): QueueItem {
-    return QueueItem(
-        "https://www.youtube.com/watch?v=$match",
-        query,
-        "Unknown video $match",
-        "https://i.ytimg.com/vi/$match/maxresdefault.jpg"
-    )
 }
 
 fun dequeue(session: Session, queueId: String): String {
@@ -95,57 +76,6 @@ fun reorder(session: Session, order: String): String {
     room.broadcastAll(session, "queue order $order")
 
     return "queue order ok"
-}
-
-private fun fetchVideoInfo(query: String, fromYoutube: Boolean): QueueItem? {
-    val process = Runtime.getRuntime().exec(buildYtDlpCommand(fromYoutube, query))
-    val result = StringWriter()
-    process.inputStream.bufferedReader().copyTo(result)
-    if (!process.waitFor(YT_DLP_TIMEOUT, TimeUnit.SECONDS)) {
-        logger.warn("ytdl timeout")
-        process.destroy()
-        return null
-    }
-    if (process.exitValue() != 0) {
-        logger.warn("ytdl err")
-        logger.warn(process.errorStream.bufferedReader().readText())
-        return null
-    }
-    val videoData = result.buffer.toString()
-    val video = JsonParser.parseString(videoData).asJsonObject
-    return try {
-        val urlElement = if (fromYoutube) {
-            video["webpage_url"]
-        } else {
-            video["manifest_url"] ?: video["url"]
-        }?.asString ?: return null
-        val title = video["title"]?.asString
-        val thumbnail = video["thumbnail"]?.asString
-        QueueItem(urlElement, query, title, thumbnail)
-    } catch (_: AssertionError) {
-        null
-    } catch (_: UnsupportedOperationException) {
-        null
-    }
-}
-
-private fun buildYtDlpCommand(fromYoutube: Boolean, query: String): Array<String> {
-    val command = mutableListOf(
-        "yt-dlp",
-        "--default-search", "ytsearch",
-        "--no-playlist",
-        "--dump-json",
-    )
-    if (!fromYoutube) {
-        // only allow pre-merged formats except from youtube
-        // m3u8 can be problematic if the hoster does not set a access-control-allow-origin header
-        command.add("-f")
-        command.add("b")
-    }
-    command.add("--")
-    command.add(query)
-    println("command = $command")
-    return command.toTypedArray()
 }
 
 fun skip(session: Session): String {
