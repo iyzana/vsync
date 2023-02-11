@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#000000" />
     <meta name="description" content="Watch any video in sync" />
+    <link rel="stylesheet" href="%PUBLIC_URL%/noscript.css" />
     <!-- <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" /> -->
     <!--
       manifest.json provides metadata used when your web app is installed on a
@@ -25,9 +26,14 @@
   </head>
   <body>
     <noscript>
-      vsync provides live video synchronization between connected clients.
-      JavaScript is required for sending and receiving websocket messages and
-      integrating the YouTube player.
+      <div class="noscript">
+        <div>
+          <h1>JavaScript required</h1>
+          vsync provides live video synchronization between connected clients.
+          JavaScript is required for sending and receiving websocket messages
+          and integrating the video player.
+        </div>
+      </div>
     </noscript>
     <div id="root"></div>
     <!--
