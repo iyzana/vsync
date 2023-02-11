@@ -9,12 +9,35 @@
   justify-content: space-between;
 }
 
-.infobox.info {
+.infobox.success {
   background-color: #147447;
+}
+
+.infobox.info {
+  background-color: #005187;
 }
 
 .infobox.error {
   background-color: #880011;
+}
+
+.remaining {
+  background-color: var(--card);
+  padding: var(--s0);
+  margin: calc(-1 * var(--s0)) 0;
+  border-radius: var(--radius);
+}
+
+.infobox.success .remaining {
+  background-color: #0d492c;
+}
+
+.infobox.info .remaining {
+  background-color: #003254;
+}
+
+.infobox.error .remaining {
+  background-color: #55000b;
 }
 
 .copylink {

@@ -1,5 +1,5 @@
 export default interface Notification {
   message: string;
-  level: 'info' | 'error';
+  level: 'success' | 'info' | 'error';
   permanent: boolean;
 }

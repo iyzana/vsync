@@ -54,14 +54,14 @@ function Queue({ addNotification, setWorking }: QueueProps) {
         } else if (msg === 'queue err not-found') {
           addNotification({
             message: 'No video found',
-            level: 'error',
+            level: 'info',
             permanent: false,
           });
           setWorking(false);
         } else if (msg === 'queue err duplicate') {
           addNotification({
             message: 'Already in queue',
-            level: 'error',
+            level: 'info',
             permanent: false,
           });
           setWorking(false);
@@ -101,7 +101,7 @@ function Queue({ addNotification, setWorking }: QueueProps) {
           <div className="status">
             {queue.length === 0 ? null : (
               <button className="skip" onClick={skip}>
-                SKIP <FontAwesomeIcon icon={faAngleDoubleRight} />
+                Skip <FontAwesomeIcon icon={faAngleDoubleRight} />
               </button>
             )}
           </div>

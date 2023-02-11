@@ -34,17 +34,27 @@ function App() {
   }>({});
 
   const addNotification = useCallback((notification: Notification) => {
-    setNotifications((notifications) => [...notifications, notification]);
+    setNotifications((notifications) => [
+      ...notifications.filter((notification) => !notification.permanent),
+      notification,
+      ...notifications.filter((notification) => notification.permanent),
+    ]);
   }, []);
 
   useEffect(() => {
     ws.onclose = () => {
       console.log('disconnected');
-      addNotification({
-        message: 'Connection lost',
-        level: 'error',
-        permanent: true,
-      });
+      // wait 200ms before showing connection lost because on site-reload
+      // firefox first closes the websocket resulting in the error briefly
+      // showing up when it is not necessary
+      const timeout = setTimeout(() => {
+        addNotification({
+          message: 'Connection lost',
+          level: 'error',
+          permanent: true,
+        });
+      }, 200);
+      return () => clearTimeout(timeout);
     };
   }, [addNotification]);
 
@@ -77,7 +87,8 @@ function App() {
   }, [addNotification, messageCallbacks]);
 
   useEffect(() => {
-    if (notifications.length === 0) {
+    if (!notifications.find((notification) => !notification.permanent)) {
+      // no non-permanent notifications
       return;
     }
     const timeout = setTimeout(() => {
@@ -85,9 +96,10 @@ function App() {
         const dismissIndex = notifications.findIndex(
           (notification) => !notification.permanent,
         );
-        return notifications.splice(dismissIndex, 1);
+        console.log(`dismissing ${dismissIndex}`);
+        return dismissIndex === -1 ? notifications : notifications.slice(1);
       });
-    }, 3000);
+    }, 2000);
     return () => clearTimeout(timeout);
   }, [notifications]);
 

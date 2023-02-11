@@ -32,8 +32,8 @@ function Infobox({ notifications, addNotification }: InfoboxProps) {
     }
     navigator.clipboard.writeText(window.location.href);
     addNotification({
-      message: 'Link copied',
-      level: 'info',
+      message: 'Room link copied to clipboard',
+      level: 'success',
       permanent: false,
     });
   };
@@ -45,15 +45,22 @@ function Infobox({ notifications, addNotification }: InfoboxProps) {
       className={`infobox ${notification != null ? notification.level : ''}`}
     >
       {notification != null ? (
-        <span className="">{notifications[0].message}</span>
+        <>
+          <span>{notifications[0].message}</span>
+          {notifications.length > 1 ? (
+            <span className="remaining">
+              {notifications.length - 1} remaining
+            </span>
+          ) : null}
+        </>
       ) : (
         <>
           <span className="connections">
-            {numUsers === 1 ? 'no one else connected' : `${numUsers} connected`}
+            {numUsers === 1 ? 'No one else connected' : `${numUsers} connected`}
           </span>
           <div>
             <button className="copylink" onClick={copyLink}>
-              COPY LINK
+              Copy room link
             </button>
           </div>
         </>

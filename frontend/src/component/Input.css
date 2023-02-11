@@ -18,12 +18,6 @@
   border-radius: 0 0 var(--radius) var(--radius);
 }
 
-.error {
-  width: 100%;
-  background-color: #880011;
-  padding: var(--s0);
-}
-
 .input-send {
   background-color: unset;
 }
