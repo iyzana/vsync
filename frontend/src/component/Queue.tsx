@@ -7,17 +7,17 @@ import { useCallback, useContext, useState } from 'react';
 import Notification from '../model/Notification';
 import { useWebsocketMessages } from '../hook/websocket-messages';
 import { WebsocketContext } from '../context/websocket';
+import FavIcon from './FavIcon';
 
-const faviconUrl = (url: string, originalQuery: string) => {
+const getDomain = (item: QueueItem) => {
   let baseUrl;
   try {
-    baseUrl = new URL(originalQuery);
+    baseUrl = new URL(item.originalQuery);
   } catch (e) {
-    baseUrl = new URL(url);
+    baseUrl = new URL(item.url);
   }
-  baseUrl.search = '';
-  baseUrl.pathname = 'favicon.ico';
-  return baseUrl;
+  const host = baseUrl.hostname;
+  return host.replace(/^www./, '');
 };
 
 interface QueueProps {
@@ -111,26 +111,24 @@ function Queue({ addNotification, setWorking }: QueueProps) {
           setList={reorderQueue}
           className="queue-list"
         >
-          {queue.map(({ title, thumbnail, id, url, originalQuery }) => {
-            const favicon = faviconUrl(url, originalQuery);
+          {queue.map((item) => {
             return (
-              <li key={id} className="queue-item">
+              <li key={item.id} className="queue-item">
                 <div className="video-info">
                   <img
                     className="thumbnail"
-                    src={thumbnail || undefined}
+                    src={item.thumbnail || undefined}
                     alt="Video thumbnail, content unknown"
                   />
                   <div>
-                    <img
-                      className="favicon"
-                      src={favicon.toString()}
-                      alt={`favicon of ${favicon.host}`}
-                    ></img>{' '}
-                    {title || 'No title'}
+                    <div>{item.title || 'No title'}</div>
+                    <div className="hostname">
+                      <FavIcon item={item} />{' '}
+                      <span>{getDomain(item)}</span>
+                    </div>
                   </div>
                 </div>
-                <button className="remove" onClick={() => removeVideo(id)}>
+                <button className="remove" onClick={() => removeVideo(item.id)}>
                   <FontAwesomeIcon icon={faTimes} />
                 </button>
               </li>

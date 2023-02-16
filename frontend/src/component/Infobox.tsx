@@ -2,6 +2,10 @@ import './Infobox.css';
 import { useCallback, useState } from 'react';
 import Notification from '../model/Notification';
 import { useWebsocketMessages } from '../hook/websocket-messages';
+import Dialog from './Dialog';
+import About from './About';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 
 interface InfoboxProps {
   notifications: Notification[];
@@ -9,6 +13,7 @@ interface InfoboxProps {
 }
 
 function Infobox({ notifications, addNotification }: InfoboxProps) {
+  const [about, setAbout] = useState(false);
   const [numUsers, setNumUsers] = useState(1);
 
   useWebsocketMessages(
@@ -58,13 +63,21 @@ function Infobox({ notifications, addNotification }: InfoboxProps) {
           <span className="connections">
             {numUsers === 1 ? 'No one else connected' : `${numUsers} connected`}
           </span>
-          <div>
+          <div className="interact">
+            <FontAwesomeIcon
+              className="about"
+              icon={faQuestionCircle}
+              onClick={() => setAbout(true)}
+            />
             <button className="copylink" onClick={copyLink}>
               Copy room link
             </button>
           </div>
         </>
       )}
+      <Dialog open={about} onDismiss={() => setAbout(false)}>
+        <About></About>
+      </Dialog>
     </div>
   );
 }

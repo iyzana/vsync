@@ -20,7 +20,7 @@
   font-size: 2rem;
   justify-content: center;
   border-radius: var(--radius);
-  border: 16px solid var(--card);
+  border: var(--border) solid var(--card);
   width: 100%;
   height: 100%;
 }

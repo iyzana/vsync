@@ -6,7 +6,9 @@
   --card-alt: #444444;
   --hover: #555555;
   --fg: #dddddd;
+  --fg-light: #888888;
   --radius: 5px;
+  --border: 16px;
 }
 
 html {

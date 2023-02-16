@@ -1,0 +1,36 @@
+.bookmarklet {
+  display: inline-block;
+  color: var(--fg);
+  background-color: var(--card-alt);
+  padding: var(--s0);
+  border-radius: var(--radius);
+  text-decoration: none;
+}
+
+.shortcuts {
+  padding: 0;
+
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: var(--s0);
+}
+
+.shortcuts > li {
+  list-style: none;
+}
+
+.shortcut {
+  background-color: var(--card-alt);
+  padding: 4px var(--s0);
+  margin-right: var(--s0);
+  border-radius: var(--radius);
+
+  display: inline-block;
+
+  font-family: monospace;
+  font-weight: bold;
+  font-size: 1.4em;
+  line-height: 1.5em;
+  min-width: 48px;
+  text-align: center;
+}

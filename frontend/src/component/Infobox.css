@@ -40,6 +40,16 @@
   background-color: #55000b;
 }
 
+.interact {
+  /* display: flex; */
+}
+
 .copylink {
   margin: calc(-1 * var(--s0)) 0;
+}
+
+.about {
+  padding: var(--s0);
+  margin: calc(-1 * var(--s0)) 0;
+  cursor: pointer;
 }

@@ -95,8 +95,10 @@
   margin-right: var(--s0);
 }
 
-.favicon {
-  display: inline;
-  width: 16px;
-  height: 16px;
+.hostname {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+  color: var(--fg-light);
 }
