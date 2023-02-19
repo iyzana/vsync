@@ -29,7 +29,7 @@ function Input({ addToQueue, working }: InputProps) {
       <input
         className="input-text"
         type="text"
-        placeholder="Video-Url or YouTube search"
+        placeholder="Video URL or YouTube search query"
         value={input}
         onChange={(e) => setInput(e.target.value)}
         onKeyUp={onKey}

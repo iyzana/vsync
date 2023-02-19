@@ -2,7 +2,6 @@
   display: flex;
   flex-flow: row nowrap;
   align-items: center;
-  margin-top: calc(-1 * var(--s1));
 
   width: 100%;
   background-color: var(--card-alt);
@@ -12,6 +11,8 @@
 .input-text {
   width: 100%;
   padding: var(--s0);
+  padding-right: 36px;
+  margin-right: -36px;
   color: var(--fg);
   background-color: #444444;
   border: none;
