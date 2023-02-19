@@ -5,6 +5,7 @@
 
   display: flex;
   flex-flow: row wrap;
+  column-gap: var(--s0);
   row-gap: var(--s1);
   align-items: center;
   justify-content: space-between;
@@ -47,7 +48,6 @@
 
 .connections {
   flex: 1 0 auto;
-  margin-right: var(--s0);
 }
 
 .copylink {
@@ -56,7 +56,5 @@
 }
 
 .about {
-  padding: var(--s0);
   margin: calc(-1 * var(--s0)) 0;
-  cursor: pointer;
 }
