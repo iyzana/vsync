@@ -13,7 +13,7 @@ No pop-ups asking you to create/join a room, no strange external control bar.
 Queue videos by Link, Youtube-Id or any query.
 When entering a query the first YouTube result will be added to the queue, use at your own risk.
 
-![screenshot](./screenshot.png)
+![Screenshot with one video syncing and three videos from different domains in queue](./screenshot.jpg)
 
 ## todo
 
