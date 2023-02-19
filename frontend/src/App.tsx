@@ -121,8 +121,12 @@ function App() {
     console.log('sending websocket message: ' + message);
     ws.send(message);
   }, []);
+
   useEffect(() => {
     document.onkeydown = (event: KeyboardEvent) => {
+      if (document.activeElement instanceof HTMLInputElement) {
+        return;
+      }
       if (event.key === 'N') {
         sendMessage('skip');
       }
