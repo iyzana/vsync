@@ -60,7 +60,11 @@ function Infobox({ notifications, addNotification }: InfoboxProps) {
           <span className="connections">
             {numUsers === 1 ? 'No one else connected' : `${numUsers} connected`}
           </span>
-          <button className="about" onClick={() => setAbout(true)}>
+          <button
+            className="about"
+            onClick={() => setAbout(true)}
+            aria-label="About vsync"
+          >
             <FontAwesomeIcon icon={faQuestionCircle} />
           </button>
           <button className="copylink" onClick={copyLink}>

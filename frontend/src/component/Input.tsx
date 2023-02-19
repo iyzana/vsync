@@ -41,7 +41,7 @@ function Input({ addToQueue, working }: InputProps) {
       <button
         className="input-send"
         onClick={send}
-        alia-label="Add to queue"
+        aria-label="Add to queue"
         disabled={working}
       >
         <FontAwesomeIcon

@@ -53,13 +53,10 @@ function Dialog({ open, children, onDismiss }: DialogProps) {
 
   return (
     <dialog ref={dialogRef} onClick={onClick} onCancel={dismiss}>
-      <div tabIndex={0}>
-        <FontAwesomeIcon
-          className="close"
-          size="lg"
-          icon={faXmark}
-          onClick={dismiss}
-        />
+      <div>
+        <button className="close" onClick={dismiss} aria-label="Close dialog">
+          <FontAwesomeIcon icon={faXmark} size="lg" />
+        </button>
         {children}
       </div>
     </dialog>

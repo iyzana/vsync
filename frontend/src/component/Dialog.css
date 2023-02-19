@@ -36,11 +36,17 @@ dialog div {
 }
 
 dialog .close {
+  background-color: unset;
   position: fixed;
   padding: var(--s1);
   top: var(--s0);
   right: var(--s0);
   cursor: pointer;
+}
+
+
+dialog .close:hover {
+  background-color: unset;
 }
 
 dialog h1 {
