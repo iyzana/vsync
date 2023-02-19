@@ -144,6 +144,8 @@ fun playNext(session: Session, room: Room) {
         room.broadcastAll(session, "queue rm ${next.id}")
         room.broadcastAll(session, "video ${next.url}")
         room.setSyncState(SyncState.Playing(Instant.now(), TimeStamp(0.0)))
+    } else {
+        room.broadcastAll(session, "video")
     }
 }
 

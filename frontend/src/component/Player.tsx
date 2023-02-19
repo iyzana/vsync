@@ -51,6 +51,8 @@ function Player() {
       setOverlay('PAUSED');
     } else if (msg.startsWith('ready?')) {
       setOverlay('SYNCING');
+    } else if (msg === 'video') {
+      setOverlay(null);
     } else if (msg.startsWith('video')) {
       setVideoUrl(msg.split(' ').slice(1).join(' '));
     }
