@@ -15,6 +15,24 @@ const opts = {
   },
 };
 
+const getVideoId = (videoUrl: string) => {
+  const url = new URL(videoUrl);
+  const queryParam = url.searchParams.get('v');
+  if (queryParam) {
+    return queryParam;
+  }
+  const path = url.pathname;
+  if (path.startsWith('/embed/')) {
+    return path.substring('/embed/'.length);
+  }
+  if (path.startsWith('/shorts/')) {
+    return path.substring('/shorts/'.length);
+  }
+  if (path.startsWith('/')) {
+    return path.substring('/'.length);
+  }
+};
+
 function YoutubePlayer({
   videoUrl,
   setOverlay,
@@ -212,13 +230,11 @@ function YoutubePlayer({
     [volume],
   );
 
-  const videoId = new URL(videoUrl).searchParams.get('v') ?? videoUrl;
-
   return (
     <YouTube
       className="youtube-player"
       opts={opts}
-      videoId={videoId}
+      videoId={getVideoId(videoUrl)}
       onReady={onReady}
       onStateChange={onStateChange}
       onPlaybackRateChange={onPlaybackRateChange}

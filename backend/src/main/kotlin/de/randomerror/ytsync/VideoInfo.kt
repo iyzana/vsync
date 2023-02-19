@@ -5,6 +5,7 @@ import com.google.gson.JsonObject
 import com.google.gson.JsonParseException
 import com.google.gson.JsonParser
 import mu.KotlinLogging
+import java.io.FileNotFoundException
 import java.io.StringWriter
 import java.lang.AssertionError
 import java.lang.UnsupportedOperationException
@@ -32,8 +33,9 @@ fun fetchVideoInfo(query: String, youtubeId: String?): QueueItem? {
 }
 
 private fun fetchVideoInfoYouTubeOEmbed(query: String, youtubeId: String): QueueItem? {
-    val videoData = URL("https://www.youtube.com/oembed?url=$query").readText()
-    if (videoData == "Not Found") {
+    val videoData = try {
+        URL("https://www.youtube.com/oembed?url=$query").readText()
+    } catch (e: FileNotFoundException) {
         return null
     }
     return try {
