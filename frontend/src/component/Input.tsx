@@ -24,9 +24,13 @@ function Input({ addToQueue, working }: InputProps) {
     }
   };
 
+  // autofocus input in new rooms
+  const autoFocus = window.location.pathname === '/';
+
   return (
     <div className="input-group">
       <input
+        autoFocus={autoFocus}
         className="input-text"
         type="text"
         placeholder="Video URL or YouTube search query"
