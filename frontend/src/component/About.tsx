@@ -39,7 +39,7 @@ function About() {
       <h2>Bookmarklet</h2>
       <p>
         Drag this button into your bookmark bar to open a vsync room for videos
-        in any tab:
+        in any tab
       </p>
       <p
         dangerouslySetInnerHTML={{

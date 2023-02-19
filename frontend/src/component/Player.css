@@ -17,7 +17,7 @@
 .empty-player {
   display: flex;
   align-items: center;
-  font-size: 2em;
+  font-size: 1.6em;
   justify-content: center;
   border-radius: var(--radius);
   border: var(--border) solid var(--card);

@@ -61,7 +61,7 @@ function Player() {
   return (
     <div className="aspect-ratio">
       {videoUrl === null ? (
-        <div className="aspect-ratio-inner empty-player">No Video</div>
+        <div className="aspect-ratio-inner empty-player">No videos in queue</div>
       ) : (
         <div className="aspect-ratio-inner">
           {isYoutubeUrl(videoUrl) ? (
