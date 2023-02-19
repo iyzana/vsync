@@ -29,61 +29,80 @@ function About() {
         the first search result from YouTube will be added.
       </p>
       <h2>Supported sites</h2>
-      <p>
-        A list of sites that are known to work
-        <ul>
-          <li>youtube.com</li>
-          <li>vimeo.com</li>
-          <li>ardmediathek.de</li>
-          <li>zdf.de</li>
-        </ul>
-      </p>
+      <p>A list of sites that are known to work</p>
+      <ul>
+        <li>youtube.com</li>
+        <li>vimeo.com</li>
+        <li>ardmediathek.de</li>
+        <li>zdf.de</li>
+      </ul>
       <h2>Bookmarklet</h2>
       <p>
         Drag this button into your bookmark bar to open a vsync room for videos
         in any tab:
       </p>
-      <p>
-        <a
-          href={`javascript: location.href = '${origin}' + '/' + location.href`}
-          className="bookmarklet"
-        >
-          vsync
-        </a>
-      </p>
+      <p
+        dangerouslySetInnerHTML={{
+          __html: `
+          <a
+            href="javascript: location.href = '${origin}' + '/' + location.href"
+            class="bookmarklet"
+          >
+            vsync
+          </a>
+        `,
+        }}
+      ></p>
       <h2>Player Shortcuts</h2>
       <ul className="shortcuts">
         <li>
-          <span className="shortcut">🠖</span>
-          <span>Seek 5 seconds forwards</span>
-        </li>
-        <li>
-          <span className="shortcut">🠔</span>
-          <span>Seek 5 seconds backwards</span>
-        </li>
-        <li>
-          <span className="shortcut">L</span>
-          <span>Seek 10 seconds forwards</span>
-        </li>
-        <li>
-          <span className="shortcut">J</span>
-          <span>Seek 10 seconds backwards</span>
+          <span className="shortcut">Space</span>
+          <span>Click focussed element or toggle play/pause</span>
         </li>
         <li>
           <span className="shortcut">K</span>
           <span>Toggle play/pause</span>
         </li>
         <li>
+          <span className="shortcut">🠔</span>
+          <span>Seek 5 seconds backwards</span>
+        </li>
+        <li>
+          <span className="shortcut">🠖</span>
+          <span>Seek 5 seconds forwards</span>
+        </li>
+        <li>
+          <span className="shortcut">J</span>
+          <span>Seek 10 seconds backwards</span>
+        </li>
+        <li>
+          <span className="shortcut">L</span>
+          <span>Seek 10 seconds forwards</span>
+        </li>
+        <li>
+          <span className="shortcut">M</span>
+          <span>Toggle mute</span>
+        </li>
+        <li>
           <span className="shortcut">C</span>
           <span>Toggle subtitles</span>
+        </li>
+        <li>
+          <span className="shortcut">🠗</span>
+          <span>Decrease volume by 5%</span>
         </li>
         <li>
           <span className="shortcut">🠕</span>
           <span>Increase volume by 5%</span>
         </li>
         <li>
-          <span className="shortcut">🠗</span>
-          <span>Decrease volume by 5%</span>
+          <span className="shortcut">F</span>
+          <span>Toggle fullscreen</span>
+        </li>
+        <li>
+          <span className="shortcut">Shift</span> +{' '}
+          <span className="shortcut">N</span>
+          <span>Skip to next video in queue</span>
         </li>
       </ul>
     </>

@@ -33,7 +33,12 @@
     "eject": "react-scripts eject"
   },
   "eslintConfig": {
-    "extends": "react-app"
+    "extends": "react-app",
+    "rules": {
+      "react-hooks/exhaustive-deps": ["warn", {
+        "additionalHooks" : "useWebsocketMessages"
+      }]
+    }
   },
   "browserslist": {
     "production": [

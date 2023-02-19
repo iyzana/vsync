@@ -33,60 +33,57 @@ function YoutubePlayer({
   const { sendMessage } = useContext(WebsocketContext);
 
   useWebsocketMessages(
-    'youtube',
-    useCallback(
-      (msg: string) => {
-        if (!player) {
-          return;
+    (msg: string) => {
+      if (!player) {
+        return;
+      }
+      if (msg === 'play') {
+        console.log('processing server message play');
+        if (player?.getPlayerState() !== YouTube.PlayerState.PLAYING) {
+          player?.playVideo();
         }
-        if (msg === 'play') {
-          console.log('processing server message play');
-          if (player?.getPlayerState() !== YouTube.PlayerState.PLAYING) {
-            player?.playVideo();
-          }
-        } else if (msg.startsWith('pause')) {
-          console.log('processing server message pause');
-          if (
-            player?.getPlayerState() === YouTube.PlayerState.PLAYING ||
-            player?.getPlayerState() === YouTube.PlayerState.BUFFERING
-          ) {
-            if (hasEverPlayed) {
-              console.log('pause setting pause');
-              player?.pauseVideo();
-            }
-          }
-          const timestamp = parseFloat(msg.split(' ')[1]);
-          const shouldSeek = Math.abs(player?.getCurrentTime() - timestamp) > 1;
-          if (shouldSeek) {
-            setTimeout(() => {
-              player?.seekTo(timestamp, true);
-            }, 150);
-          }
-        } else if (msg.startsWith('ready?')) {
-          console.log('processing server message ready');
-          const timestamp = parseFloat(msg.split(' ')[1]);
-          setNextReadyCheck(100);
-          setPreloadTime(timestamp);
-        } else if (msg.startsWith('video')) {
-          console.log('processing server message video');
+      } else if (msg.startsWith('pause')) {
+        console.log('processing server message pause');
+        if (
+          player?.getPlayerState() === YouTube.PlayerState.PLAYING ||
+          player?.getPlayerState() === YouTube.PlayerState.BUFFERING
+        ) {
           if (hasEverPlayed) {
-            console.log(
-              'storing player volume live ' +
-                player.isMuted() +
-                ' ' +
-                player.getVolume() / 100,
-            );
-            if (player.isMuted()) {
-              setVolume(0);
-            } else {
-              setVolume(player.getVolume() / 100);
-            }
+            console.log('pause setting pause');
+            player?.pauseVideo();
           }
-          setHasEverPlayed(false);
         }
-      },
-      [player, hasEverPlayed, setVolume],
-    ),
+        const timestamp = parseFloat(msg.split(' ')[1]);
+        const shouldSeek = Math.abs(player?.getCurrentTime() - timestamp) > 1;
+        if (shouldSeek) {
+          setTimeout(() => {
+            player?.seekTo(timestamp, true);
+          }, 150);
+        }
+      } else if (msg.startsWith('ready?')) {
+        console.log('processing server message ready');
+        const timestamp = parseFloat(msg.split(' ')[1]);
+        setNextReadyCheck(100);
+        setPreloadTime(timestamp);
+      } else if (msg.startsWith('video')) {
+        console.log('processing server message video');
+        if (hasEverPlayed) {
+          console.log(
+            'storing player volume live ' +
+              player.isMuted() +
+              ' ' +
+              player.getVolume() / 100,
+          );
+          if (player.isMuted()) {
+            setVolume(0);
+          } else {
+            setVolume(player.getVolume() / 100);
+          }
+        }
+        setHasEverPlayed(false);
+      }
+    },
+    [player, hasEverPlayed, setVolume],
   );
 
   const onStateChange = useCallback(() => {

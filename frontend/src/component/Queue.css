@@ -10,6 +10,12 @@
 }
 
 .queue-header {
+  position: sticky;
+  top: 0;
+
+  /* to render above font awesome layered icons */
+  z-index: 1;
+
   padding-top: calc(var(--s1) - var(--s0));
   padding-bottom: var(--s0);
   background-color: var(--card);
@@ -17,9 +23,6 @@
   display: flex;
   flex-flow: row nowrap;
   justify-content: space-between;
-
-  position: sticky;
-  top: 0;
 }
 
 .title {
@@ -38,10 +41,6 @@
 
 .skip {
   margin: calc(-1 * var(--s0)) 0;
-}
-
-.connections {
-  margin-right: var(--s0);
 }
 
 .getlink {
@@ -83,16 +82,11 @@
 }
 
 .video-info {
+  width: 100%;
   display: flex;
   flex-flow: row nowrap;
   margin-right: var(--s0);
   align-items: flex-start;
-}
-
-.thumbnail {
-  min-width: 35%;
-  max-width: 35%;
-  margin-right: var(--s0);
 }
 
 .hostname {

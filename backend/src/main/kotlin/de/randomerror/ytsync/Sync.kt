@@ -71,6 +71,7 @@ fun coordinateClientPause(session: Session, timestamp: TimeStamp): String {
         return "pause ignore"
     }
     room.timeoutSyncAt = null
+    // this originally did not send a pause event to the client itself
     setPaused(session,room, timestamp)
     return "pause client"
 }

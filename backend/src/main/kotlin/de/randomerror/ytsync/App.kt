@@ -111,7 +111,7 @@ class SyncWebSocket {
         matches(cmd, "sync") -> sync(session)
         matches(cmd, "end", 1) -> setEnded(session, cmd[1])
         matches(cmd, "buffer", 1) -> handleBuffering(session, cmd[1].asTimeStamp())
-        matchesMinArgs(cmd, "queue", "add") -> enqueue(session, cmd.subList(2, cmd.size).joinToString(" "))
+        matchesMinArgs(cmd, "queue", "add") -> enqueue(session, cmd.subList(2, cmd.size).joinToString(" ").trim())
         matches(cmd, "queue", "rm", 1) -> dequeue(session, cmd[2])
         matches(cmd, "queue", "order", 1) -> reorder(session, cmd[2])
         // args == 2 && command == "speed" -> setSpeed(session, cmd[1].toDouble())

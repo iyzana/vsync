@@ -1,5 +1,5 @@
 import './Infobox.css';
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import Notification from '../model/Notification';
 import { useWebsocketMessages } from '../hook/websocket-messages';
 import Dialog from './Dialog';
@@ -16,15 +16,12 @@ function Infobox({ notifications, addNotification }: InfoboxProps) {
   const [about, setAbout] = useState(false);
   const [numUsers, setNumUsers] = useState(1);
 
-  useWebsocketMessages(
-    'infobox',
-    useCallback((msg: string) => {
-      if (msg.startsWith('users')) {
-        const users = parseInt(msg.split(' ')[1]);
-        setNumUsers(users);
-      }
-    }, []),
-  );
+  useWebsocketMessages((msg: string) => {
+    if (msg.startsWith('users')) {
+      const users = parseInt(msg.split(' ')[1]);
+      setNumUsers(users);
+    }
+  }, []);
 
   const copyLink = () => {
     if (!navigator.clipboard) {
@@ -51,7 +48,7 @@ function Infobox({ notifications, addNotification }: InfoboxProps) {
     >
       {notification != null ? (
         <>
-          <span>{notifications[0].message}</span>
+          <span className="notification">{notifications[0].message}</span>
           {notifications.length > 1 ? (
             <span className="remaining">
               {notifications.length - 1} remaining
@@ -63,16 +60,14 @@ function Infobox({ notifications, addNotification }: InfoboxProps) {
           <span className="connections">
             {numUsers === 1 ? 'No one else connected' : `${numUsers} connected`}
           </span>
-          <div className="interact">
-            <FontAwesomeIcon
-              className="about"
-              icon={faQuestionCircle}
-              onClick={() => setAbout(true)}
-            />
-            <button className="copylink" onClick={copyLink}>
-              Copy room link
-            </button>
-          </div>
+          <FontAwesomeIcon
+            className="about"
+            icon={faQuestionCircle}
+            onClick={() => setAbout(true)}
+          />
+          <button className="copylink" onClick={copyLink}>
+            Copy room link
+          </button>
         </>
       )}
       <Dialog open={about} onDismiss={() => setAbout(false)}>

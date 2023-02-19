@@ -8,6 +8,7 @@ import Notification from '../model/Notification';
 import { useWebsocketMessages } from '../hook/websocket-messages';
 import { WebsocketContext } from '../context/websocket';
 import FavIcon from './FavIcon';
+import Thumbnail from './Thumbnail';
 
 const getDomain = (item: QueueItem) => {
   let baseUrl;
@@ -29,46 +30,43 @@ function Queue({ addNotification, setWorking }: QueueProps) {
   const [queue, setQueue] = useState<QueueItem[]>([]);
 
   useWebsocketMessages(
-    'queue',
-    useCallback(
-      (msg: string) => {
-        if (msg.startsWith('video')) {
-          setWorking(false);
-        } else if (msg.startsWith('queue add')) {
-          const msgParts = msg.split(' ');
-          const queueItem: QueueItem = JSON.parse(msgParts.slice(2).join(' '));
-          setQueue((queue) => [...queue, queueItem]);
-          setWorking(false);
-        } else if (msg.startsWith('queue rm')) {
-          const id = msg.split(' ')[2];
-          setQueue((queue) => queue.filter((video) => video.id !== id));
-        } else if (msg.startsWith('queue order')) {
-          const order = msg.split(' ')[2].split(',');
-          setQueue((queue) => {
-            const sortedQueue = [...queue];
-            sortedQueue.sort((a, b) => {
-              return order.indexOf(a.id) - order.indexOf(b.id);
-            });
-            return sortedQueue;
+    (msg: string) => {
+      if (msg.startsWith('video')) {
+        setWorking(false);
+      } else if (msg.startsWith('queue add')) {
+        const msgParts = msg.split(' ');
+        const queueItem: QueueItem = JSON.parse(msgParts.slice(2).join(' '));
+        setQueue((queue) => [...queue, queueItem]);
+        setWorking(false);
+      } else if (msg.startsWith('queue rm')) {
+        const id = msg.split(' ')[2];
+        setQueue((queue) => queue.filter((video) => video.id !== id));
+      } else if (msg.startsWith('queue order')) {
+        const order = msg.split(' ')[2].split(',');
+        setQueue((queue) => {
+          const sortedQueue = [...queue];
+          sortedQueue.sort((a, b) => {
+            return order.indexOf(a.id) - order.indexOf(b.id);
           });
-        } else if (msg === 'queue err not-found') {
-          addNotification({
-            message: 'No video found',
-            level: 'info',
-            permanent: false,
-          });
-          setWorking(false);
-        } else if (msg === 'queue err duplicate') {
-          addNotification({
-            message: 'Already in queue',
-            level: 'info',
-            permanent: false,
-          });
-          setWorking(false);
-        }
-      },
-      [addNotification, setWorking],
-    ),
+          return sortedQueue;
+        });
+      } else if (msg === 'queue err not-found') {
+        addNotification({
+          message: 'No video found',
+          level: 'info',
+          permanent: false,
+        });
+        setWorking(false);
+      } else if (msg === 'queue err duplicate') {
+        addNotification({
+          message: 'Already in queue',
+          level: 'info',
+          permanent: false,
+        });
+        setWorking(false);
+      }
+    },
+    [addNotification, setWorking],
   );
 
   const { sendMessage } = useContext(WebsocketContext);
@@ -115,16 +113,11 @@ function Queue({ addNotification, setWorking }: QueueProps) {
             return (
               <li key={item.id} className="queue-item">
                 <div className="video-info">
-                  <img
-                    className="thumbnail"
-                    src={item.thumbnail || undefined}
-                    alt="Video thumbnail, content unknown"
-                  />
+                  <Thumbnail thumbnailUrl={item.thumbnail || null} />
                   <div>
                     <div>{item.title || 'No title'}</div>
                     <div className="hostname">
-                      <FavIcon item={item} />{' '}
-                      <span>{getDomain(item)}</span>
+                      <FavIcon item={item} /> <span>{getDomain(item)}</span>
                     </div>
                   </div>
                 </div>

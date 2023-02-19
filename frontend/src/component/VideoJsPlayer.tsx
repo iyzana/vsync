@@ -1,5 +1,5 @@
 import './VideoJsPlayer.css';
-import { useCallback, useContext, useEffect, useRef } from 'react';
+import { useContext, useEffect, useRef } from 'react';
 import videojs, { VideoJsPlayerOptions } from 'video.js';
 import 'video.js/dist/video-js.css';
 import { EmbeddedPlayerProps } from './Player';
@@ -11,6 +11,61 @@ const opts: VideoJsPlayerOptions = {
   controls: true,
   responsive: true,
   fluid: false,
+  userActions: {
+    hotkeys: function (event) {
+      const player = this as videojs.Player;
+      const key = event.which;
+      if (key === 32 /* space */ || key === 75 /* k */) {
+        if (player.paused()) {
+          player.play();
+        } else {
+          player.pause();
+        }
+      }
+      if (key === 37 /* left */) {
+        player.currentTime(player.currentTime() - 5);
+      }
+      if (key === 39 /* right */) {
+        player.currentTime(player.currentTime() + 5);
+      }
+      if (key === 74 /* j */) {
+        player.currentTime(player.currentTime() - 10);
+      }
+      if (key === 76 /* l */) {
+        player.currentTime(player.currentTime() + 10);
+      }
+      if (key === 38 /* up */) {
+        player.volume(player.volume() + 0.05);
+      }
+      if (key === 40 /* down */) {
+        player.volume(player.volume() - 0.05);
+      }
+      if (key === 77 /* m */) {
+        player.muted(!player.muted());
+      }
+      if (key === 70 /* f */) {
+        if (player.isFullscreen()) {
+          player.exitFullscreen();
+        } else {
+          player.requestFullscreen();
+        }
+      }
+      if (key === 67 /* c */) {
+        const textTracks = player.textTracks();
+        for (let i = 0; i < textTracks.length; i++) {
+          const track = textTracks[i];
+          if (track.kind === 'captions') {
+            if (track.mode !== 'showing') {
+              track.mode = 'showing';
+            } else {
+              track.mode = 'hidden';
+            }
+            return;
+          }
+        }
+      }
+    },
+  },
 };
 
 export const VideoJsPlayer = ({
@@ -29,46 +84,43 @@ export const VideoJsPlayer = ({
   const { sendMessage } = useContext(WebsocketContext);
 
   useWebsocketMessages(
-    'videojs',
-    useCallback(
-      (msg: string) => {
-        const player = playerRef.current;
-        if (!player) {
-          return;
-        }
-        player.ready(function () {
-          if (msg === 'play') {
-            console.log('processing server message play');
-            player.play();
-          } else if (msg.startsWith('pause')) {
-            console.log('processing server message pause');
-            player.pause();
-            const timestamp = parseFloat(msg.split(' ')[1]);
-            const shouldSeek = Math.abs(player.currentTime() - timestamp) > 0.5;
-            if (shouldSeek) {
-              console.log('seeking due to pause');
-              player.currentTime(timestamp);
-            }
-          } else if (msg.startsWith('ready?')) {
-            console.log('processing server message ready');
-            player.pause();
-            const timestamp = parseFloat(msg.split(' ')[1]);
-            const shouldSeek = Math.abs(player.currentTime() - timestamp) > 0.5;
-            if (shouldSeek) {
-              console.log('seeking due to ready');
-              player.currentTime(timestamp);
-            }
-
-            waitReadyRef.current = true;
-            console.log({ readyState: player.readyState() });
-            if (player.readyState() >= 3) {
-              sendMessage(`ready ${player.currentTime()}`);
-            }
+    (msg: string) => {
+      const player = playerRef.current;
+      if (!player) {
+        return;
+      }
+      player.ready(function () {
+        if (msg === 'play') {
+          console.log('processing server message play');
+          player.play();
+        } else if (msg.startsWith('pause')) {
+          console.log('processing server message pause');
+          player.pause();
+          const timestamp = parseFloat(msg.split(' ')[1]);
+          const shouldSeek = Math.abs(player.currentTime() - timestamp) > 0.5;
+          if (shouldSeek) {
+            console.log('seeking due to pause');
+            player.currentTime(timestamp);
           }
-        });
-      },
-      [sendMessage],
-    ),
+        } else if (msg.startsWith('ready?')) {
+          console.log('processing server message ready');
+          player.pause();
+          const timestamp = parseFloat(msg.split(' ')[1]);
+          const shouldSeek = Math.abs(player.currentTime() - timestamp) > 0.5;
+          if (shouldSeek) {
+            console.log('seeking due to ready');
+            player.currentTime(timestamp);
+          }
+
+          waitReadyRef.current = true;
+          console.log({ readyState: player.readyState() });
+          if (player.readyState() >= 3) {
+            sendMessage(`ready ${player.currentTime()}`);
+          }
+        }
+      });
+    },
+    [sendMessage],
   );
 
   useEffect(() => {

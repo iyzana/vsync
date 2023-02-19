@@ -4,8 +4,9 @@
   border-radius: var(--radius);
 
   display: flex;
-  flex: row nowrap;
-  align-items: baseline;
+  flex-flow: row wrap;
+  row-gap: var(--s1);
+  align-items: center;
   justify-content: space-between;
 }
 
@@ -19,6 +20,10 @@
 
 .infobox.error {
   background-color: #880011;
+}
+
+.notification {
+  justify-self: start;
 }
 
 .remaining {
@@ -40,12 +45,14 @@
   background-color: #55000b;
 }
 
-.interact {
-  /* display: flex; */
+.connections {
+  flex: 1 0 auto;
+  margin-right: var(--s0);
 }
 
 .copylink {
-  margin: calc(-1 * var(--s0)) 0;
+  flex: 0 0 auto;
+  margin: calc(-1 * var(--s0)) auto;
 }
 
 .about {

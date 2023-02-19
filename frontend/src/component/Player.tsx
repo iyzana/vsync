@@ -1,7 +1,7 @@
 import './Player.css';
 import { faPause, faSyncAlt } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import YoutubePlayer from './YoutubePlayer';
 import VideoJsPlayer from './VideoJsPlayer';
 import { useWebsocketMessages } from '../hook/websocket-messages';
@@ -44,20 +44,17 @@ function Player() {
   const [volume, setVolume] = useState<number | null>(null);
   const [initialized, setInitialized] = useState<boolean>(false);
 
-  useWebsocketMessages(
-    'player',
-    useCallback((msg: string) => {
-      if (msg === 'play') {
-        setOverlay(null);
-      } else if (msg.startsWith('pause')) {
-        setOverlay('PAUSED');
-      } else if (msg.startsWith('ready?')) {
-        setOverlay('SYNCING');
-      } else if (msg.startsWith('video')) {
-        setVideoUrl(msg.split(' ')[1]);
-      }
-    }, []),
-  );
+  useWebsocketMessages((msg: string) => {
+    if (msg === 'play') {
+      setOverlay(null);
+    } else if (msg.startsWith('pause')) {
+      setOverlay('PAUSED');
+    } else if (msg.startsWith('ready?')) {
+      setOverlay('SYNCING');
+    } else if (msg.startsWith('video')) {
+      setVideoUrl(msg.split(' ').slice(1).join(' '));
+    }
+  }, []);
 
   return (
     <div className="aspect-ratio">

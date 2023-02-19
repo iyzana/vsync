@@ -104,18 +104,16 @@ function App() {
   }, [notifications]);
 
   const addMessageCallback = useCallback(
-    (name: string, callback: (msg: string) => void) => {
-      console.log(`adding callback ${name}`);
+    (id: string, callback: (msg: string) => void) => {
       setMessageCallbacks((callbacks) =>
-        Object.assign(callbacks, { [name]: callback }),
+        Object.assign(callbacks, { [id]: callback }),
       );
     },
     [],
   );
-  const removeMessageCallback = useCallback((name: string) => {
-    console.log(`removing callback ${name}`);
+  const removeMessageCallback = useCallback((id: string) => {
     setMessageCallbacks((callbacks) => {
-      const { [name]: removed, ...remaining } = callbacks;
+      const { [id]: removed, ...remaining } = callbacks;
       return remaining;
     });
   }, []);
@@ -123,6 +121,16 @@ function App() {
     console.log('sending websocket message: ' + message);
     ws.send(message);
   }, []);
+  useEffect(() => {
+    document.onkeydown = (event: KeyboardEvent) => {
+      if (event.key === 'N') {
+        sendMessage('skip');
+      }
+    };
+    return () => {
+      document.onkeydown = null;
+    };
+  }, [sendMessage]);
 
   return (
     <WebsocketContext.Provider

@@ -21,17 +21,14 @@ function Dialog({ open, children, onDismiss }: DialogProps) {
   useEffect(() => {
     const dialog = dialogRef.current;
     if (!dialog) {
-      console.log('dialog is null');
       return;
     }
     if (open && !dialog.open) {
-      console.log('open');
       dialog.showModal();
       dialog.classList.add('animate');
     } else if (!open && dialog.open) {
       dialog.classList.remove('animate');
       setTimeout(() => dialog.close(), 100);
-      console.log('dismiss');
     }
   }, [open]);
 

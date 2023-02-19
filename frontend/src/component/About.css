@@ -11,7 +11,7 @@
   padding: 0;
 
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
   gap: var(--s0);
 }
 
@@ -19,18 +19,20 @@
   list-style: none;
 }
 
+.shortcuts > li > *:last-child {
+  margin-left: var(--s0);
+}
+
 .shortcut {
   background-color: var(--card-alt);
-  padding: 4px var(--s0);
-  margin-right: var(--s0);
+  padding: 1px var(--s0);
   border-radius: var(--radius);
+  border: 1px solid var(--fg-light);
 
   display: inline-block;
 
   font-family: monospace;
-  font-weight: bold;
-  font-size: 1.4em;
+  font-size: 1.2em;
   line-height: 1.5em;
-  min-width: 48px;
   text-align: center;
 }

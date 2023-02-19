@@ -8,7 +8,7 @@ import java.util.concurrent.Executors
 import kotlin.text.RegexOption.IGNORE_CASE
 
 private val youtubeUrlRegex: Regex =
-    Regex("""https://(?:www\.)?youtu(?:\.be|be\.com)/(?:watch\?v=|embed/)?([^?&]+)(?:.*)?""", IGNORE_CASE)
+    Regex("""https://(?:www\.)?youtu(?:\.be|be\.com)/(?:watch\?v=|embed/|shorts/)?([^?&]+)(?:.*)?""", IGNORE_CASE)
 private val videoInfoFetcher: ExecutorService = Executors.newCachedThreadPool()
 
 fun enqueue(session: Session, query: String): String {

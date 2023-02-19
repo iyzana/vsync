@@ -1,5 +1,7 @@
 package de.randomerror.ytsync
 
+import com.google.gson.JsonElement
+import com.google.gson.JsonObject
 import com.google.gson.JsonParseException
 import com.google.gson.JsonParser
 import mu.KotlinLogging
@@ -36,10 +38,9 @@ private fun fetchVideoInfoYouTubeOEmbed(query: String, youtubeId: String): Queue
     }
     return try {
         val video = JsonParser.parseString(videoData).asJsonObject
-        val id = youtubeId
-        val title = video["title"]?.asString
+        val title = video.getNullable("title")?.asString
         val thumbnail = "https://i.ytimg.com/vi/$youtubeId/mqdefault.jpg"
-        QueueItem(query, query, title, thumbnail, id)
+        QueueItem(query, query, title, thumbnail)
     } catch (e: JsonParseException) {
         logger.warn("failed to parse oembed response for query $query", e)
         null
@@ -79,12 +80,12 @@ private fun parseYtDlpOutput(
     return try {
         val video = JsonParser.parseString(videoData).asJsonObject
         val urlElement = if (isYoutube) {
-            video["webpage_url"]
+            video.getNullable("webpage_url")
         } else {
-            video["manifest_url"] ?: video["url"]
+            video.getNullable("manifest_url") ?: video.getNullable("url")
         }?.asString ?: return null
-        val title = video["title"]?.asString
-        val thumbnail = video["thumbnail"]?.asString
+        val title = video.getNullable("title")?.asString
+        val thumbnail = video.getNullable("thumbnail")?.asString
         QueueItem(urlElement, query, title, thumbnail)
     } catch (e: JsonParseException) {
         logger.warn("failed to parse ytdlp output for query $query", e)
@@ -95,6 +96,15 @@ private fun parseYtDlpOutput(
     } catch (e: UnsupportedOperationException) {
         logger.warn("failed to parse ytdlp output for query $query", e)
         null
+    }
+}
+
+fun JsonObject.getNullable(key: String): JsonElement? {
+    val value: JsonElement = this.get(key) ?: return null
+    return if (value.isJsonNull) {
+        null
+    } else {
+        value
     }
 }
 
