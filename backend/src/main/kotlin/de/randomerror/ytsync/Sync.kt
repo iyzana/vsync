@@ -120,15 +120,10 @@ fun setEnded(session: Session, queueId: String): String {
     val room = getRoom(session)
 
     synchronized(room.queue) {
-        val ignoreEndTill = room.ignoreEndTill
-        if (ignoreEndTill != null && ignoreEndTill.isAfter(Instant.now())) {
-            return "end ignore"
-        }
-
         if (room.queue.isEmpty()) return "end empty"
         if (room.queue[0].url != queueId) return "end old"
 
-        room.ignoreEndTill = Instant.now().plusSeconds(IGNORE_DURATION)
+        room.ignoreSkipTill = Instant.now().plusSeconds(IGNORE_DURATION)
         playNext(session, room)
     }
 

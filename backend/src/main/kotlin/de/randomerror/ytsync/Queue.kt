@@ -1,6 +1,5 @@
 package de.randomerror.ytsync
 
-import mu.KotlinLogging
 import org.eclipse.jetty.websocket.api.Session
 import java.time.Instant
 import java.util.concurrent.ExecutorService
@@ -86,12 +85,12 @@ fun skip(session: Session): String {
             return "skip deny"
         }
 
-        val ignoreEndTill = room.ignoreEndTill
-        if (ignoreEndTill != null && ignoreEndTill.isAfter(Instant.now())) {
+        val ignoreSkipTill = room.ignoreSkipTill
+        if (ignoreSkipTill != null && ignoreSkipTill.isAfter(Instant.now())) {
             return "skip ignore"
         }
+        room.ignoreSkipTill = Instant.now().plusSeconds(2)
 
-        room.ignoreEndTill = Instant.now().plusSeconds(2)
         playNext(session, room)
     }
 
