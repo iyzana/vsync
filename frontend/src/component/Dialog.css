@@ -1,17 +1,15 @@
 dialog {
-  position: absolute;
-  top: 50vh;
-
   width: 900px;
   max-width: 95vw;
   height: 800px;
+  max-height: 95vh;
 
   padding: 0;
 
   transition-property: transform;
   transition-duration: 100ms;
   transition-timing-function: ease-in;
-  transform: translatey(-50%) scale(0.1);
+  transform: scale(0.1);
 
   border: none;
   border-radius: var(--radius);
@@ -22,7 +20,7 @@ dialog {
 
 dialog.animate {
   transition-timing-function: ease-out;
-  transform: translatey(-50%) scale(1);
+  transform: scale(1);
 }
 
 dialog::backdrop {
@@ -43,7 +41,6 @@ dialog .close {
   right: var(--s0);
   cursor: pointer;
 }
-
 
 dialog .close:hover {
   background-color: unset;

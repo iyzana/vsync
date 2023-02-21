@@ -10,13 +10,14 @@
 .shortcuts {
   padding: 0;
 
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: var(--s0);
 }
 
 .shortcuts > li {
   list-style: none;
+  flex: 0 1 400px;
 }
 
 .shortcuts > li > *:last-child {
