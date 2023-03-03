@@ -66,4 +66,6 @@ The build output will be written to the `build` directory.
 To serve the frontend a webserver is required.
 An example configuration for the webserver [nginx](https://nginx.org/en/) is included at
 `nginx.conf`.
-The configuration expects nginx to be started inside the `build` directory.
+You will need to update the `Content-Security-Policy` header in the `nginx.conf` as per the comment
+above that line.
+The provided nginx configuration expects the build output to be available at `/data/dist`
