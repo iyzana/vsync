@@ -1,5 +1,42 @@
 # Changelog
 
+## [2.1.0](https://github.com/iyzana/yt-sync/compare/v2.0.0...v2.1.0) (2023-03-07)
+
+
+### Features
+
+* add about dialog, nicer queue site indicator ([a1d298f](https://github.com/iyzana/yt-sync/commit/a1d298f886be0e0be0e2e6ec52ef1ce574e36d47))
+* add css for noscript ([c22dcef](https://github.com/iyzana/yt-sync/commit/c22dcef69eafa879aad08e9fb47895c0db2f1780))
+* allow null thumbnail and title in frontend ([59ccb7b](https://github.com/iyzana/yt-sync/commit/59ccb7b78b82a92a0b7a68f3e639bfbb079a525a))
+* autofocus input in new rooms ([b149fd7](https://github.com/iyzana/yt-sync/commit/b149fd79e148be18bb89fed81dd238c5126fad8b))
+* better notification management ([2122b48](https://github.com/iyzana/yt-sync/commit/2122b485d93f78d394960c33a12da7e203beaffe))
+* fetch video info from oembed if possible ([9e7c707](https://github.com/iyzana/yt-sync/commit/9e7c70766d338b8ee258668ceb2a02f0f02eeeee))
+* improve accessibility and keyboard navigation ([c2e90cb](https://github.com/iyzana/yt-sync/commit/c2e90cb39f40e006ef2671ba6987f94919b0678c))
+* improve input styling and some texts ([24bf04c](https://github.com/iyzana/yt-sync/commit/24bf04cd738846a2b2517d490d417512167713c5))
+* inform clients when last video ended ([8fff741](https://github.com/iyzana/yt-sync/commit/8fff7411a3c6dd409f2202ce25cfe3b4cf4e0492))
+* player shortcuts, fix thumbnails, yt-shorts ([68274e2](https://github.com/iyzana/yt-sync/commit/68274e2b6c75b1d909c4ec222ad0f87ae37e727a))
+* slight redesign, improve architecture ([99adb17](https://github.com/iyzana/yt-sync/commit/99adb17e7c54205e73f137fbf017a3ac658fc96c))
+* update text of empty video player ([e551a69](https://github.com/iyzana/yt-sync/commit/e551a69dce5f05608498b254559f495986e2599b))
+
+
+### Bug Fixes
+
+* add space between shortcut and description ([1db0159](https://github.com/iyzana/yt-sync/commit/1db015985f47b0572fef12e79e3d1a9f7f17c62f))
+* backend build ([7564366](https://github.com/iyzana/yt-sync/commit/75643667e57fc0c85c816a3ca757b809344ee660))
+* backend build ([180b219](https://github.com/iyzana/yt-sync/commit/180b219de826458ef93fdf521517dce6faea923b))
+* consistent favicon size in queue ([c725f81](https://github.com/iyzana/yt-sync/commit/c725f81fa1f7c4ed540d7dca66e210bd1294f719))
+* dialog css on small devices ([e9bd099](https://github.com/iyzana/yt-sync/commit/e9bd099e09f48c38a02ad4c142016e93aeefb4a6))
+* don't perform global action when input active ([27fd98b](https://github.com/iyzana/yt-sync/commit/27fd98b27b4c24866f101bd5ba915b3cdb422858))
+* fast message handling, improve volume sync ([a91556d](https://github.com/iyzana/yt-sync/commit/a91556da8c308fc59c632468f5aef9e62c273aae))
+* improve queue remove button height ([ba7a7af](https://github.com/iyzana/yt-sync/commit/ba7a7af702844eed862ab225b0c6a14ae857adde))
+* make about icon properly selectable ([8ad9a75](https://github.com/iyzana/yt-sync/commit/8ad9a759883f332e1818f7bb68888a86ce28b47a))
+* queue border rounding ([2f31fad](https://github.com/iyzana/yt-sync/commit/2f31fad4bd33f104f5b5e99ec5a5842cf3c3ee99))
+* queuing youtube shorts, embeds or youtu.be links ([89fcaf7](https://github.com/iyzana/yt-sync/commit/89fcaf7e2ab6349012f0cf69203c8b575ac201cb))
+* remove superfluous ignoreEndTill check ([8702ce3](https://github.com/iyzana/yt-sync/commit/8702ce3fcaafedf4ba19431effce415a1373df8c))
+* set queue working to false on new video ([39add11](https://github.com/iyzana/yt-sync/commit/39add1113e51ae60d75cc69cc31773b3793918b7))
+* update frontend dependencies ([861da3f](https://github.com/iyzana/yt-sync/commit/861da3f9609d700705d8209d46180293d3f9bee0))
+* use youtube player for youtu.be urls ([02dae81](https://github.com/iyzana/yt-sync/commit/02dae81c5f703d744ab51e95d0f7fd7ff63d1501))
+
 ## [2.0.0](https://github.com/iyzana/yt-sync/compare/v1.1.1...v2.0.0) (2022-10-23)
 
 
