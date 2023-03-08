@@ -21,9 +21,12 @@ function About() {
         will be created with that URL already queued.
       </p>
       <h2>Queuing videos</h2>
-      Queue videos by inputting a video URL from any publicly accessible site.
-      It may not be possible to watch videos from everywhere but a wide range of
-      websites are supported.
+      <p>
+        Queue videos by entering a video URL from any publicly accessible
+        website where you can to watch without signing in. You may not be able
+        to watch videos from all of these sites, but a wide range of sites are
+        supported.
+      </p>
       <p>
         It is also possible to queue videos by typing search terms. In this case
         the first search result from YouTube will be added.
@@ -32,9 +35,19 @@ function About() {
       <p>A list of sites that are known to work</p>
       <ul>
         <li>youtube.com</li>
-        <li>vimeo.com</li>
         <li>ardmediathek.de</li>
         <li>zdf.de</li>
+        <li>PeerTube-instances</li>
+        <li>vimeo.com</li>
+      </ul>
+      <h2>Unsupported sites</h2>
+      <p>A list of sites that are known not to work</p>
+      <ul>
+        <li>netflix.com</li>
+        <li>twitch.tv</li>
+        <li>reddit.com</li>
+        <li>instagram.com</li>
+        <li>tvnow.de</li>
       </ul>
       <h2>Bookmarklet</h2>
       <p>
