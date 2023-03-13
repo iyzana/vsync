@@ -1,0 +1,22 @@
+.overlay {
+  pointer-events: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 1.8rem;
+  filter: drop-shadow(0px 0px 1px #222222) drop-shadow(0px 0px 1px #222222);
+}
+
+.overlay > .text {
+  display: flex;
+  align-items: center;
+  gap: var(--s0);
+}
+
+.overlay.blocked {
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+.overlay.blocked > .text {
+  margin-block-start: 6rem;
+}

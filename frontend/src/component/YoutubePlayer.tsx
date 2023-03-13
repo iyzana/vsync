@@ -4,6 +4,7 @@ import { useCallback, useContext, useEffect, useState } from 'react';
 import { EmbeddedPlayerProps } from './Player';
 import { useWebsocketMessages } from '../hook/websocket-messages';
 import { WebsocketContext } from '../context/websocket';
+import OverlayState from '../model/Overlay';
 
 const opts = {
   width: '100%',
@@ -110,7 +111,7 @@ function YoutubePlayer({
     console.log('player state changed to ' + newState);
     if (newState === YouTube.PlayerState.PAUSED) {
       if (preloadTime === null) {
-        setOverlay('PAUSED');
+        setOverlay(OverlayState.PAUSED);
       }
       if (hasEverPlayed) {
         sendMessage(`pause ${player.getCurrentTime()}`);
@@ -119,11 +120,9 @@ function YoutubePlayer({
       setHasEverPlayed(true);
       if (initialized) {
         sendMessage(`play ${player.getCurrentTime()}`);
-        setOverlay(null);
+        setOverlay(OverlayState.NONE);
       } else {
         setInitialized(true);
-        // the youtube player behaves strange if it is paused
-        // almost immediately after starting, so delay sync
         sendMessage('sync');
       }
     } else if (newState === YouTube.PlayerState.ENDED) {
@@ -203,7 +202,7 @@ function YoutubePlayer({
         }
       }
     };
-  }, [player, setVolume]);
+  }, [player, setVolume, setOverlay]);
 
   const onPlaybackRateChange = useCallback(
     (event: { target: any; data: number }) => {
@@ -226,8 +225,12 @@ function YoutubePlayer({
           player.setVolume(volume * 100);
         }
       }
+
+      if (!initialized) {
+        setOverlay(OverlayState.UNSTARTED);
+      }
     },
-    [volume],
+    [volume, initialized, setOverlay],
   );
 
   return (

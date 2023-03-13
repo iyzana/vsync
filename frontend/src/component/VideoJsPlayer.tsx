@@ -5,6 +5,7 @@ import 'video.js/dist/video-js.css';
 import { EmbeddedPlayerProps } from './Player';
 import { useWebsocketMessages } from '../hook/websocket-messages';
 import { WebsocketContext } from '../context/websocket';
+import OverlayState from '../model/Overlay';
 
 const opts: VideoJsPlayerOptions = {
   autoplay: true,
@@ -139,12 +140,15 @@ export const VideoJsPlayer = ({
       const player = playerRef.current;
       player.ready(() => {
         console.log('registering player hooks');
+        if (!initialized) {
+          setOverlay(OverlayState.UNSTARTED);
+        }
         player.on('play', function () {
           console.log('player hook play');
           if (initializedRef.current) {
             sendMessage(`play ${player.currentTime()}`);
             waitReadyRef.current = false;
-            setOverlay(null);
+            setOverlay(OverlayState.NONE);
           } else {
             setInitialized(true);
             sendMessage('sync');
@@ -154,7 +158,7 @@ export const VideoJsPlayer = ({
           console.log('player hook pause');
           if (!waitReadyRef.current) {
             sendMessage(`pause ${player.currentTime()}`);
-            setOverlay('PAUSED');
+            setOverlay(OverlayState.PAUSED);
           }
         });
         player.on('stalled', function () {

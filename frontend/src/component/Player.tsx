@@ -1,30 +1,14 @@
 import './Player.css';
-import { faPause, faSyncAlt } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import YoutubePlayer from './YoutubePlayer';
 import VideoJsPlayer from './VideoJsPlayer';
 import { useWebsocketMessages } from '../hook/websocket-messages';
-
-function getOverlay(overlay: 'PAUSED' | 'SYNCING' | null) {
-  if (overlay == null) {
-    return null;
-  }
-
-  const icon = overlay === 'PAUSED' ? faPause : faSyncAlt;
-  const spin = overlay === 'SYNCING';
-
-  return (
-    <div className="aspect-ratio-inner overlay">
-      <FontAwesomeIcon icon={icon} spin={spin} />
-      <div>{overlay}</div>
-    </div>
-  );
-}
+import Overlay from './Overlay';
+import OverlayState from '../model/Overlay';
 
 export interface EmbeddedPlayerProps {
   videoUrl: string;
-  setOverlay: (state: 'PAUSED' | 'SYNCING' | null) => void;
+  setOverlay: (state: OverlayState) => void;
   volume: number | null;
   setVolume: (volume: number) => void;
   initialized: boolean;
@@ -39,29 +23,44 @@ function isYoutubeUrl(url: string): boolean {
 }
 
 function Player() {
-  const [overlay, setOverlay] = useState<'PAUSED' | 'SYNCING' | null>(null);
+  const [overlay, setOverlay] = useState<OverlayState>(OverlayState.NONE);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [volume, setVolume] = useState<number | null>(null);
   const [initialized, setInitialized] = useState<boolean>(false);
 
-  useWebsocketMessages((msg: string) => {
-    if (msg === 'play') {
-      setOverlay(null);
-    } else if (msg.startsWith('pause')) {
-      setOverlay('PAUSED');
-    } else if (msg.startsWith('ready?')) {
-      setOverlay('SYNCING');
-    } else if (msg === 'video') {
-      setOverlay(null);
-    } else if (msg.startsWith('video')) {
-      setVideoUrl(msg.split(' ').slice(1).join(' '));
-    }
-  }, []);
+  useWebsocketMessages(
+    (msg: string) => {
+      if (msg === 'play') {
+        setOverlay(OverlayState.NONE);
+      } else if (msg.startsWith('pause')) {
+        setOverlay(OverlayState.PAUSED);
+      } else if (msg.startsWith('ready?')) {
+        setOverlay(OverlayState.SYNCING);
+      } else if (msg === 'video') {
+        setOverlay(initialized ? OverlayState.NONE : OverlayState.UNSTARTED);
+      } else if (msg.startsWith('video')) {
+        setVideoUrl(msg.split(' ').slice(1).join(' '));
+      }
+    },
+    [initialized],
+  );
+
+  const init = useCallback(
+    (initialized: boolean) => {
+      setInitialized(initialized);
+      if (overlay === OverlayState.UNSTARTED) {
+        setOverlay(OverlayState.NONE);
+      }
+    },
+    [overlay],
+  );
 
   return (
     <div className="aspect-ratio">
       {videoUrl === null ? (
-        <div className="aspect-ratio-inner empty-player">No videos in queue</div>
+        <div className="aspect-ratio-inner empty-player">
+          No videos in queue
+        </div>
       ) : (
         <div className="aspect-ratio-inner">
           {isYoutubeUrl(videoUrl) ? (
@@ -71,7 +70,7 @@ function Player() {
               volume={volume}
               setVolume={setVolume}
               initialized={initialized}
-              setInitialized={setInitialized}
+              setInitialized={init}
             />
           ) : (
             <VideoJsPlayer
@@ -80,10 +79,10 @@ function Player() {
               volume={volume}
               setVolume={setVolume}
               initialized={initialized}
-              setInitialized={setInitialized}
+              setInitialized={init}
             />
           )}
-          {getOverlay(overlay)}
+          <Overlay state={overlay} />
         </div>
       )}
     </div>

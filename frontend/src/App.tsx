@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import './App.css';
 import Notification from './model/Notification';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -29,9 +29,7 @@ ws.onopen = () => {
 
 function App() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [messageCallbacks, setMessageCallbacks] = useState<{
-    [key: string]: (msg: string) => void;
-  }>({});
+  const messageCallbacks = useRef<Record<string, (msg: string) => void>>({});
 
   const addNotification = useCallback((notification: Notification) => {
     setNotifications((notifications) => [
@@ -78,13 +76,15 @@ function App() {
           permanent: true,
         });
       } else {
-        Object.values(messageCallbacks).forEach((callback) => callback(msg));
+        Object.values(messageCallbacks.current).forEach((callback) =>
+          callback(msg),
+        );
       }
     };
     return () => {
       ws.onmessage = null;
     };
-  }, [addNotification, messageCallbacks]);
+  }, [addNotification]);
 
   useEffect(() => {
     if (!notifications.find((notification) => !notification.permanent)) {
@@ -105,17 +105,12 @@ function App() {
 
   const addMessageCallback = useCallback(
     (id: string, callback: (msg: string) => void) => {
-      setMessageCallbacks((callbacks) =>
-        Object.assign(callbacks, { [id]: callback }),
-      );
+      messageCallbacks.current[id] = callback;
     },
     [],
   );
   const removeMessageCallback = useCallback((id: string) => {
-    setMessageCallbacks((callbacks) => {
-      const { [id]: removed, ...remaining } = callbacks;
-      return remaining;
-    });
+    delete messageCallbacks.current[id];
   }, []);
   const sendMessage = useCallback((message: string) => {
     console.log('sending websocket message: ' + message);
@@ -142,19 +137,15 @@ function App() {
     >
       <div className="container">
         <main className="with-sidebar">
-          <div>
-            <section className="video">
-              <div className="embed">
-                <Player />
-              </div>
-            </section>
-            <section className="aside">
-              <Sidebar
-                notifications={notifications}
-                addNotification={addNotification}
-              />
-            </section>
-          </div>
+          <section>
+            <Player />
+          </section>
+          <section className="aside">
+            <Sidebar
+              notifications={notifications}
+              addNotification={addNotification}
+            />
+          </section>
         </main>
         <footer className="footer">
           <a
