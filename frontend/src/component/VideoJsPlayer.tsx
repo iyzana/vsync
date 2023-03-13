@@ -74,13 +74,13 @@ export const VideoJsPlayer = ({
   setOverlay,
   volume,
   setVolume,
-  initialized,
-  setInitialized,
+  playbackPermission,
+  gotPlaybackPermission,
 }: EmbeddedPlayerProps) => {
   const placeholderRef = useRef<HTMLDivElement | null>(null);
   const playerRef = useRef<videojs.Player | null>(null);
   const waitReadyRef = useRef(false);
-  const initializedRef = useRef(initialized);
+  const playbackPermissionRef = useRef(playbackPermission);
   const videoUrlRef = useRef(videoUrl);
   const { sendMessage } = useContext(WebsocketContext);
 
@@ -140,17 +140,14 @@ export const VideoJsPlayer = ({
       const player = playerRef.current;
       player.ready(() => {
         console.log('registering player hooks');
-        if (!initialized) {
-          setOverlay(OverlayState.UNSTARTED);
-        }
         player.on('play', function () {
           console.log('player hook play');
-          if (initializedRef.current) {
+          if (playbackPermissionRef.current) {
             sendMessage(`play ${player.currentTime()}`);
             waitReadyRef.current = false;
             setOverlay(OverlayState.NONE);
           } else {
-            setInitialized(true);
+            gotPlaybackPermission();
             sendMessage('sync');
           }
         });
@@ -218,8 +215,8 @@ export const VideoJsPlayer = ({
   });
 
   useEffect(() => {
-    initializedRef.current = initialized;
-  }, [initialized]);
+    playbackPermissionRef.current = playbackPermission;
+  }, [playbackPermission]);
 
   useEffect(() => {
     if (!playerRef.current) {

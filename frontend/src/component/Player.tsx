@@ -1,5 +1,5 @@
 import './Player.css';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import YoutubePlayer from './YoutubePlayer';
 import VideoJsPlayer from './VideoJsPlayer';
 import { useWebsocketMessages } from '../hook/websocket-messages';
@@ -11,8 +11,8 @@ export interface EmbeddedPlayerProps {
   setOverlay: (state: OverlayState) => void;
   volume: number | null;
   setVolume: (volume: number) => void;
-  initialized: boolean;
-  setInitialized: (initialized: boolean) => void;
+  playbackPermission: boolean;
+  gotPlaybackPermission: () => void;
 }
 
 function isYoutubeUrl(url: string): boolean {
@@ -26,7 +26,7 @@ function Player() {
   const [overlay, setOverlay] = useState<OverlayState>(OverlayState.NONE);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [volume, setVolume] = useState<number | null>(null);
-  const [initialized, setInitialized] = useState<boolean>(false);
+  const [playbackPermission, setPlaybackPermission] = useState<boolean>(false);
 
   useWebsocketMessages(
     (msg: string) => {
@@ -37,23 +37,33 @@ function Player() {
       } else if (msg.startsWith('ready?')) {
         setOverlay(OverlayState.SYNCING);
       } else if (msg === 'video') {
-        setOverlay(initialized ? OverlayState.NONE : OverlayState.UNSTARTED);
+        if (overlay !== OverlayState.UNSTARTED) {
+          setOverlay(OverlayState.NONE);
+        }
       } else if (msg.startsWith('video')) {
         setVideoUrl(msg.split(' ').slice(1).join(' '));
       }
     },
-    [initialized],
-  );
-
-  const init = useCallback(
-    (initialized: boolean) => {
-      setInitialized(initialized);
-      if (overlay === OverlayState.UNSTARTED) {
-        setOverlay(OverlayState.NONE);
-      }
-    },
     [overlay],
   );
+
+  useEffect(() => {
+    if (playbackPermission || overlay !== OverlayState.NONE) {
+      return;
+    }
+    const timeout = setTimeout(() => {
+      console.log('set unstarted overlay');
+      setOverlay(OverlayState.UNSTARTED);
+    }, 1000);
+    return () => clearTimeout(timeout);
+  }, [playbackPermission, overlay]);
+
+  const gotPlaybackPermission = useCallback(() => {
+    setPlaybackPermission(true);
+    if (overlay === OverlayState.UNSTARTED) {
+      setOverlay(OverlayState.NONE);
+    }
+  }, [overlay]);
 
   return (
     <div className="aspect-ratio">
@@ -69,8 +79,8 @@ function Player() {
               setOverlay={setOverlay}
               volume={volume}
               setVolume={setVolume}
-              initialized={initialized}
-              setInitialized={init}
+              playbackPermission={playbackPermission}
+              gotPlaybackPermission={gotPlaybackPermission}
             />
           ) : (
             <VideoJsPlayer
@@ -78,8 +88,8 @@ function Player() {
               setOverlay={setOverlay}
               volume={volume}
               setVolume={setVolume}
-              initialized={initialized}
-              setInitialized={init}
+              playbackPermission={playbackPermission}
+              gotPlaybackPermission={gotPlaybackPermission}
             />
           )}
           <Overlay state={overlay} />

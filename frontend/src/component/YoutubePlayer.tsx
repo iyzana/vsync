@@ -39,8 +39,8 @@ function YoutubePlayer({
   setOverlay,
   volume,
   setVolume,
-  initialized,
-  setInitialized,
+  playbackPermission,
+  gotPlaybackPermission,
 }: EmbeddedPlayerProps) {
   const [player, setPlayer] = useState<YouTubePlayer | null>(null);
   const [preloadTime, setPreloadTime] = useState<number | null>(null);
@@ -118,11 +118,11 @@ function YoutubePlayer({
       }
     } else if (newState === YouTube.PlayerState.PLAYING) {
       setHasEverPlayed(true);
-      if (initialized) {
+      if (playbackPermission) {
         sendMessage(`play ${player.getCurrentTime()}`);
         setOverlay(OverlayState.NONE);
       } else {
-        setInitialized(true);
+        gotPlaybackPermission();
         sendMessage('sync');
       }
     } else if (newState === YouTube.PlayerState.ENDED) {
@@ -139,8 +139,8 @@ function YoutubePlayer({
     oldState,
     hasEverPlayed,
     preloadTime,
-    initialized,
-    setInitialized,
+    playbackPermission,
+    gotPlaybackPermission,
     sendMessage,
     setOverlay,
   ]);
@@ -225,12 +225,8 @@ function YoutubePlayer({
           player.setVolume(volume * 100);
         }
       }
-
-      if (!initialized) {
-        setOverlay(OverlayState.UNSTARTED);
-      }
     },
-    [volume, initialized, setOverlay],
+    [volume],
   );
 
   return (
