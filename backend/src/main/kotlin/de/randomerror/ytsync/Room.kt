@@ -50,6 +50,7 @@ fun joinRoom(roomId: RoomId, session: Session): String {
     if (room.queue.isNotEmpty()) {
         val playingUrl = room.queue[0].url
         log(session, "video $playingUrl")
+        // todo: include mime in video message if available
         session.remote.sendStringByFuture("video $playingUrl")
         for (item in room.queue.drop(1)) {
             val videoJson = gson.toJson(item)

@@ -43,6 +43,7 @@ data class QueueItem(
     val originalQuery: String,
     val title: String?,
     val thumbnail: String?,
+    val mime: String?,
     val id: String = UUID.nameUUIDFromBytes(url.toByteArray()).toString(),
 )
 

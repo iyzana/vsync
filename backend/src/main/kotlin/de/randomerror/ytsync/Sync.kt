@@ -137,6 +137,7 @@ fun playNext(session: Session, room: Room) {
     if (room.queue.isNotEmpty()) {
         val next = room.queue[0]
         room.broadcastAll(session, "queue rm ${next.id}")
+        // todo: include mime in video message if available
         room.broadcastAll(session, "video ${next.url}")
         room.setSyncState(SyncState.Playing(Instant.now(), TimeStamp(0.0)))
     } else {

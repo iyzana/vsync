@@ -14,6 +14,7 @@ fun enqueue(session: Session, query: String): String {
     val room = getRoom(session)
 
     val youtubeId = youtubeUrlRegex.find(query)?.let { it.groups[1]!!.value }
+    // todo: remove this fallback code, oembed is fast enough
     if (youtubeId != null) {
         synchronized(room.queue) {
             if (room.queue.size == 0) {
@@ -40,6 +41,7 @@ fun enqueue(session: Session, query: String): String {
             }
             room.queue.add(video)
             if (room.queue.size == 1) {
+                // todo: include mime in video message if available
                 room.broadcastAll(session, "video ${video.url}")
             } else {
                 room.broadcastAll(session, "queue add ${gson.toJson(video)}")

@@ -9,6 +9,7 @@ import java.io.FileNotFoundException
 import java.io.StringWriter
 import java.lang.AssertionError
 import java.lang.UnsupportedOperationException
+import java.net.HttpURLConnection
 import java.net.URL
 import java.util.concurrent.TimeUnit
 
@@ -21,7 +22,8 @@ fun getFallbackYoutubeVideo(query: String, match: String): QueueItem {
         "https://www.youtube.com/watch?v=$match",
         query,
         "Unknown video $match",
-        "https://i.ytimg.com/vi/$match/mqdefault.jpg"
+        "https://i.ytimg.com/vi/$match/mqdefault.jpg",
+        null
     )
 }
 
@@ -42,7 +44,7 @@ private fun fetchVideoInfoYouTubeOEmbed(query: String, youtubeId: String): Queue
         val video = JsonParser.parseString(videoData).asJsonObject
         val title = video.getNullable("title")?.asString
         val thumbnail = "https://i.ytimg.com/vi/$youtubeId/mqdefault.jpg"
-        QueueItem(query, query, title, thumbnail)
+        QueueItem(query, query, title, thumbnail, null)
     } catch (e: JsonParseException) {
         logger.warn("failed to parse oembed response for query $query", e)
         null
@@ -88,7 +90,8 @@ private fun parseYtDlpOutput(
         }?.asString ?: return null
         val title = video.getNullable("title")?.asString
         val thumbnail = video.getNullable("thumbnail")?.asString
-        QueueItem(urlElement, query, title, thumbnail)
+        val mime = if (isYoutube) null else getMimeType(urlElement)
+        QueueItem(urlElement, query, title, thumbnail, mime)
     } catch (e: JsonParseException) {
         logger.warn("failed to parse ytdlp output for query $query", e)
         null
@@ -107,6 +110,20 @@ fun JsonObject.getNullable(key: String): JsonElement? {
         null
     } else {
         value
+    }
+}
+
+private fun getMimeType(urlElement: String): String? {
+    val conn = URL(urlElement).openConnection()
+    if (conn !is HttpURLConnection) {
+        return null
+    }
+    conn.requestMethod = "HEAD"
+    try {
+        conn.connect()
+        return conn.getHeaderField("content-type")
+    } finally {
+        conn.disconnect()
     }
 }
 
