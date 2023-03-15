@@ -132,10 +132,10 @@ fun setEnded(session: Session, queueId: String): String {
 
 fun playNext(session: Session, room: Room) {
     room.queue.removeAt(0)
+    room.timeoutSyncAt = null
 
     if (room.queue.isNotEmpty()) {
         val next = room.queue[0]
-        room.timeoutSyncAt = null
         room.broadcastAll(session, "queue rm ${next.id}")
         room.broadcastAll(session, "video ${next.url}")
         room.setSyncState(SyncState.Playing(Instant.now(), TimeStamp(0.0)))
