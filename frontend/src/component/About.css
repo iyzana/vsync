@@ -24,16 +24,14 @@
   margin-left: var(--s0);
 }
 
-.shortcut {
+kbd {
   background-color: var(--card-alt);
-  padding: 1px var(--s0);
+  padding: 2px var(--s0);
   border-radius: var(--radius);
   border: 1px solid var(--fg-light);
 
   display: inline-block;
 
-  font-family: monospace;
-  font-size: 1.2em;
+  font-size: 1.1em;
   line-height: 1.5em;
-  text-align: center;
 }

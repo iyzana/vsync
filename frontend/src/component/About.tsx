@@ -69,46 +69,41 @@ function About() {
       <h2>Player Shortcuts</h2>
       <ul className="shortcuts">
         <li>
-          <span className="shortcut">Space</span>{' '}
+          <kbd>Space</kbd>{' '}
           <span>Click focussed element or toggle play/pause</span>
         </li>
         <li>
-          <span className="shortcut">K</span> <span>Toggle play/pause</span>
+          <kbd>K</kbd> <span>Toggle play/pause</span>
         </li>
         <li>
-          <span className="shortcut">🠔</span>{' '}
-          <span>Seek 5 seconds backwards</span>
+          <kbd>🠔</kbd> <span>Seek 5 seconds backwards</span>
         </li>
         <li>
-          <span className="shortcut">🠖</span>{' '}
-          <span>Seek 5 seconds forwards</span>
+          <kbd>🠖</kbd> <span>Seek 5 seconds forwards</span>
         </li>
         <li>
-          <span className="shortcut">J</span>{' '}
-          <span>Seek 10 seconds backwards</span>
+          <kbd>J</kbd> <span>Seek 10 seconds backwards</span>
         </li>
         <li>
-          <span className="shortcut">L</span>{' '}
-          <span>Seek 10 seconds forwards</span>
+          <kbd>L</kbd> <span>Seek 10 seconds forwards</span>
         </li>
         <li>
-          <span className="shortcut">M</span> <span>Toggle mute</span>
+          <kbd>M</kbd> <span>Toggle mute</span>
         </li>
         <li>
-          <span className="shortcut">C</span> <span>Toggle subtitles</span>
+          <kbd>C</kbd> <span>Toggle subtitles</span>
         </li>
         <li>
-          <span className="shortcut">🠗</span> <span>Decrease volume by 5%</span>
+          <kbd>🠗</kbd> <span>Decrease volume by 5%</span>
         </li>
         <li>
-          <span className="shortcut">🠕</span> <span>Increase volume by 5%</span>
+          <kbd>🠕</kbd> <span>Increase volume by 5%</span>
         </li>
         <li>
-          <span className="shortcut">F</span> <span>Toggle fullscreen</span>
+          <kbd>F</kbd> <span>Toggle fullscreen</span>
         </li>
         <li>
-          <span className="shortcut">Shift</span> +{' '}
-          <span className="shortcut">N</span>{' '}
+          <kbd>Shift</kbd> + <kbd>N</kbd>{' '}
           <span>Skip to next video in queue</span>
         </li>
       </ul>
