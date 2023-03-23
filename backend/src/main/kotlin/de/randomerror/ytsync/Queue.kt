@@ -3,12 +3,15 @@ package de.randomerror.ytsync
 import org.eclipse.jetty.websocket.api.Session
 import java.time.Instant
 import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
+import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.ThreadPoolExecutor
+import java.util.concurrent.TimeUnit.SECONDS
 import kotlin.text.RegexOption.IGNORE_CASE
 
 private val youtubeUrlRegex: Regex =
     Regex("""https://(?:www\.)?youtu(?:\.be|be\.com)/(?:watch\?v=|embed/|shorts/)?([^?&]+)(?:.*)?""", IGNORE_CASE)
-private val videoInfoFetcher: ExecutorService = Executors.newCachedThreadPool()
+private val videoInfoFetcher: ExecutorService =
+    ThreadPoolExecutor(4, 16, 60L, SECONDS, LinkedBlockingQueue())
 
 fun enqueue(session: Session, query: String): String {
     val room = getRoom(session)
