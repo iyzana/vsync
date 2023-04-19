@@ -35,7 +35,7 @@ fun fetchVideoInfo(query: String, youtubeId: String?): QueueItem? {
 private fun fetchVideoInfoYouTubeOEmbed(query: String, youtubeId: String): QueueItem? {
     val videoData = try {
         URL("https://www.youtube.com/oembed?url=$query").readText()
-    } catch (e: FileNotFoundException) {
+    } catch (ignored: FileNotFoundException) {
         return null
     }
     return try {

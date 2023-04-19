@@ -10,8 +10,12 @@ import kotlin.text.RegexOption.IGNORE_CASE
 
 private val youtubeUrlRegex: Regex =
     Regex("""https://(?:www\.)?youtu(?:\.be|be\.com)/(?:watch\?v=|embed/|shorts/)?([^?&]+)(?:.*)?""", IGNORE_CASE)
+
+private const val FETCHER_CORE_POOL = 4
+private const val FETCHER_MAX_POOL = 16
+private const val FETCHER_KEEPALIVE_SECONDS = 60L
 private val videoInfoFetcher: ExecutorService =
-    ThreadPoolExecutor(4, 16, 60L, SECONDS, LinkedBlockingQueue())
+    ThreadPoolExecutor(FETCHER_CORE_POOL, FETCHER_MAX_POOL, FETCHER_KEEPALIVE_SECONDS, SECONDS, LinkedBlockingQueue())
 
 fun enqueue(session: Session, query: String): String {
     val room = getRoom(session)
