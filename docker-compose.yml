@@ -11,8 +11,6 @@ services:
     image: ghcr.io/iyzana/yt-sync-frontend:latest
     container_name: ytsync-frontend
     restart: unless-stopped
-    environment:
-      HOST: vsync.randomerror.de
     networks:
       - nginx
 
