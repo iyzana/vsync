@@ -2,15 +2,17 @@ version: "2.2"
 services:
   backend:
     image: ghcr.io/iyzana/yt-sync-backend:latest
-    container_name: ytsync_backend
+    container_name: ytsync-backend
     restart: unless-stopped
     networks:
       - nginx
     mem_limit: 512m
   frontend:
     image: ghcr.io/iyzana/yt-sync-frontend:latest
-    container_name: ytsync_frontend
+    container_name: ytsync-frontend
     restart: unless-stopped
+    environment:
+      HOST: vsync.randomerror.de
     networks:
       - nginx
 

@@ -171,6 +171,7 @@ export const VideoJsPlayer = ({
               sendMessage(`pause ${player.currentTime()}`);
             }
           }
+          // fixme: on keyboard seek player is playing here
         });
         player.on('ended', function () {
           console.log('player hook ended');

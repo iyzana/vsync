@@ -38,7 +38,7 @@ fun main() {
     }
 
     webSocketIdleTimeoutMillis(SECONDS.toMillis(WEBSOCKET_IDLE_TIMEOUT).toInt())
-    webSocket("/room", SyncWebSocket::class.java)
+    webSocket("/api/room", SyncWebSocket::class.java)
     init()
 }
 
