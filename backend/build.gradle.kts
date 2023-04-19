@@ -11,7 +11,7 @@ kotlin {
 }
 
 repositories {
-    mavenCentral()
+    jcenter()
 }
 
 dependencies {
