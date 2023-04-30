@@ -38,12 +38,17 @@ data class Room(
     }
 }
 
-data class QueueItem(
+data class VideoSource(
     val url: String,
+    val mimeType: String?,
+)
+
+data class QueueItem(
+    val source: VideoSource,
     val originalQuery: String,
     val title: String?,
     val thumbnail: String?,
-    val id: String = UUID.nameUUIDFromBytes(url.toByteArray()).toString(),
+    val id: String = UUID.nameUUIDFromBytes(source.url.toByteArray()).toString(),
 )
 
 data class User(

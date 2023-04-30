@@ -7,12 +7,17 @@ import Overlay from './Overlay';
 import OverlayState from '../model/Overlay';
 
 export interface EmbeddedPlayerProps {
-  videoUrl: string;
+  source: VideoSource;
   setOverlay: (state: OverlayState) => void;
   volume: number | null;
   setVolume: (volume: number) => void;
   playbackPermission: boolean;
   gotPlaybackPermission: () => void;
+}
+
+export interface VideoSource {
+  url: string;
+  mimeType: string | null;
 }
 
 function isYoutubeUrl(url: string): boolean {
@@ -24,7 +29,7 @@ function isYoutubeUrl(url: string): boolean {
 
 function Player() {
   const [overlay, setOverlay] = useState<OverlayState>(OverlayState.NONE);
-  const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [source, setSource] = useState<VideoSource | null>(null);
   const [volume, setVolume] = useState<number | null>(null);
   const [playbackPermission, setPlaybackPermission] = useState<boolean>(false);
 
@@ -41,7 +46,7 @@ function Player() {
           setOverlay(OverlayState.NONE);
         }
       } else if (msg.startsWith('video')) {
-        setVideoUrl(msg.split(' ').slice(1).join(' '));
+        setSource(JSON.parse(msg.split(' ').slice(1).join(' ')));
       }
     },
     [overlay],
@@ -67,15 +72,15 @@ function Player() {
 
   return (
     <div className="aspect-ratio">
-      {videoUrl === null ? (
+      {source === null ? (
         <div className="aspect-ratio-inner empty-player">
           No videos in queue
         </div>
       ) : (
         <div className="aspect-ratio-inner">
-          {isYoutubeUrl(videoUrl) ? (
+          {isYoutubeUrl(source.url) ? (
             <YoutubePlayer
-              videoUrl={videoUrl}
+              source={source}
               setOverlay={setOverlay}
               volume={volume}
               setVolume={setVolume}
@@ -84,7 +89,7 @@ function Player() {
             />
           ) : (
             <VideoJsPlayer
-              videoUrl={videoUrl}
+              source={source}
               setOverlay={setOverlay}
               volume={volume}
               setVolume={setVolume}

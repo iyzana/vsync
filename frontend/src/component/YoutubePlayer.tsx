@@ -35,7 +35,7 @@ const getVideoId = (videoUrl: string) => {
 };
 
 function YoutubePlayer({
-  videoUrl,
+  source,
   setOverlay,
   volume,
   setVolume,
@@ -126,7 +126,7 @@ function YoutubePlayer({
         sendMessage('sync');
       }
     } else if (newState === YouTube.PlayerState.ENDED) {
-      sendMessage(`end ${videoUrl}`);
+      sendMessage(`end ${source.url}`);
     } else if (
       newState === YouTube.PlayerState.BUFFERING &&
       oldState === YouTube.PlayerState.PLAYING
@@ -135,7 +135,7 @@ function YoutubePlayer({
     }
   }, [
     player,
-    videoUrl,
+    source,
     oldState,
     hasEverPlayed,
     preloadTime,
@@ -233,7 +233,7 @@ function YoutubePlayer({
     <YouTube
       className="youtube-player"
       opts={opts}
-      videoId={getVideoId(videoUrl)}
+      videoId={getVideoId(source.url)}
       onReady={onReady}
       onStateChange={onStateChange}
       onPlaybackRateChange={onPlaybackRateChange}

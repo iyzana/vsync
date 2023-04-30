@@ -9,6 +9,7 @@ import java.io.FileNotFoundException
 import java.io.StringWriter
 import java.lang.AssertionError
 import java.lang.UnsupportedOperationException
+import java.net.HttpURLConnection
 import java.net.URL
 import java.util.concurrent.TimeUnit
 
@@ -18,7 +19,10 @@ private val logger = KotlinLogging.logger {}
 
 fun getFallbackYoutubeVideo(query: String, match: String): QueueItem {
     return QueueItem(
-        "https://www.youtube.com/watch?v=$match",
+        VideoSource(
+            "https://www.youtube.com/watch?v=$match",
+            null
+        ),
         query,
         "Unknown video $match",
         "https://i.ytimg.com/vi/$match/mqdefault.jpg"
@@ -42,7 +46,7 @@ private fun fetchVideoInfoYouTubeOEmbed(query: String, youtubeId: String): Queue
         val video = JsonParser.parseString(videoData).asJsonObject
         val title = video.getNullable("title")?.asString
         val thumbnail = "https://i.ytimg.com/vi/$youtubeId/mqdefault.jpg"
-        QueueItem(query, query, title, thumbnail)
+        QueueItem(VideoSource(query, null), query, title, thumbnail)
     } catch (e: JsonParseException) {
         logger.warn("failed to parse oembed response for query $query", e)
         null
@@ -81,14 +85,15 @@ private fun parseYtDlpOutput(
 ): QueueItem? {
     return try {
         val video = JsonParser.parseString(videoData).asJsonObject
-        val urlElement = if (isYoutube) {
+        val url = if (isYoutube) {
             video.getNullable("webpage_url")
         } else {
             video.getNullable("manifest_url") ?: video.getNullable("url")
         }?.asString ?: return null
         val title = video.getNullable("title")?.asString
         val thumbnail = video.getNullable("thumbnail")?.asString
-        QueueItem(urlElement, query, title, thumbnail)
+        val contentType = if (isYoutube) null else getContentType(url)
+        QueueItem(VideoSource(url, contentType), query, title, thumbnail)
     } catch (e: JsonParseException) {
         logger.warn("failed to parse ytdlp output for query $query", e)
         null
@@ -99,6 +104,12 @@ private fun parseYtDlpOutput(
         logger.warn("failed to parse ytdlp output for query $query", e)
         null
     }
+}
+
+private fun getContentType(url: String): String? {
+    val connection = URL(url).openConnection() as HttpURLConnection
+    connection.requestMethod = "HEAD"
+    return connection.getHeaderField("Content-Type")
 }
 
 fun JsonObject.getNullable(key: String): JsonElement? {

@@ -116,12 +116,12 @@ fun sync(session: Session): String {
     }
 }
 
-fun setEnded(session: Session, queueId: String): String {
+fun setEnded(session: Session, videoUrl: String): String {
     val room = getRoom(session)
 
     synchronized(room.queue) {
         if (room.queue.isEmpty()) return "end empty"
-        if (room.queue[0].url != queueId) return "end old"
+        if (room.queue[0].source.url != videoUrl) return "end old"
 
         room.ignoreSkipTill = Instant.now().plusSeconds(IGNORE_DURATION)
         playNext(session, room)
@@ -137,7 +137,7 @@ fun playNext(session: Session, room: Room) {
     if (room.queue.isNotEmpty()) {
         val next = room.queue[0]
         room.broadcastAll(session, "queue rm ${next.id}")
-        room.broadcastAll(session, "video ${next.url}")
+        room.broadcastAll(session, "video ${gson.toJson(next.source)}")
         room.setSyncState(SyncState.Playing(Instant.now(), TimeStamp(0.0)))
     } else {
         room.broadcastAll(session, "video")

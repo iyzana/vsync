@@ -20,7 +20,7 @@ interface FavIconProps {
 
 function FavIcon({ item }: FavIconProps) {
   const [error, setError] = useState(false);
-  const favicon = faviconUrl(item.url, item.originalQuery);
+  const favicon = faviconUrl(item.source.url, item.originalQuery);
   return error ? null : (
     <img
       className="favicon"

@@ -70,7 +70,7 @@ const opts: VideoJsPlayerOptions = {
 };
 
 export const VideoJsPlayer = ({
-  videoUrl,
+  source,
   setOverlay,
   volume,
   setVolume,
@@ -81,7 +81,7 @@ export const VideoJsPlayer = ({
   const playerRef = useRef<videojs.Player | null>(null);
   const waitReadyRef = useRef(false);
   const playbackPermissionRef = useRef(playbackPermission);
-  const videoUrlRef = useRef(videoUrl);
+  const sourceRef = useRef(source);
   const { sendMessage } = useContext(WebsocketContext);
 
   useWebsocketMessages(
@@ -175,7 +175,7 @@ export const VideoJsPlayer = ({
         });
         player.on('ended', function () {
           console.log('player hook ended');
-          sendMessage(`end ${videoUrlRef.current}`);
+          sendMessage(`end ${sourceRef.current.url}`);
         });
         player.on('ratechange', function () {
           console.log('player hook ratechange');
@@ -225,10 +225,10 @@ export const VideoJsPlayer = ({
     }
     const player = playerRef.current;
     player.ready(() => {
-      videoUrlRef.current = videoUrl;
-      player.src(videoUrl);
+      sourceRef.current = source;
+      player.src({ src: source.url, type: source.mimeType || undefined });
     });
-  }, [videoUrl]);
+  }, [source]);
 
   // dispose video.js when the component unmounts
   useEffect(() => {

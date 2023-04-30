@@ -1,5 +1,5 @@
 plugins {
-    id("org.jetbrains.kotlin.jvm") version "1.8.10"
+    kotlin("jvm") version "1.8.10"
 
     application
     id("com.github.johnrengelman.shadow") version "7.1.2"
@@ -11,7 +11,7 @@ kotlin {
 }
 
 repositories {
-    jcenter()
+    mavenCentral()
 }
 
 dependencies {

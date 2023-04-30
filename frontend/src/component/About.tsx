@@ -38,6 +38,7 @@ function About() {
         <li>ardmediathek.de</li>
         <li>zdf.de</li>
         <li>PeerTube-instances</li>
+        <li>Invidious-instances</li>
         <li>vimeo.com</li>
       </ul>
       <h2>Unsupported sites</h2>

@@ -12,7 +12,7 @@ const urlRegex = new RegExp('^(ftp|https?)://.*');
 const server =
   process.env.NODE_ENV !== 'development'
     ? `wss://${window.location.host}/api/room`
-    : 'ws://localhost:4567/room';
+    : 'ws://localhost:4567/api/room';
 const ws = new WebSocket(server);
 ws.onopen = () => {
   const path = (window.location.pathname + window.location.search).substring(1);

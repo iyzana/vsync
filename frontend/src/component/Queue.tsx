@@ -15,7 +15,7 @@ const getDomain = (item: QueueItem) => {
   try {
     baseUrl = new URL(item.originalQuery);
   } catch (e) {
-    baseUrl = new URL(item.url);
+    baseUrl = new URL(item.source.url);
   }
   const host = baseUrl.hostname;
   return host.replace(/^www./, '');

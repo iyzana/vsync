@@ -48,9 +48,9 @@ fun joinRoom(roomId: RoomId, session: Session): String {
     }
     room.broadcastAll(session, "users ${room.participants.size}")
     if (room.queue.isNotEmpty()) {
-        val playingUrl = room.queue[0].url
-        log(session, "video $playingUrl")
-        session.remote.sendStringByFuture("video $playingUrl")
+        val playingSource = gson.toJson(room.queue[0].source)
+        log(session, "video $playingSource")
+        session.remote.sendStringByFuture("video $playingSource")
         for (item in room.queue.drop(1)) {
             val videoJson = gson.toJson(item)
             log(session, "queue add $videoJson")

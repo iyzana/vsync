@@ -27,7 +27,7 @@ fun enqueue(session: Session, query: String): String {
                 val fallbackVideo = getFallbackYoutubeVideo(query, youtubeId)
                 // this is the first video it does not go into the queue, we don't need any video info
                 room.queue.add(fallbackVideo)
-                room.broadcastAll(session, "video ${fallbackVideo.url}")
+                room.broadcastAll(session, "video ${gson.toJson(fallbackVideo.source)}")
                 return "queue"
             }
         }
@@ -41,13 +41,13 @@ fun enqueue(session: Session, query: String): String {
             return@execute
         }
         synchronized(room.queue) {
-            if (room.queue.any { it.url == video.url || it.originalQuery == query }) {
+            if (room.queue.any { it.source.url == video.source.url || it.originalQuery == query }) {
                 session.remote.sendStringByFuture("queue err duplicate")
                 return@execute
             }
             room.queue.add(video)
             if (room.queue.size == 1) {
-                room.broadcastAll(session, "video ${video.url}")
+                room.broadcastAll(session, "video ${gson.toJson(video.source)}")
             } else {
                 room.broadcastAll(session, "queue add ${gson.toJson(video)}")
             }
@@ -59,7 +59,7 @@ fun enqueue(session: Session, query: String): String {
 fun dequeue(session: Session, queueId: String): String {
     val room = getRoom(session)
     // first in queue is currently playing song
-    if (room.queue.isNotEmpty() && room.queue[0].url == queueId) {
+    if (room.queue.isNotEmpty() && room.queue[0].id == queueId) {
         return "queue rm deny"
     }
     room.queue.removeAll { it.id == queueId }

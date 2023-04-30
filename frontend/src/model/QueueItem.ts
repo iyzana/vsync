@@ -1,5 +1,7 @@
+import { VideoSource } from '../component/Player';
+
 export default interface QueueItem {
-  url: string;
+  source: VideoSource;
   originalQuery: string;
   title?: string;
   thumbnail?: string;
