@@ -3,6 +3,9 @@ FROM node:14-alpine AS build
 WORKDIR /app
 ENV INLINE_RUNTIME_CHUNK=false
 
+COPY vendor vendor
+RUN cd vendor/react-youtube/packages/react-youtube && yarn && yarn build
+
 COPY package.json package.json
 COPY yarn.lock yarn.lock
 RUN yarn

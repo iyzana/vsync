@@ -21,7 +21,7 @@
     "react-dom": "^18.1.0",
     "react-scripts": "^5.0.1",
     "react-sortablejs": "6.1.4",
-    "react-youtube": "^10.0.0",
+    "react-youtube": "file:vendor/react-youtube/packages/react-youtube",
     "sortablejs": "^1.12.0",
     "typescript": "^4.6.4",
     "video.js": "^7.20.1"

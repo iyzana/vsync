@@ -20,6 +20,7 @@ jobs:
       - name: Build Frontend Docker image
         run: |
           cd frontend
+          git submodule update --init
           docker build \
           -t "ghcr.io/${GITHUB_REPOSITORY}-frontend:${GITHUB_SHA:0:7}" \
           -t "ghcr.io/${GITHUB_REPOSITORY}-frontend:nightly" .

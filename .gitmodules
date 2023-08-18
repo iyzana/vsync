@@ -1,0 +1,4 @@
+[submodule "frontend/vendor/react-youtube"]
+	path = frontend/vendor/react-youtube
+	url = https://github.com/iyzana/react-youtube.git
+	branch = feature/fast-video-change

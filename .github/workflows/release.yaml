@@ -29,6 +29,7 @@ jobs:
         if: ${{ steps.release.outputs.release_created }}
         run: |
           cd frontend
+          git submodule update --init
           docker build \
           -t "ghcr.io/${GITHUB_REPOSITORY}-frontend:${{ steps.release.outputs.tag_name }}" \
           -t "ghcr.io/${GITHUB_REPOSITORY}-frontend:latest" .

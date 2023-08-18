@@ -1,0 +1,14 @@
+build: build-vendor
+	yarn build
+
+start: build-vendor
+	yarn start
+
+git-submodules:
+	git submodule init
+
+install-vendor: git-submodules
+	cd vendor/react-youtube/packages/react-youtube && yarn
+
+build-vendor: install-vendor
+	cd vendor/react-youtube/packages/react-youtube && yarn build
