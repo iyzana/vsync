@@ -3,7 +3,7 @@ import Input from './Input';
 import Queue from './Queue';
 import Notification from '../model/Notification';
 import Infobox from './Infobox';
-import { useCallback, useContext, useState } from 'react';
+import { useCallback, useContext } from 'react';
 import { WebsocketContext } from '../context/websocket';
 
 interface SidebarProps {
@@ -12,13 +12,11 @@ interface SidebarProps {
 }
 
 function Sidebar({ notifications, addNotification }: SidebarProps) {
-  const [working, setWorking] = useState(false);
   const { sendMessage } = useContext(WebsocketContext);
 
   const addToQueue = useCallback(
     (input: string) => {
       sendMessage(`queue add ${input}`);
-      setWorking(true);
     },
     [sendMessage],
   );
@@ -29,8 +27,8 @@ function Sidebar({ notifications, addNotification }: SidebarProps) {
         notifications={notifications}
         addNotification={addNotification}
       />
-      <Queue addNotification={addNotification} setWorking={setWorking} />
-      <Input addToQueue={addToQueue} working={working} />
+      <Queue addNotification={addNotification} />
+      <Input addToQueue={addToQueue} />
     </div>
   );
 }

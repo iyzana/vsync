@@ -10,12 +10,18 @@ import { WebsocketContext } from '../context/websocket';
 import FavIcon from './FavIcon';
 import Thumbnail from './Thumbnail';
 
-const getDomain = (item: QueueItem) => {
+const getDomain: (item: QueueItem) => string | null = (item: QueueItem) => {
   let baseUrl;
   try {
     baseUrl = new URL(item.originalQuery);
   } catch (e) {
-    baseUrl = new URL(item.source.url);
+    if (item.source) {
+      baseUrl = new URL(item.source?.url);
+    } else if (item.favicon) {
+      baseUrl = new URL(item.favicon);
+    } else {
+      return null;
+    }
   }
   const host = baseUrl.hostname;
   return host.replace(/^www./, '');
@@ -23,21 +29,37 @@ const getDomain = (item: QueueItem) => {
 
 interface QueueProps {
   addNotification: (notification: Notification) => void;
-  setWorking: (working: boolean) => void;
 }
 
-function Queue({ addNotification, setWorking }: QueueProps) {
+function Queue({ addNotification }: QueueProps) {
   const [queue, setQueue] = useState<QueueItem[]>([]);
 
   useWebsocketMessages(
     (msg: string) => {
-      if (msg.startsWith('video')) {
-        setWorking(false);
-      } else if (msg.startsWith('queue add')) {
+      if (msg.startsWith('queue add')) {
         const msgParts = msg.split(' ');
         const queueItem: QueueItem = JSON.parse(msgParts.slice(2).join(' '));
-        setQueue((queue) => [...queue, queueItem]);
-        setWorking(false);
+        setQueue((queue) => {
+          const index = queue.findIndex((video) => video.id === queueItem.id);
+          console.log({ index });
+          if (index === -1) {
+            let newQueue = [...queue, queueItem];
+            newQueue.sort((a, b) => +a.loading - +b.loading);
+            return newQueue;
+          } else {
+            if (queue[index].loading && !queueItem.loading) {
+              let newQueue = [...queue];
+              newQueue.splice(index, 1);
+              newQueue.push(queueItem);
+              newQueue.sort((a, b) => +a.loading - +b.loading);
+              return newQueue;
+            } else {
+              let newQueue = [...queue];
+              newQueue.splice(index, 1, queueItem);
+              return newQueue;
+            }
+          }
+        });
       } else if (msg.startsWith('queue rm')) {
         const id = msg.split(' ')[2];
         setQueue((queue) => queue.filter((video) => video.id !== id));
@@ -46,6 +68,9 @@ function Queue({ addNotification, setWorking }: QueueProps) {
         setQueue((queue) => {
           const sortedQueue = [...queue];
           sortedQueue.sort((a, b) => {
+            if (a.loading !== b.loading) {
+              return +a.loading - +b.loading;
+            }
             return order.indexOf(a.id) - order.indexOf(b.id);
           });
           return sortedQueue;
@@ -56,25 +81,27 @@ function Queue({ addNotification, setWorking }: QueueProps) {
           level: 'info',
           permanent: false,
         });
-        setWorking(false);
       } else if (msg === 'queue err duplicate') {
         addNotification({
           message: 'Already in queue',
           level: 'info',
           permanent: false,
         });
-        setWorking(false);
       }
     },
-    [addNotification, setWorking],
+    [addNotification],
   );
 
   const { sendMessage } = useContext(WebsocketContext);
   const skip = () => sendMessage('skip');
   const reorderQueue = useCallback(
     (videos: QueueItem[]) => {
-      const oldOrder = queue.map((video) => video.id);
-      const newOrder = videos.map((video) => video.id);
+      const oldOrder = queue
+        .filter((video) => !video.loading)
+        .map((video) => video.id);
+      const newOrder = videos
+        .filter((video) => !video.loading)
+        .map((video) => video.id);
       if (
         oldOrder.length !== newOrder.length ||
         [...oldOrder].sort().join() !== [...newOrder].sort().join() ||
@@ -97,7 +124,7 @@ function Queue({ addNotification, setWorking }: QueueProps) {
         <div className="queue-header">
           <h3 className="title">Queue</h3>
           <div className="status">
-            {queue.length === 0 ? null : (
+            {queue.filter(video => !video.loading).length === 0 ? null : (
               <button className="skip" onClick={skip}>
                 Skip <FontAwesomeIcon icon={faAngleDoubleRight} />
               </button>
@@ -113,17 +140,28 @@ function Queue({ addNotification, setWorking }: QueueProps) {
             return (
               <li key={item.id} className="queue-item">
                 <div className="video-info">
-                  <Thumbnail thumbnailUrl={item.thumbnail || null} />
+                  <Thumbnail
+                    thumbnailUrl={item.thumbnail || null}
+                    loading={item.loading}
+                  />
                   <div>
-                    <div>{item.title || 'No title'}</div>
+                    <div>
+                      {item.title || (item.loading ? 'Loading...' : 'No title')}
+                    </div>
                     <div className="hostname">
-                      <FavIcon item={item} /> <span>{getDomain(item)}</span>
+                      <FavIcon item={item} />{' '}
+                      <span>{getDomain(item) || ''}</span>
                     </div>
                   </div>
                 </div>
-                <button className="remove" onClick={() => removeVideo(item.id)}>
-                  <FontAwesomeIcon icon={faTimes} />
-                </button>
+                {!item.loading ? (
+                  <button
+                    className="remove"
+                    onClick={() => removeVideo(item.id)}
+                  >
+                    <FontAwesomeIcon icon={faTimes} />
+                  </button>
+                ) : null}
               </li>
             );
           })}

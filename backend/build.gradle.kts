@@ -24,6 +24,8 @@ dependencies {
     implementation("ch.qos.logback:logback-classic:1.4.5")
     implementation("io.github.microutils:kotlin-logging-jvm:3.0.5")
 
+    implementation("com.mohamedrejeb.ksoup:ksoup-html:0.1.4")
+
     testImplementation("org.jetbrains.kotlin:kotlin-test")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit")
 }

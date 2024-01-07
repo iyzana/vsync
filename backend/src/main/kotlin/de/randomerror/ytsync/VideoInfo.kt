@@ -12,20 +12,41 @@ import java.lang.UnsupportedOperationException
 import java.net.HttpURLConnection
 import java.net.URL
 import java.util.concurrent.TimeUnit
+import kotlin.concurrent.thread
 
-private const val YT_DLP_TIMEOUT = 5L
+private const val YT_DLP_TIMEOUT = 15L
 
 private val logger = KotlinLogging.logger {}
 
-fun getFallbackYoutubeVideo(query: String, match: String): QueueItem {
+fun getInitialVideoInfo(query: String, youtubeId: String?): QueueItem {
+    val favicon = getInitialFavicon(query, youtubeId)
+    if (youtubeId !== null) {
+        return QueueItem(
+            VideoSource(
+                "https://www.youtube.com/watch?v=$youtubeId",
+                null
+            ),
+            query,
+            null,
+            "https://i.ytimg.com/vi/$youtubeId/mqdefault.jpg",
+            favicon,
+            true
+        )
+    }
+    return QueueItem(null, query, null, null, favicon, true)
+}
+
+fun getFallbackYoutubeVideo(query: String, youtubeId: String): QueueItem {
     return QueueItem(
         VideoSource(
-            "https://www.youtube.com/watch?v=$match",
+            "https://www.youtube.com/watch?v=$youtubeId",
             null
         ),
         query,
-        "Unknown video $match",
-        "https://i.ytimg.com/vi/$match/mqdefault.jpg"
+        "Unknown video $youtubeId",
+        "https://i.ytimg.com/vi/$youtubeId/mqdefault.jpg",
+        getInitialFavicon(query, youtubeId),
+        false
     )
 }
 
@@ -46,7 +67,7 @@ private fun fetchVideoInfoYouTubeOEmbed(query: String, youtubeId: String): Queue
         val video = JsonParser.parseString(videoData).asJsonObject
         val title = video.getNullable("title")?.asString
         val thumbnail = "https://i.ytimg.com/vi/$youtubeId/mqdefault.jpg"
-        QueueItem(VideoSource(query, null), query, title, thumbnail)
+        QueueItem(VideoSource(query, null), query, title, thumbnail, null, false)
     } catch (e: JsonParseException) {
         logger.warn("failed to parse oembed response for query $query", e)
         null
@@ -63,7 +84,9 @@ private fun fetchVideoInfoYtDlp(youtubeId: String?, query: String): QueueItem? {
     val isYoutube = youtubeId != null || !query.matches(Regex("^(ftp|https?)://.*"))
     val process = Runtime.getRuntime().exec(buildYtDlpCommand(query, isYoutube))
     val result = StringWriter()
-    process.inputStream.bufferedReader().copyTo(result)
+    val reader = thread(isDaemon = true) {
+        process.inputStream.bufferedReader().copyTo(result)
+    }
     if (!process.waitFor(YT_DLP_TIMEOUT, TimeUnit.SECONDS)) {
         logger.warn("ytdl timeout")
         process.destroy()
@@ -74,6 +97,7 @@ private fun fetchVideoInfoYtDlp(youtubeId: String?, query: String): QueueItem? {
         logger.warn(process.errorStream.bufferedReader().readText())
         return null
     }
+    reader.join()
     val videoData = result.buffer.toString()
     return parseYtDlpOutput(videoData, query, isYoutube)
 }
@@ -93,7 +117,7 @@ private fun parseYtDlpOutput(
         val title = video.getNullable("title")?.asString
         val thumbnail = video.getNullable("thumbnail")?.asString
         val contentType = if (isYoutube) null else getContentType(url)
-        QueueItem(VideoSource(url, contentType), query, title, thumbnail)
+        QueueItem(VideoSource(url, contentType), query, title, thumbnail, null, false)
     } catch (e: JsonParseException) {
         logger.warn("failed to parse ytdlp output for query $query", e)
         null

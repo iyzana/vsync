@@ -3,7 +3,6 @@ import {
   useCallback,
   useContext,
   useEffect,
-  useId,
 } from 'react';
 import { WebsocketContext } from '../context/websocket';
 
@@ -11,7 +10,7 @@ export function useWebsocketMessages(
   handler: (msg: string) => void,
   deps: DependencyList,
 ) {
-  const id = useId();
+  const id = handler.toString();
   const { addMessageCallback, removeMessageCallback } =
     useContext(WebsocketContext);
 

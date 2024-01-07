@@ -44,11 +44,13 @@ data class VideoSource(
 )
 
 data class QueueItem(
-    val source: VideoSource,
+    val source: VideoSource?,
     val originalQuery: String,
     val title: String?,
     val thumbnail: String?,
-    val id: String = UUID.nameUUIDFromBytes(source.url.toByteArray()).toString(),
+    val favicon: String?,
+    val loading: Boolean,
+    val id: String = UUID.randomUUID().toString(),
 )
 
 data class User(

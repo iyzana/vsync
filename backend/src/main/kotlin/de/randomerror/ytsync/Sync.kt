@@ -121,7 +121,7 @@ fun setEnded(session: Session, videoUrl: String): String {
 
     synchronized(room.queue) {
         if (room.queue.isEmpty()) return "end empty"
-        if (room.queue[0].source.url != videoUrl) return "end old"
+        if (room.queue[0].source?.url != videoUrl) return "end old"
 
         room.ignoreSkipTill = Instant.now().plusSeconds(IGNORE_DURATION)
         playNext(session, room)

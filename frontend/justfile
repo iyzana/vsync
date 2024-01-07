@@ -6,6 +6,7 @@ start: build-vendor
 
 git-submodules:
 	git submodule init
+	git submodule update
 
 install-vendor: git-submodules
 	cd vendor/react-youtube/packages/react-youtube && yarn

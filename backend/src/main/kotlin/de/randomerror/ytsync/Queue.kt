@@ -24,41 +24,65 @@ fun enqueue(session: Session, query: String): String {
     if (youtubeId != null) {
         synchronized(room.queue) {
             if (room.queue.size == 0) {
+                // this is the first video, it does not go into the queue, we don't need any video info
                 val fallbackVideo = getFallbackYoutubeVideo(query, youtubeId)
-                // this is the first video it does not go into the queue, we don't need any video info
                 room.queue.add(fallbackVideo)
                 room.broadcastAll(session, "video ${gson.toJson(fallbackVideo.source)}")
-                return "queue"
+                return "queue immediate"
             }
         }
     }
+    if (room.queue.any { it.originalQuery == query }) {
+        session.remote.sendStringByFuture("queue err duplicate")
+        return "queue err duplicate"
+    }
+    val loadingQueueItem = getInitialVideoInfo(query, youtubeId)
+    room.broadcastAll(session, "queue add ${gson.toJson(loadingQueueItem)}")
     videoInfoFetcher.execute {
         // try to get video info, but if it fails, use the fallback info so that the video at least plays
-        val video = fetchVideoInfo(query, youtubeId) ?: youtubeId?.let { getFallbackYoutubeVideo(query, it) }
-        if (video == null) {
+        val videoInfo = (fetchVideoInfo(query, youtubeId) ?: youtubeId?.let { getFallbackYoutubeVideo(query, it) })
+        if (videoInfo == null) {
             log(session, "queue err not-found")
+            room.broadcastAll(session, "queue rm ${loadingQueueItem.id}")
             session.remote.sendStringByFuture("queue err not-found")
             return@execute
         }
+        val queueItem =
+            videoInfo.copy(id = loadingQueueItem.id, favicon = videoInfo.favicon ?: loadingQueueItem.favicon)
         synchronized(room.queue) {
-            if (room.queue.any { it.source.url == video.source.url || it.originalQuery == query }) {
+            if (room.queue.any { it.source != null && it.source.url == queueItem.source?.url }) {
                 session.remote.sendStringByFuture("queue err duplicate")
+                room.broadcastAll(session, "queue rm ${loadingQueueItem.id}")
                 return@execute
             }
-            room.queue.add(video)
+            room.queue.add(queueItem)
             if (room.queue.size == 1) {
-                room.broadcastAll(session, "video ${gson.toJson(video.source)}")
+                room.broadcastAll(session, "queue rm ${queueItem.id}")
+                room.broadcastAll(session, "video ${gson.toJson(queueItem.source)}")
+                return@execute
             } else {
-                room.broadcastAll(session, "queue add ${gson.toJson(video)}")
+                room.broadcastAll(session, "queue add ${gson.toJson(queueItem)}")
+            }
+        }
+        val favicon = getFavicon(query, queueItem.source!!.url)
+        println(favicon)
+        if (favicon != null && favicon != queueItem.favicon) {
+            synchronized(room.queue) {
+                val index = room.queue.indexOfFirst { it.id == queueItem.id }
+                if (index > 0) {
+                    val queueItemWithFavicon = queueItem.copy(favicon = favicon)
+                    room.broadcastAll(session, "queue add ${gson.toJson(queueItemWithFavicon)}")
+                    room.queue[index] = queueItemWithFavicon
+                }
             }
         }
     }
-    return "queue"
+    return "queue fetching"
 }
 
 fun dequeue(session: Session, queueId: String): String {
     val room = getRoom(session)
-    // first in queue is currently playing song
+    // first in queue is currently playing video
     if (room.queue.isNotEmpty() && room.queue[0].id == queueId) {
         return "queue rm deny"
     }
@@ -87,7 +111,7 @@ fun reorder(session: Session, order: String): String {
 fun skip(session: Session): String {
     val room = getRoom(session)
     synchronized(room.queue) {
-        // first in queue is currently playing song
+        // first in queue is currently playing video
         if (room.queue.size < 2) {
             return "skip deny"
         }

@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
 import './Input.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCircleNotch, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faPlus } from '@fortawesome/free-solid-svg-icons';
 
 interface InputProps {
   addToQueue: (input: string) => void;
-  working: boolean;
 }
 
-function Input({ addToQueue, working }: InputProps) {
+function Input({ addToQueue }: InputProps) {
   const [input, setInput] = useState('');
 
   const onKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -42,12 +41,8 @@ function Input({ addToQueue, working }: InputProps) {
         className="input-send"
         onClick={send}
         aria-label="Add to queue"
-        disabled={working}
       >
-        <FontAwesomeIcon
-          icon={working ? faCircleNotch : faPlus}
-          spin={working}
-        />
+        <FontAwesomeIcon icon={faPlus} />
       </button>
     </div>
   );
