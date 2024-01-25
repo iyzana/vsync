@@ -131,5 +131,5 @@ class SyncWebSocket {
 fun log(session: Session, message: String) {
     val roomId = sessions[session]?.let { "@${it.roomId} " } ?: ""
     val context = local.get()?.let { "[$it] " } ?: ""
-    logger.info("$roomId${session.remoteAddress.port}: $context$message")
+    logger.debug("$roomId${session.remoteAddress.port}: $context$message")
 }

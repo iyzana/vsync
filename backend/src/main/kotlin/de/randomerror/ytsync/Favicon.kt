@@ -57,7 +57,6 @@ private fun fetchFavicon(url: URL): String {
                         FaviconSizes.Unknown
                     } else {
                         val sizes = sizesSpec.split(' ')
-                            .onEach { println("found size: $it") }
                             .map { it.split('x', ignoreCase = true)[0] }
                             .map { it.toInt() }
                         FaviconSizes.Sizes(sizes)

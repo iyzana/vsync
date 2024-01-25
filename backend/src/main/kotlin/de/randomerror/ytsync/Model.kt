@@ -14,7 +14,9 @@ data class Room(
     var shutdownThread: Thread? = null,
     var timeoutSyncAt: Instant? = null,
     var ignorePauseTill: Instant? = null,
-    var ignoreSkipTill: Instant? = null
+    var ignoreSkipTill: Instant? = null,
+    var maxConcurentUsers: Int = 1,
+    var numQueuedVideos: Int = 0,
 ) {
     fun getUser(session: Session) = participants.find { it.session == session }!!
 

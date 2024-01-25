@@ -28,6 +28,7 @@ fun enqueue(session: Session, query: String): String {
                 val fallbackVideo = getFallbackYoutubeVideo(query, youtubeId)
                 room.queue.add(fallbackVideo)
                 room.broadcastAll(session, "video ${gson.toJson(fallbackVideo.source)}")
+                room.numQueuedVideos += 1
                 return "queue immediate"
             }
         }
@@ -56,6 +57,7 @@ fun enqueue(session: Session, query: String): String {
                 return@execute
             }
             room.queue.add(queueItem)
+            room.numQueuedVideos += 1
             if (room.queue.size == 1) {
                 room.broadcastAll(session, "queue rm ${queueItem.id}")
                 room.broadcastAll(session, "video ${gson.toJson(queueItem.source)}")
@@ -65,7 +67,6 @@ fun enqueue(session: Session, query: String): String {
             }
         }
         val favicon = getFavicon(query, queueItem.source!!.url)
-        println(favicon)
         if (favicon != null && favicon != queueItem.favicon) {
             synchronized(room.queue) {
                 val index = room.queue.indexOfFirst { it.id == queueItem.id }

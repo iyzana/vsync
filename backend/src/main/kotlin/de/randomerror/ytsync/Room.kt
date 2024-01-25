@@ -1,5 +1,6 @@
 package de.randomerror.ytsync
 
+import mu.KotlinLogging
 import org.eclipse.jetty.http.HttpStatus
 import org.eclipse.jetty.websocket.api.Session
 import java.util.*
@@ -7,6 +8,8 @@ import kotlin.concurrent.thread
 
 private const val ROOM_CLOSE_TIMEOUT_MS = 15L * 1000
 private const val ROOM_ID_BYTES = 3
+
+private val logger = KotlinLogging.logger {}
 
 val sessions: MutableMap<Session, RoomId> = HashMap()
 val rooms: MutableMap<RoomId, Room> = HashMap()
@@ -45,6 +48,9 @@ fun joinRoom(roomId: RoomId, session: Session): String {
         room.shutdownThread?.interrupt()
         room.shutdownThread = null
         sessions[session] = roomId
+        if (room.participants.size > room.maxConcurentUsers) {
+            room.maxConcurentUsers = room.participants.size
+        }
     }
     room.broadcastAll(session, "users ${room.participants.size}")
     if (room.queue.isNotEmpty()) {
@@ -85,6 +91,9 @@ private fun scheduleRoomClose(
         }
         rooms.remove(roomId)
         log(session, "<close ${roomId.roomId}>")
+        if (roomId.roomId != "test") {
+            logger.info("room statistic: ${room.maxConcurentUsers} users, ${room.numQueuedVideos} videos")
+        }
     }
 }
 

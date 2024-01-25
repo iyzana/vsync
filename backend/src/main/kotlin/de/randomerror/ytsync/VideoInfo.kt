@@ -160,7 +160,6 @@ private fun buildYtDlpCommand(query: String, fromYoutube: Boolean): Array<String
     }
     command.add("--")
     command.add(query)
-    println("command = $command")
     return command.toTypedArray()
 }
 
