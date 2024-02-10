@@ -24,6 +24,9 @@ fun createRoom(session: Session, roomId: RoomId = generateRoomId()): String {
     if (sessions[session] != null) throw Disconnect()
     if (rooms.containsKey(roomId)) throw Disconnect("server full")
     val room = Room(mutableListOf(User(session)))
+    if (rooms.isEmpty()) {
+        logger.info("active rooms")
+    }
     rooms[roomId] = room
     sessions[session] = roomId
     session.remote.sendStringByFuture("create ${roomId.roomId}")
@@ -93,6 +96,9 @@ private fun scheduleRoomClose(
         log(session, "<close ${roomId.roomId}>")
         if (roomId.roomId != "test") {
             logger.info("room statistic: ${room.maxConcurentUsers} users, ${room.numQueuedVideos} videos")
+        }
+        if (rooms.isEmpty()) {
+            logger.info("no more active rooms")
         }
     }
 }
