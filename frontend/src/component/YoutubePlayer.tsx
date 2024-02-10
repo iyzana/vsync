@@ -232,7 +232,13 @@ function YoutubePlayer({
   return (
     <YouTube
       className="youtube-player"
-      opts={opts}
+      opts={{
+        ...opts,
+        playerVars: {
+          ...opts.playerVars,
+          start: source?.startTimeSeconds || 0,
+        },
+      }}
       videoId={getVideoId(source.url)}
       onReady={onReady}
       onStateChange={onStateChange}

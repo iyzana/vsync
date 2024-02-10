@@ -84,6 +84,13 @@ fun sync(session: Session): String {
     }
     user.syncState = SyncState.Playing(Instant.now(), TimeStamp(0.0))
 
+    val timestamp = if (room.queue.isEmpty()) {
+        TimeStamp(0.0)
+    } else {
+        val video = room.queue[0].source
+        TimeStamp(video?.startTimeSeconds?.toDouble() ?: 0.0)
+    }
+    user.syncState = SyncState.Playing(Instant.now(), timestamp)
     val activeMembers = room.participants.filter { it.syncState != SyncState.NotStarted }
     if (activeMembers.size == 1) {
         return "sync go"
@@ -138,7 +145,7 @@ fun playNext(session: Session, room: Room) {
         val next = room.queue[0]
         room.broadcastAll(session, "queue rm ${next.id}")
         room.broadcastAll(session, "video ${gson.toJson(next.source)}")
-        room.setSyncState(SyncState.Playing(Instant.now(), TimeStamp(0.0)))
+        room.setSyncState(SyncState.Playing(Instant.now(), TimeStamp(next.source?.startTimeSeconds?.toDouble() ?: 0.0)))
     } else {
         room.broadcastAll(session, "video")
     }

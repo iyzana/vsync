@@ -18,6 +18,7 @@ export interface EmbeddedPlayerProps {
 export interface VideoSource {
   url: string;
   mimeType: string | null;
+  startTimeSeconds: number | null;
 }
 
 function isYoutubeUrl(url: string): boolean {

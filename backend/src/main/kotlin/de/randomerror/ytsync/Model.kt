@@ -43,6 +43,7 @@ data class Room(
 data class VideoSource(
     val url: String,
     val mimeType: String?,
+    val startTimeSeconds: Int?,
 )
 
 data class QueueItem(

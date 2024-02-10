@@ -24,11 +24,7 @@ fun enqueue(session: Session, query: String): String {
     if (youtubeId != null) {
         synchronized(room.queue) {
             if (room.queue.size == 0) {
-                // this is the first video, it does not go into the queue, we don't need any video info
-                val fallbackVideo = getFallbackYoutubeVideo(query, youtubeId)
-                room.queue.add(fallbackVideo)
-                room.broadcastAll(session, "video ${gson.toJson(fallbackVideo.source)}")
-                room.numQueuedVideos += 1
+                enqueueFallbackVideo(room, session, query, youtubeId)
                 return "queue immediate"
             }
         }
@@ -41,44 +37,58 @@ fun enqueue(session: Session, query: String): String {
     room.broadcastAll(session, "queue add ${gson.toJson(loadingQueueItem)}")
     videoInfoFetcher.execute {
         // try to get video info, but if it fails, use the fallback info so that the video at least plays
-        val videoInfo = (fetchVideoInfo(query, youtubeId) ?: youtubeId?.let { getFallbackYoutubeVideo(query, it) })
-        if (videoInfo == null) {
-            log(session, "queue err not-found")
+        val videoInfo = fetchVideoInfo(query, youtubeId) ?: youtubeId?.let { getFallbackYoutubeVideo(query, it) }
+        enqueueVideo(room, session, videoInfo, loadingQueueItem)
+    }
+    return "queue fetching"
+}
+
+fun enqueueFallbackVideo(room: Room, session: Session, query: String, youtubeId: String) {
+    // this is the first video, it does not go into the queue, we don't need any video info
+    val fallbackVideo = getFallbackYoutubeVideo(query, youtubeId)
+    room.queue.add(fallbackVideo)
+    room.broadcastAll(session, "video ${gson.toJson(fallbackVideo.source)}")
+    room.numQueuedVideos += 1
+}
+
+fun enqueueVideo(room: Room, session: Session, videoInfo: QueueItem?, loadingQueueItem: QueueItem) {
+    if (videoInfo == null) {
+        log(session, "queue err not-found")
+        room.broadcastAll(session, "queue rm ${loadingQueueItem.id}")
+        session.remote.sendStringByFuture("queue err not-found")
+        return
+    }
+    val queueItem = videoInfo.copy(
+        id = loadingQueueItem.id,
+        favicon = videoInfo.favicon ?: loadingQueueItem.favicon
+    )
+    synchronized(room.queue) {
+        if (room.queue.any { it.source != null && it.source.url == queueItem.source?.url }) {
+            session.remote.sendStringByFuture("queue err duplicate")
             room.broadcastAll(session, "queue rm ${loadingQueueItem.id}")
-            session.remote.sendStringByFuture("queue err not-found")
-            return@execute
+            return
         }
-        val queueItem =
-            videoInfo.copy(id = loadingQueueItem.id, favicon = videoInfo.favicon ?: loadingQueueItem.favicon)
+        room.queue.add(queueItem)
+        room.numQueuedVideos += 1
+        if (room.queue.size == 1) {
+            room.broadcastAll(session, "queue rm ${queueItem.id}")
+            room.broadcastAll(session, "video ${gson.toJson(queueItem.source)}")
+            return
+        } else {
+            room.broadcastAll(session, "queue add ${gson.toJson(queueItem)}")
+        }
+    }
+    val favicon = getFavicon(queueItem.originalQuery, queueItem.source!!.url)
+    if (favicon != null && favicon != queueItem.favicon) {
         synchronized(room.queue) {
-            if (room.queue.any { it.source != null && it.source.url == queueItem.source?.url }) {
-                session.remote.sendStringByFuture("queue err duplicate")
-                room.broadcastAll(session, "queue rm ${loadingQueueItem.id}")
-                return@execute
-            }
-            room.queue.add(queueItem)
-            room.numQueuedVideos += 1
-            if (room.queue.size == 1) {
-                room.broadcastAll(session, "queue rm ${queueItem.id}")
-                room.broadcastAll(session, "video ${gson.toJson(queueItem.source)}")
-                return@execute
-            } else {
-                room.broadcastAll(session, "queue add ${gson.toJson(queueItem)}")
-            }
-        }
-        val favicon = getFavicon(query, queueItem.source!!.url)
-        if (favicon != null && favicon != queueItem.favicon) {
-            synchronized(room.queue) {
-                val index = room.queue.indexOfFirst { it.id == queueItem.id }
-                if (index > 0) {
-                    val queueItemWithFavicon = queueItem.copy(favicon = favicon)
-                    room.broadcastAll(session, "queue add ${gson.toJson(queueItemWithFavicon)}")
-                    room.queue[index] = queueItemWithFavicon
-                }
+            val index = room.queue.indexOfFirst { it.id == queueItem.id }
+            if (index > 0) {
+                val queueItemWithFavicon = queueItem.copy(favicon = favicon)
+                room.broadcastAll(session, "queue add ${gson.toJson(queueItemWithFavicon)}")
+                room.queue[index] = queueItemWithFavicon
             }
         }
     }
-    return "queue fetching"
 }
 
 fun dequeue(session: Session, queueId: String): String {

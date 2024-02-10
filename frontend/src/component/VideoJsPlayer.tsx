@@ -81,6 +81,7 @@ export const VideoJsPlayer = ({
   const playerRef = useRef<videojs.Player | null>(null);
   const waitReadyRef = useRef(false);
   const playbackPermissionRef = useRef(playbackPermission);
+  const gotPlaybackPermissionRef = useRef(gotPlaybackPermission);
   const sourceRef = useRef(source);
   const { sendMessage } = useContext(WebsocketContext);
 
@@ -147,7 +148,7 @@ export const VideoJsPlayer = ({
             waitReadyRef.current = false;
             setOverlay(OverlayState.NONE);
           } else {
-            gotPlaybackPermission();
+            gotPlaybackPermissionRef.current();
             sendMessage('sync');
           }
         });
@@ -163,6 +164,9 @@ export const VideoJsPlayer = ({
           sendMessage(`buffer ${player.currentTime()}`);
         });
         player.on('seeked', function () {
+          if (!playbackPermissionRef.current) {
+            return;
+          }
           console.log('player hook seeked');
           if (player.paused()) {
             if (waitReadyRef.current) {
@@ -220,6 +224,10 @@ export const VideoJsPlayer = ({
   }, [playbackPermission]);
 
   useEffect(() => {
+    gotPlaybackPermissionRef.current = gotPlaybackPermission;
+  }, [gotPlaybackPermission]);
+
+  useEffect(() => {
     if (!playerRef.current) {
       return;
     }
@@ -227,6 +235,9 @@ export const VideoJsPlayer = ({
     player.ready(() => {
       sourceRef.current = source;
       player.src({ src: source.url, type: source.mimeType || undefined });
+      if (source.startTimeSeconds) {
+        player.currentTime(source.startTimeSeconds);
+      }
     });
   }, [source]);
 

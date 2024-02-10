@@ -18,13 +18,15 @@ private const val YT_DLP_TIMEOUT = 15L
 
 private val logger = KotlinLogging.logger {}
 
-fun getInitialVideoInfo(query: String, youtubeId: String?): QueueItem {
+fun getInitialVideoInfo(query: String, youtubeId: String?, loading: Boolean = true): QueueItem {
     val favicon = getInitialFavicon(query, youtubeId)
+    val startTime = findStartTimeSeconds(query)
     if (youtubeId !== null) {
         return QueueItem(
             VideoSource(
                 "https://www.youtube.com/watch?v=$youtubeId",
-                null
+                null,
+                startTime
             ),
             query,
             null,
@@ -37,17 +39,33 @@ fun getInitialVideoInfo(query: String, youtubeId: String?): QueueItem {
 }
 
 fun getFallbackYoutubeVideo(query: String, youtubeId: String): QueueItem {
-    return QueueItem(
-        VideoSource(
-            "https://www.youtube.com/watch?v=$youtubeId",
-            null
-        ),
-        query,
-        "Unknown video $youtubeId",
-        "https://i.ytimg.com/vi/$youtubeId/mqdefault.jpg",
-        getInitialFavicon(query, youtubeId),
-        false
-    )
+    return getInitialVideoInfo(query, youtubeId, loading = false)
+}
+
+private val startTimeRegex: Regex = Regex("""[&?]t=([0-9]+[hms]?)+(?=( |&|$))""", RegexOption.IGNORE_CASE)
+
+fun findStartTimeSeconds(query: String): Int? {
+    val startTimeFragment: MatchResult = startTimeRegex.find(query) ?: return null
+    val startTimeSpec: String = startTimeFragment.value.substring(3)
+    var totalSeconds = 0
+    var segmentStart = 0
+    startTimeSpec.forEachIndexed { index, char ->
+        if (char.isDigit()) {
+            return@forEachIndexed
+        }
+        val value = startTimeSpec.substring(segmentStart, index).toInt()
+        val multiplier = when (char.lowercaseChar()) {
+            'h' -> 60 * 60
+            'm' -> 60
+            else -> 1
+        }
+        totalSeconds += value * multiplier
+        segmentStart = index + 1
+    }
+    if (segmentStart < startTimeSpec.chars().count()) {
+        totalSeconds += startTimeSpec.substring(segmentStart).toInt()
+    }
+    return totalSeconds
 }
 
 fun fetchVideoInfo(query: String, youtubeId: String?): QueueItem? {
@@ -65,9 +83,10 @@ private fun fetchVideoInfoYouTubeOEmbed(query: String, youtubeId: String): Queue
     }
     return try {
         val video = JsonParser.parseString(videoData).asJsonObject
+        val startTime = findStartTimeSeconds(query)
         val title = video.getNullable("title")?.asString
         val thumbnail = "https://i.ytimg.com/vi/$youtubeId/mqdefault.jpg"
-        QueueItem(VideoSource(query, null), query, title, thumbnail, null, false)
+        QueueItem(VideoSource(query, null, startTime), query, title, thumbnail, null, false)
     } catch (e: JsonParseException) {
         logger.warn("failed to parse oembed response for query $query", e)
         null
@@ -117,7 +136,8 @@ private fun parseYtDlpOutput(
         val title = video.getNullable("title")?.asString
         val thumbnail = video.getNullable("thumbnail")?.asString
         val contentType = if (isYoutube) null else getContentType(url)
-        QueueItem(VideoSource(url, contentType), query, title, thumbnail, null, false)
+        val startTime = video.getNullable("start_time")?.asInt ?: findStartTimeSeconds(query)
+        QueueItem(VideoSource(url, contentType, startTime), query, title, thumbnail, null, false)
     } catch (e: JsonParseException) {
         logger.warn("failed to parse ytdlp output for query $query", e)
         null
@@ -162,4 +182,3 @@ private fun buildYtDlpCommand(query: String, fromYoutube: Boolean): Array<String
     command.add(query)
     return command.toTypedArray()
 }
-
