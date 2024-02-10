@@ -64,7 +64,13 @@ data class User(
 class Disconnect(message: String = "invalid command") : RuntimeException(message)
 
 @JvmInline
-value class TimeStamp(val second: Double)
+value class TimeStamp(val second: Double) {
+    companion object {
+        val ZERO: TimeStamp = TimeStamp(0.0)
+    }
+
+    constructor(second: Int) : this(second.toDouble())
+}
 
 fun String.asTimeStamp(): TimeStamp {
     return TimeStamp(toDouble())
@@ -72,7 +78,7 @@ fun String.asTimeStamp(): TimeStamp {
 
 sealed class SyncState {
     object NotStarted : SyncState()
-    class Paused(val timestamp: TimeStamp = TimeStamp(0.0)) : SyncState()
+    class Paused(val timestamp: TimeStamp = TimeStamp.ZERO) : SyncState()
     class AwaitReady(val timestamp: TimeStamp) : SyncState()
     class Ready(val timestamp: TimeStamp) : SyncState()
     class Playing(

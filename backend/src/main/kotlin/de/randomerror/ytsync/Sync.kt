@@ -82,13 +82,12 @@ fun sync(session: Session): String {
     if (user.syncState != SyncState.NotStarted) {
         return "sync deny"
     }
-    user.syncState = SyncState.Playing(Instant.now(), TimeStamp(0.0))
 
     val timestamp = if (room.queue.isEmpty()) {
-        TimeStamp(0.0)
+        TimeStamp.ZERO
     } else {
         val video = room.queue[0].source
-        TimeStamp(video?.startTimeSeconds?.toDouble() ?: 0.0)
+        video?.startTimeSeconds?.let(::TimeStamp) ?: TimeStamp.ZERO
     }
     user.syncState = SyncState.Playing(Instant.now(), timestamp)
     val activeMembers = room.participants.filter { it.syncState != SyncState.NotStarted }

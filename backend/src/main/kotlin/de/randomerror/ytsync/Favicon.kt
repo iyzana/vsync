@@ -6,6 +6,8 @@ import java.net.MalformedURLException
 import java.net.URL
 import kotlin.time.Duration.Companion.seconds
 
+private const val HTML_MAX_BYTES = 64 * 1024 // 64KiB
+
 private val FAVICON_CACHE = mutableMapOf<String, String>()
 
 fun getInitialFavicon(query: String, youtubeId: String?): String? {
@@ -45,37 +47,43 @@ private fun fetchFavicon(url: URL): String {
         val icons = mutableListOf<Pair<String, FaviconSizes>>()
         val handler = KsoupHtmlHandler.Builder()
             .onOpenTag { name, attributes, _ ->
+                if (name != "link") {
+                    return@onOpenTag
+                }
                 val href = attributes["href"]
                 val rel = attributes["rel"]
-                if (name == "link" && (rel == "icon" || rel == "shortcut icon") && href != null) {
-                    val icon = url.toURI().resolve(href).toString()
-                    val type = attributes["type"]
-                    val sizesSpec = attributes["sizes"]
-                    val sizes = if (type != null && type.startsWith("image/svg") || sizesSpec == "any" && !href.endsWith(".ico")) {
-                        FaviconSizes.Any
-                    } else if (sizesSpec == null || sizesSpec == "any" && href.endsWith(".ico")) {
-                        FaviconSizes.Unknown
-                    } else {
+                if (href == null || rel != "icon" && rel != "shortcut icon") {
+                    return@onOpenTag
+                }
+                val icon = url.toURI().resolve(href).toString()
+                val type = attributes["type"]
+                val sizesSpec = attributes["sizes"]
+                val sizes = when {
+                    type != null && type.startsWith("image/svg") -> FaviconSizes.Any
+                    sizesSpec == "any" && !href.endsWith(".ico") -> FaviconSizes.Any
+                    sizesSpec == "any" -> FaviconSizes.Unknown
+                    sizesSpec == null -> FaviconSizes.Unknown
+                    else -> {
                         val sizes = sizesSpec.split(' ')
                             .map { it.split('x', ignoreCase = true)[0] }
                             .map { it.toInt() }
                         FaviconSizes.Sizes(sizes)
                     }
-                    icons.add(icon to sizes)
                 }
+                icons.add(icon to sizes)
             }
             .build()
         val conn = url.openConnection()
         conn.connectTimeout = 5.seconds.inWholeMilliseconds.toInt()
         conn.readTimeout = 5.seconds.inWholeMilliseconds.toInt()
-        val bytes = conn.getInputStream().use { it.readNBytes(1024 * 64) }
+        val bytes = conn.getInputStream().use { it.readNBytes(HTML_MAX_BYTES) }
         val parser = KsoupHtmlParser(handler)
         parser.write(String(bytes))
         parser.end()
         val favicon = icons.maxBy { it.second }.first
         FAVICON_CACHE[url.authority] = favicon
         return favicon
-    } catch (e: Exception) {
+    } catch (_: Exception) {
         return url.toURI().resolve("/favicon.ico").toString()
     }
 }

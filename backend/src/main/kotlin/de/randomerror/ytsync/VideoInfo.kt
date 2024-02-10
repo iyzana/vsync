@@ -13,6 +13,10 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.util.concurrent.TimeUnit
 import kotlin.concurrent.thread
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 private const val YT_DLP_TIMEOUT = 15L
 
@@ -32,40 +36,39 @@ fun getInitialVideoInfo(query: String, youtubeId: String?, loading: Boolean = tr
             null,
             "https://i.ytimg.com/vi/$youtubeId/mqdefault.jpg",
             favicon,
-            true
+            loading
         )
     }
-    return QueueItem(null, query, null, null, favicon, true)
+    return QueueItem(null, query, null, null, favicon, loading)
 }
 
 fun getFallbackYoutubeVideo(query: String, youtubeId: String): QueueItem {
     return getInitialVideoInfo(query, youtubeId, loading = false)
 }
 
-private val startTimeRegex: Regex = Regex("""[&?]t=([0-9]+[hms]?)+(?=( |&|$))""", RegexOption.IGNORE_CASE)
+private val startTimeRegex: Regex = Regex("""[&?]t=(([0-9]+[hms]?)+)( |&|$)""", RegexOption.IGNORE_CASE)
 
 fun findStartTimeSeconds(query: String): Int? {
     val startTimeFragment: MatchResult = startTimeRegex.find(query) ?: return null
-    val startTimeSpec: String = startTimeFragment.value.substring(3)
-    var totalSeconds = 0
+    val startTimeSpec: String = startTimeFragment.groups[1]?.value ?: return null
+    var totalDuration = Duration.ZERO
     var segmentStart = 0
     startTimeSpec.forEachIndexed { index, char ->
         if (char.isDigit()) {
             return@forEachIndexed
         }
         val value = startTimeSpec.substring(segmentStart, index).toInt()
-        val multiplier = when (char.lowercaseChar()) {
-            'h' -> 60 * 60
-            'm' -> 60
-            else -> 1
+        totalDuration += when (char.lowercaseChar()) {
+            'h' -> value.hours
+            'm' -> value.minutes
+            else -> value.seconds
         }
-        totalSeconds += value * multiplier
         segmentStart = index + 1
     }
     if (segmentStart < startTimeSpec.chars().count()) {
-        totalSeconds += startTimeSpec.substring(segmentStart).toInt()
+        totalDuration += startTimeSpec.substring(segmentStart).toInt().seconds
     }
-    return totalSeconds
+    return totalDuration.inWholeSeconds.toInt()
 }
 
 fun fetchVideoInfo(query: String, youtubeId: String?): QueueItem? {
