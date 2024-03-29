@@ -4,12 +4,13 @@ import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import com.google.gson.JsonParseException
 import com.google.gson.JsonParser
-import mu.KotlinLogging
+import io.github.oshai.kotlinlogging.KotlinLogging
 import java.io.FileNotFoundException
 import java.io.StringWriter
 import java.lang.AssertionError
 import java.lang.UnsupportedOperationException
 import java.net.HttpURLConnection
+import java.net.URI
 import java.net.URL
 import java.util.concurrent.TimeUnit
 import kotlin.concurrent.thread
@@ -80,7 +81,7 @@ fun fetchVideoInfo(query: String, youtubeId: String?): QueueItem? {
 
 private fun fetchVideoInfoYouTubeOEmbed(query: String, youtubeId: String): QueueItem? {
     val videoData = try {
-        URL("https://www.youtube.com/oembed?url=$query").readText()
+        URI("https://www.youtube.com/oembed?url=$query").toURL().readText()
     } catch (ignored: FileNotFoundException) {
         return null
     }
@@ -91,13 +92,13 @@ private fun fetchVideoInfoYouTubeOEmbed(query: String, youtubeId: String): Queue
         val thumbnail = "https://i.ytimg.com/vi/$youtubeId/mqdefault.jpg"
         QueueItem(VideoSource(query, null, startTime), query, title, thumbnail, null, false)
     } catch (e: JsonParseException) {
-        logger.warn("failed to parse oembed response for query $query", e)
+        logger.warn(e) { "failed to parse oembed response for query $query" }
         null
     } catch (e: AssertionError) {
-        logger.warn("failed to parse oembed response for query $query", e)
+        logger.warn(e) { "failed to parse oembed response for query $query" }
         null
     } catch (e: UnsupportedOperationException) {
-        logger.warn("failed to parse oembed response for query $query", e)
+        logger.warn(e) { "failed to parse oembed response for query $query" }
         null
     }
 }
@@ -110,13 +111,13 @@ private fun fetchVideoInfoYtDlp(youtubeId: String?, query: String): QueueItem? {
         process.inputStream.bufferedReader().copyTo(result)
     }
     if (!process.waitFor(YT_DLP_TIMEOUT, TimeUnit.SECONDS)) {
-        logger.warn("ytdl timeout")
+        logger.warn { "ytdl timeout" }
         process.destroy()
         return null
     }
     if (process.exitValue() != 0) {
-        logger.warn("ytdl err")
-        logger.warn(process.errorStream.bufferedReader().readText())
+        logger.warn { "ytdl err" }
+        logger.warn { process.errorStream.bufferedReader().readText() }
         return null
     }
     reader.join()
@@ -142,19 +143,19 @@ private fun parseYtDlpOutput(
         val startTime = video.getNullable("start_time")?.asInt ?: findStartTimeSeconds(query)
         QueueItem(VideoSource(url, contentType, startTime), query, title, thumbnail, null, false)
     } catch (e: JsonParseException) {
-        logger.warn("failed to parse ytdlp output for query $query", e)
+        logger.warn(e) { "failed to parse ytdlp output for query $query" }
         null
     } catch (e: AssertionError) {
-        logger.warn("failed to parse ytdlp output for query $query", e)
+        logger.warn(e) { "failed to parse ytdlp output for query $query" }
         null
     } catch (e: UnsupportedOperationException) {
-        logger.warn("failed to parse ytdlp output for query $query", e)
+        logger.warn(e) { "failed to parse ytdlp output for query $query" }
         null
     }
 }
 
 private fun getContentType(url: String): String? {
-    val connection = URL(url).openConnection() as HttpURLConnection
+    val connection = URI(url).toURL().openConnection() as HttpURLConnection
     connection.requestMethod = "HEAD"
     return connection.getHeaderField("Content-Type")
 }

@@ -1,4 +1,4 @@
-FROM gradle:7.6.0-jdk17 as build
+FROM gradle:8-jdk21 as build
 WORKDIR /app
 
 COPY build.gradle.kts settings.gradle.kts gradlew ./
@@ -7,7 +7,7 @@ RUN ./gradlew build
 COPY src ./src
 RUN ./gradlew shadowJar
 
-FROM eclipse-temurin:17-jre-alpine
+FROM eclipse-temurin:21-jre-alpine
 RUN apk update
 RUN apk add python3
 RUN wget https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -O /usr/local/bin/yt-dlp

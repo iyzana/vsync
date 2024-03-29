@@ -1,6 +1,6 @@
 package de.randomerror.ytsync
 
-import mu.KotlinLogging
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.eclipse.jetty.http.HttpStatus
 import org.eclipse.jetty.websocket.api.Session
 import java.util.*
@@ -25,7 +25,7 @@ fun createRoom(session: Session, roomId: RoomId = generateRoomId()): String {
     if (rooms.containsKey(roomId)) throw Disconnect("server full")
     val room = Room(mutableListOf(User(session)))
     if (rooms.isEmpty()) {
-        logger.info("active rooms")
+        logger.info { "active rooms" }
     }
     rooms[roomId] = room
     sessions[session] = roomId
@@ -95,10 +95,10 @@ private fun scheduleRoomClose(
         rooms.remove(roomId)
         log(session, "<close ${roomId.roomId}>")
         if (roomId.roomId != "test") {
-            logger.info("room statistic: ${room.maxConcurentUsers} users, ${room.numQueuedVideos} videos")
+            logger.info { "room statistic: ${room.maxConcurentUsers} users, ${room.numQueuedVideos} videos" }
         }
         if (rooms.isEmpty()) {
-            logger.info("no more active rooms")
+            logger.info { "no more active rooms" }
         }
     }
 }

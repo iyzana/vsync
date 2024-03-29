@@ -3,7 +3,7 @@ package de.randomerror.ytsync
 import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.Logger
 import com.google.gson.Gson
-import mu.KotlinLogging
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.eclipse.jetty.websocket.api.Session
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketClose
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketConnect
@@ -51,8 +51,9 @@ private fun updateYoutubeDl() {
     logger.info {
         process.inputStream.bufferedReader().readLines().joinToString(separator = "\n") { "yt-dlp: $it" }
     }
-    logger.warn {
-        process.errorStream.bufferedReader().readLines().joinToString(separator = "\n") { "yt-dlp: $it" }
+    val stderr = process.errorStream.bufferedReader().readLines().joinToString(separator = "\n") { "yt-dlp: $it" }
+    if (stderr != "") {
+        logger.warn { stderr }
     }
 }
 
@@ -131,5 +132,5 @@ class SyncWebSocket {
 fun log(session: Session, message: String) {
     val roomId = sessions[session]?.let { "@${it.roomId} " } ?: ""
     val context = local.get()?.let { "[$it] " } ?: ""
-    logger.debug("$roomId${session.remoteAddress.port}: $context$message")
+    logger.debug { "$roomId${session.remoteAddress.port}: $context$message" }
 }

@@ -3,7 +3,7 @@ package de.randomerror.ytsync
 import com.mohamedrejeb.ksoup.html.parser.KsoupHtmlHandler
 import com.mohamedrejeb.ksoup.html.parser.KsoupHtmlParser
 import java.net.MalformedURLException
-import java.net.URL
+import java.net.URI
 import kotlin.time.Duration.Companion.seconds
 
 private const val HTML_MAX_BYTES = 64 * 1024 // 64KiB
@@ -12,37 +12,37 @@ private val FAVICON_CACHE = mutableMapOf<String, String>()
 
 fun getInitialFavicon(query: String, youtubeId: String?): String? {
     val isYoutube = youtubeId != null || !query.matches(Regex("^(ftp|https?)://.*"))
-    val url = if (isYoutube) {
-        URL("https://www.youtube.com/")
+    val uri = if (isYoutube) {
+        URI("https://www.youtube.com/")
     } else {
         try {
-            URL(query)
+            URI(query)
         } catch (e: MalformedURLException) {
             return null
         }
     }
 
-    return if (url.authority in FAVICON_CACHE) {
-        FAVICON_CACHE[url.authority]
+    return if (uri.authority in FAVICON_CACHE) {
+        FAVICON_CACHE[uri.authority]
     } else {
-        url.toURI().resolve("/favicon.ico").toString()
+        uri.resolve("/favicon.ico").toString()
     }
 }
 fun getFavicon(query: String, videoUrl: String): String? {
-    val url = try {
-        URL(query)
+    val uri = try {
+        URI(query)
     } catch (e: MalformedURLException) {
-        URL(videoUrl)
+        URI(videoUrl)
     }
-    if (url.authority in FAVICON_CACHE) {
-        return FAVICON_CACHE[url.authority]
+    if (uri.authority in FAVICON_CACHE) {
+        return FAVICON_CACHE[uri.authority]
     }
-    val favicon = fetchFavicon(url)
-    FAVICON_CACHE[url.authority] = favicon
+    val favicon = fetchFavicon(uri)
+    FAVICON_CACHE[uri.authority] = favicon
     return favicon
 }
 
-private fun fetchFavicon(url: URL): String {
+private fun fetchFavicon(uri: URI): String {
     try {
         val icons = mutableListOf<Pair<String, FaviconSizes>>()
         val handler = KsoupHtmlHandler.Builder()
@@ -55,7 +55,7 @@ private fun fetchFavicon(url: URL): String {
                 if (href == null || rel != "icon" && rel != "shortcut icon") {
                     return@onOpenTag
                 }
-                val icon = url.toURI().resolve(href).toString()
+                val icon = uri.resolve(href).toString()
                 val type = attributes["type"]
                 val sizesSpec = attributes["sizes"]
                 val sizes = when {
@@ -73,7 +73,7 @@ private fun fetchFavicon(url: URL): String {
                 icons.add(icon to sizes)
             }
             .build()
-        val conn = url.openConnection()
+        val conn = uri.toURL().openConnection()
         conn.connectTimeout = 5.seconds.inWholeMilliseconds.toInt()
         conn.readTimeout = 5.seconds.inWholeMilliseconds.toInt()
         val bytes = conn.getInputStream().use { it.readNBytes(HTML_MAX_BYTES) }
@@ -81,10 +81,10 @@ private fun fetchFavicon(url: URL): String {
         parser.write(String(bytes))
         parser.end()
         val favicon = icons.maxBy { it.second }.first
-        FAVICON_CACHE[url.authority] = favicon
+        FAVICON_CACHE[uri.authority] = favicon
         return favicon
     } catch (_: Exception) {
-        return url.toURI().resolve("/favicon.ico").toString()
+        return uri.resolve("/favicon.ico").toString()
     }
 }
 
