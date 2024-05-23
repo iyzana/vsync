@@ -73,11 +73,10 @@ function YoutubePlayer({
           }
         }
         const timestamp = parseFloat(msg.split(' ')[1]);
-        const shouldSeek = Math.abs(player?.getCurrentTime() - timestamp) > 1;
+        const shouldSeek = Math.abs(player?.getCurrentTime() - timestamp) > 0.5;
         if (shouldSeek) {
-          setTimeout(() => {
-            player?.seekTo(timestamp, true);
-          }, 150);
+          console.log('pause seek to', timestamp);
+          player?.seekTo(timestamp, true);
         }
       } else if (msg.startsWith('ready?')) {
         console.log('processing server message ready');
@@ -99,6 +98,8 @@ function YoutubePlayer({
             setVolume(player.getVolume() / 100);
           }
         }
+        setOldState(YouTube.PlayerState.UNSTARTED);
+        setPreloadTime(null);
         setHasEverPlayed(false);
       }
     },
@@ -126,7 +127,10 @@ function YoutubePlayer({
         sendMessage('sync');
       }
     } else if (newState === YouTube.PlayerState.ENDED) {
-      sendMessage(`end ${source.url}`);
+      // sanity check playback time, because the youtube player may send ended events event after the video was switched
+      if (player.getCurrentTime() > player.getDuration() - 1) {
+        sendMessage(`end ${source.url}`);
+      }
     } else if (
       newState === YouTube.PlayerState.BUFFERING &&
       oldState === YouTube.PlayerState.PLAYING
@@ -174,6 +178,7 @@ function YoutubePlayer({
           }
         }
 
+        console.log('ready check seek to', preloadTime);
         player?.seekTo(preloadTime, true);
         // youtube does not update videoLoadedFraction
         // without updated seek event
