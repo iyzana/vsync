@@ -17,7 +17,7 @@ server {
 	# disable unnecessary browser features
 	add_header Permissions-Policy "accelerometer=(), ambient-light-sensor=(), battery=(), camera=(), display-capture=(), document-domain=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(), sync-xhr=(), usb=(), web-share=()" always;
 
-	add_header Content-Security-Policy "default-src 'none'; connect-src https: wss://${HOST}; img-src 'self' https:; mainfest-src: 'self'; media-src https: blob:; font-src 'self' data:; script-src 'self' https://www.youtube.com/iframe_api https://www.youtube.com/s/ https://s.ytimg.com/ blob:; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'self'; frame-src https://www.youtube.com/embed/; frame-ancestors 'none'; form-action 'self';" always;
+	add_header Content-Security-Policy "default-src 'none'; connect-src https: wss://${HOST}; img-src 'self' https:; manifest-src: 'self'; media-src https: blob:; font-src 'self' data:; script-src 'self' https://www.youtube.com/iframe_api https://www.youtube.com/s/ https://s.ytimg.com/ blob:; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'self'; frame-src https://www.youtube.com/embed/; frame-ancestors 'none'; form-action 'self';" always;
 
 	add_header Referrer-Policy strict-origin;
 
