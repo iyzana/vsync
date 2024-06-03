@@ -1,10 +1,11 @@
 import './Player.css';
-import { useCallback, useEffect, useState } from 'react';
-import YoutubePlayer from './YoutubePlayer';
-import VideoJsPlayer from './VideoJsPlayer';
+import { useCallback, useEffect, useState, lazy, Suspense } from 'react';
 import { useWebsocketMessages } from '../hook/websocket-messages';
 import Overlay from './Overlay';
+import ErrorBoundary from './ErrorBoundary';
 import OverlayState from '../model/Overlay';
+const YoutubePlayer = lazy(() => import('./YoutubePlayer'));
+const VideoJsPlayer = lazy(() => import('./VideoJsPlayer'));
 
 export interface EmbeddedPlayerProps {
   source: VideoSource;
@@ -78,28 +79,44 @@ function Player() {
           No videos in queue
         </div>
       ) : (
-        <div className="aspect-ratio-inner">
-          {isYoutubeUrl(source.url) ? (
-            <YoutubePlayer
-              source={source}
-              setOverlay={setOverlay}
-              volume={volume}
-              setVolume={setVolume}
-              playbackPermission={playbackPermission}
-              gotPlaybackPermission={gotPlaybackPermission}
-            />
-          ) : (
-            <VideoJsPlayer
-              source={source}
-              setOverlay={setOverlay}
-              volume={volume}
-              setVolume={setVolume}
-              playbackPermission={playbackPermission}
-              gotPlaybackPermission={gotPlaybackPermission}
-            />
+        <ErrorBoundary
+          fallback={(message) => (
+            <div className="aspect-ratio-inner empty-player">
+              Failed to load player: {message}
+            </div>
           )}
-          <Overlay state={overlay} />
-        </div>
+        >
+          <Suspense
+            fallback={
+              <div className="aspect-ratio-inner empty-player">
+                Loading player
+              </div>
+            }
+          >
+            <div className="aspect-ratio-inner">
+              {isYoutubeUrl(source.url) ? (
+                <YoutubePlayer
+                  source={source}
+                  setOverlay={setOverlay}
+                  volume={volume}
+                  setVolume={setVolume}
+                  playbackPermission={playbackPermission}
+                  gotPlaybackPermission={gotPlaybackPermission}
+                />
+              ) : (
+                <VideoJsPlayer
+                  source={source}
+                  setOverlay={setOverlay}
+                  volume={volume}
+                  setVolume={setVolume}
+                  playbackPermission={playbackPermission}
+                  gotPlaybackPermission={gotPlaybackPermission}
+                />
+              )}
+              <Overlay state={overlay} />
+            </div>
+          </Suspense>
+        </ErrorBoundary>
       )}
     </div>
   );
