@@ -2,8 +2,8 @@ package de.randomerror.ytsync
 
 import com.mohamedrejeb.ksoup.html.parser.KsoupHtmlHandler
 import com.mohamedrejeb.ksoup.html.parser.KsoupHtmlParser
-import java.net.MalformedURLException
 import java.net.URI
+import java.net.URISyntaxException
 import kotlin.time.Duration.Companion.seconds
 
 private const val HTML_MAX_BYTES = 64 * 1024 // 64KiB
@@ -17,7 +17,7 @@ fun getInitialFavicon(query: String, youtubeId: String?): String? {
     } else {
         try {
             URI(query)
-        } catch (e: MalformedURLException) {
+        } catch (e: URISyntaxException) {
             return null
         }
     }
@@ -31,7 +31,7 @@ fun getInitialFavicon(query: String, youtubeId: String?): String? {
 fun getFavicon(query: String, videoUrl: String): String? {
     val uri = try {
         URI(query)
-    } catch (e: MalformedURLException) {
+    } catch (e: URISyntaxException) {
         URI(videoUrl)
     }
     if (uri.authority in FAVICON_CACHE) {
