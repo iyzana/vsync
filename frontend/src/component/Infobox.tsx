@@ -1,7 +1,10 @@
 import './Infobox.css';
 import { useState } from 'react';
 import Notification from '../model/Notification';
-import { useWebsocketMessages } from '../hook/websocket-messages';
+import {
+  useWebsocketClose,
+  useWebsocketMessages,
+} from '../hook/websocket-messages';
 import Dialog from './Dialog';
 import About from './About';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -22,6 +25,19 @@ function Infobox({ notifications, addNotification }: InfoboxProps) {
       setNumUsers(users);
     }
   }, []);
+
+  useWebsocketClose(() => {
+    // wait 200ms before showing connection lost because on site-reload
+    // firefox first closes the websocket resulting in the error briefly
+    // showing up when it is not necessary
+    setTimeout(() => {
+      addNotification({
+        message: 'Connection lost',
+        level: 'error',
+        permanent: true,
+      });
+    }, 200);
+  }, [addNotification]);
 
   const copyLink = () => {
     if (!navigator.clipboard) {

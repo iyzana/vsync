@@ -30,6 +30,7 @@ ws.onopen = () => {
 function App() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const messageCallbacks = useRef<Record<string, (msg: string) => void>>({});
+  const onCloseCallbacks = useRef<Record<string, () => void>>({});
 
   const addNotification = useCallback((notification: Notification) => {
     setNotifications((notifications) => [
@@ -42,17 +43,7 @@ function App() {
   useEffect(() => {
     ws.onclose = () => {
       console.log('disconnected');
-      // wait 200ms before showing connection lost because on site-reload
-      // firefox first closes the websocket resulting in the error briefly
-      // showing up when it is not necessary
-      const timeout = setTimeout(() => {
-        addNotification({
-          message: 'Connection lost',
-          level: 'error',
-          permanent: true,
-        });
-      }, 200);
-      return () => clearTimeout(timeout);
+      Object.values(onCloseCallbacks.current).forEach((callback) => callback());
     };
   }, [addNotification]);
 
@@ -103,6 +94,10 @@ function App() {
     return () => clearTimeout(timeout);
   }, [notifications]);
 
+  const sendMessage = useCallback((message: string) => {
+    console.log('sending websocket message: ' + message);
+    ws.send(message);
+  }, []);
   const addMessageCallback = useCallback(
     (id: string, callback: (msg: string) => void) => {
       messageCallbacks.current[id] = callback;
@@ -112,9 +107,11 @@ function App() {
   const removeMessageCallback = useCallback((id: string) => {
     delete messageCallbacks.current[id];
   }, []);
-  const sendMessage = useCallback((message: string) => {
-    console.log('sending websocket message: ' + message);
-    ws.send(message);
+  const addOnCloseCallback = useCallback((id: string, callback: () => void) => {
+    onCloseCallbacks.current[id] = callback;
+  }, []);
+  const removeOnCloseCallback = useCallback((id: string) => {
+    delete onCloseCallbacks.current[id];
   }, []);
 
   useEffect(() => {
@@ -133,7 +130,13 @@ function App() {
 
   return (
     <WebsocketContext.Provider
-      value={{ addMessageCallback, removeMessageCallback, sendMessage }}
+      value={{
+        sendMessage,
+        addMessageCallback,
+        removeMessageCallback,
+        addOnCloseCallback,
+        removeOnCloseCallback,
+      }}
     >
       <div className="container">
         <main className="with-sidebar">

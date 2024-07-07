@@ -1,6 +1,9 @@
 import './Player.css';
 import { useCallback, useEffect, useState, lazy, Suspense } from 'react';
-import { useWebsocketMessages } from '../hook/websocket-messages';
+import {
+  useWebsocketClose,
+  useWebsocketMessages,
+} from '../hook/websocket-messages';
 import Overlay from './Overlay';
 import ErrorBoundary from './ErrorBoundary';
 import OverlayState from '../model/Overlay';
@@ -53,6 +56,10 @@ function Player() {
     },
     [overlay],
   );
+
+  useWebsocketClose(() => {
+    document.exitFullscreen();
+  }, []);
 
   useEffect(() => {
     if (playbackPermission || overlay !== OverlayState.NONE) {
