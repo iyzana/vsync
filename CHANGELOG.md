@@ -1,5 +1,44 @@
 # Changelog
 
+## [3.0.0](https://github.com/iyzana/vsync/compare/v2.1.0...v3.0.0) (2024-09-12)
+
+
+### ⚠ BREAKING CHANGES
+
+* simplify docker setup
+
+### Features
+
+* add logging on if there are active rooms ([23616e8](https://github.com/iyzana/vsync/commit/23616e8fe81dfc90e14dc22d94f620306312756c))
+* add more info about which sites are supported ([7997a6d](https://github.com/iyzana/vsync/commit/7997a6da9a4c89a91f760a4114aa2074579fb195))
+* delay playback permission request ([9397cf4](https://github.com/iyzana/vsync/commit/9397cf440e8e7f16de3a1d0d0528d81a382f32f1))
+* exit fullscreen on connection loss ([a6184dc](https://github.com/iyzana/vsync/commit/a6184dc7decb31d614d259d5dc7fd1f4278796bb))
+* inform videojs about the video content type ([f6068e9](https://github.com/iyzana/vsync/commit/f6068e97ba63dd2ccce2967c9f644a9d29fc4027))
+* lazy-load video players ([ed129fc](https://github.com/iyzana/vsync/commit/ed129fc12959b05fdd83995cf3d3c1e826412e35))
+* mark message logging as debug, add statistic logs ([1f318ed](https://github.com/iyzana/vsync/commit/1f318ed4055dd06d1bb66cf65b0ccfd3b05e5e72))
+* request interaction on missing autoplay permission, cleanup html/css ([df0641d](https://github.com/iyzana/vsync/commit/df0641d38bd2a7ae6f72d06f4223c32c523b48c1))
+* show loading indicator in queue list, proper favicon loading ([cc1ad28](https://github.com/iyzana/vsync/commit/cc1ad288665ce0770f608ca42c12f2dd1824a5d3))
+* support video start timestamps ([a263165](https://github.com/iyzana/vsync/commit/a263165154aa5fff704e22c8e7622f98fb6df9f5))
+* vendor react-youtube with custom patch ([b61df8d](https://github.com/iyzana/vsync/commit/b61df8dfde7af8bae3588567a7cc01afacf72a75))
+
+
+### Bug Fixes
+
+* also clear sync timeout when last video ends ([143b3f4](https://github.com/iyzana/vsync/commit/143b3f40e6848011cc1d25ee305fbb3fe7d1f603))
+* always keep some threads alive for video info fetching ([45bbc78](https://github.com/iyzana/vsync/commit/45bbc78359d65133423862bcbe1e0c1dc1e9d2b5))
+* catch correct exception for parsing URIs ([b8dffef](https://github.com/iyzana/vsync/commit/b8dffefa3e9dc5948b3a73b2e63685b09e1dff59))
+* detekt lints ([494ec22](https://github.com/iyzana/vsync/commit/494ec22fb9de4134e1269e3836894a179e891017))
+* remove unnecessary host env ([43d23c1](https://github.com/iyzana/vsync/commit/43d23c167e680db1a79c42e3a7959b8001b0f0a4))
+* reset state and ready checks on video switch ([feaf447](https://github.com/iyzana/vsync/commit/feaf447b9d1daa4279431d53deb1ae4f7f6c5742)), closes [#55](https://github.com/iyzana/vsync/issues/55)
+* typo in manifest-src ([85e57b2](https://github.com/iyzana/vsync/commit/85e57b272fbf906aa2e56f874072a83bcc0f7586))
+* update frontend dependencies ([fae1b2f](https://github.com/iyzana/vsync/commit/fae1b2f07a9a73cc7fe12fa1b5490bcba784a53a))
+* use jcenter repo ([47b2072](https://github.com/iyzana/vsync/commit/47b207281e118392ea8855e7e527ef91bcc902d7))
+
+
+### Code Refactoring
+
+* simplify docker setup ([d972464](https://github.com/iyzana/vsync/commit/d972464771ff14f19f52c48a2c4666e20c52c1d2))
+
 ## [2.1.0](https://github.com/iyzana/yt-sync/compare/v2.0.0...v2.1.0) (2023-03-07)
 
 
