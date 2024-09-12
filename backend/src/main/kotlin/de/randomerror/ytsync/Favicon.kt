@@ -17,7 +17,7 @@ fun getInitialFavicon(query: String, youtubeId: String?): String? {
     } else {
         try {
             URI(query)
-        } catch (e: URISyntaxException) {
+        } catch (_: URISyntaxException) {
             return null
         }
     }
@@ -31,7 +31,7 @@ fun getInitialFavicon(query: String, youtubeId: String?): String? {
 fun getFavicon(query: String, videoUrl: String): String? {
     val uri = try {
         URI(query)
-    } catch (e: URISyntaxException) {
+    } catch (_: URISyntaxException) {
         URI(videoUrl)
     }
     if (uri.authority in FAVICON_CACHE) {
