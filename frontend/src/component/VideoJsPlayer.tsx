@@ -1,20 +1,21 @@
 import './VideoJsPlayer.css';
 import { useContext, useEffect, useRef } from 'react';
-import videojs, { VideoJsPlayerOptions } from 'video.js';
+import videojs from 'video.js';
+import type Player from 'video.js/dist/types/player';
 import 'video.js/dist/video-js.css';
 import { EmbeddedPlayerProps } from './Player';
 import { useWebsocketMessages } from '../hook/websocket-messages';
 import { WebsocketContext } from '../context/websocket';
 import OverlayState from '../model/Overlay';
 
-const opts: VideoJsPlayerOptions = {
+const opts = {
   autoplay: true,
   controls: true,
   responsive: true,
   fluid: false,
   userActions: {
-    hotkeys: function (event) {
-      const player = this as videojs.Player;
+    hotkeys: function (event: any) {
+      const player = this as unknown as Player;
       const key = event.which;
       if (key === 32 /* space */ || key === 75 /* k */) {
         if (player.paused()) {
@@ -24,22 +25,22 @@ const opts: VideoJsPlayerOptions = {
         }
       }
       if (key === 37 /* left */) {
-        player.currentTime(player.currentTime() - 5);
+        player.currentTime(player.currentTime()! - 5);
       }
       if (key === 39 /* right */) {
-        player.currentTime(player.currentTime() + 5);
+        player.currentTime(player.currentTime()! + 5);
       }
       if (key === 74 /* j */) {
-        player.currentTime(player.currentTime() - 10);
+        player.currentTime(player.currentTime()! - 10);
       }
       if (key === 76 /* l */) {
-        player.currentTime(player.currentTime() + 10);
+        player.currentTime(player.currentTime()! + 10);
       }
       if (key === 38 /* up */) {
-        player.volume(player.volume() + 0.05);
+        player.volume(player.volume()! + 0.05);
       }
       if (key === 40 /* down */) {
-        player.volume(player.volume() - 0.05);
+        player.volume(player.volume()! - 0.05);
       }
       if (key === 77 /* m */) {
         player.muted(!player.muted());
@@ -52,7 +53,7 @@ const opts: VideoJsPlayerOptions = {
         }
       }
       if (key === 67 /* c */) {
-        const textTracks = player.textTracks();
+        const textTracks = (player as any).textTracks();
         for (let i = 0; i < textTracks.length; i++) {
           const track = textTracks[i];
           if (track.kind === 'captions') {
@@ -78,7 +79,7 @@ export const VideoJsPlayer = ({
   gotPlaybackPermission,
 }: EmbeddedPlayerProps) => {
   const placeholderRef = useRef<HTMLDivElement | null>(null);
-  const playerRef = useRef<videojs.Player | null>(null);
+  const playerRef = useRef<Player | null>(null);
   const waitReadyRef = useRef(false);
   const playbackPermissionRef = useRef(playbackPermission);
   const gotPlaybackPermissionRef = useRef(gotPlaybackPermission);
@@ -99,7 +100,7 @@ export const VideoJsPlayer = ({
           console.log('processing server message pause');
           player.pause();
           const timestamp = parseFloat(msg.split(' ')[1]);
-          const shouldSeek = Math.abs(player.currentTime() - timestamp) > 0.5;
+          const shouldSeek = Math.abs(player.currentTime()! - timestamp) > 0.5;
           if (shouldSeek) {
             console.log('seeking due to pause');
             player.currentTime(timestamp);
@@ -108,7 +109,7 @@ export const VideoJsPlayer = ({
           console.log('processing server message ready');
           player.pause();
           const timestamp = parseFloat(msg.split(' ')[1]);
-          const shouldSeek = Math.abs(player.currentTime() - timestamp) > 0.5;
+          const shouldSeek = Math.abs(player.currentTime()! - timestamp) > 0.5;
           if (shouldSeek) {
             console.log('seeking due to ready');
             player.currentTime(timestamp);
@@ -203,7 +204,7 @@ export const VideoJsPlayer = ({
           if (player.muted()) {
             setVolume(0);
           } else {
-            setVolume(player.volume());
+            setVolume(player.volume()!);
           }
         });
 

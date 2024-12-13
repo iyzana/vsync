@@ -58,7 +58,9 @@ function Player() {
   );
 
   useWebsocketClose(() => {
-    document.exitFullscreen();
+    if (document.fullscreenElement !== null) {
+      document.exitFullscreen();
+    }
   }, []);
 
   useEffect(() => {
