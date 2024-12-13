@@ -1,8 +1,10 @@
 package de.randomerror.ytsync
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import io.javalin.websocket.WsCloseStatus
+import io.javalin.websocket.WsContext
 import org.eclipse.jetty.http.HttpStatus
-import org.eclipse.jetty.websocket.api.Session
+import org.eclipse.jetty.websocket.api.CloseStatus
 import java.util.*
 import kotlin.concurrent.thread
 
@@ -11,25 +13,25 @@ private const val ROOM_ID_BYTES = 3
 
 private val logger = KotlinLogging.logger {}
 
-val sessions: MutableMap<Session, RoomId> = HashMap()
+val websockets: MutableMap<WsContext, RoomId> = HashMap()
 val rooms: MutableMap<RoomId, Room> = HashMap()
 private val random = Random()
 
-fun getRoom(session: Session): Room {
-    val roomId = sessions[session] ?: throw Disconnect()
+fun getRoom(ws: WsContext): Room {
+    val roomId = websockets[ws] ?: throw Disconnect()
     return rooms[roomId]!!
 }
 
-fun createRoom(session: Session, roomId: RoomId = generateRoomId()): String {
-    if (sessions[session] != null) throw Disconnect()
+fun createRoom(ws: WsContext, roomId: RoomId = generateRoomId()): String {
+    if (websockets[ws] != null) throw Disconnect()
     if (rooms.containsKey(roomId)) throw Disconnect("server full")
-    val room = Room(mutableListOf(User(session)))
+    val room = Room(mutableListOf(User(ws)))
     if (rooms.isEmpty()) {
         logger.info { "active rooms" }
     }
     rooms[roomId] = room
-    sessions[session] = roomId
-    session.remote.sendStringByFuture("create ${roomId.roomId}")
+    websockets[ws] = roomId
+    ws.send("create ${roomId.roomId}")
     return "create ${roomId.roomId}"
 }
 
@@ -39,51 +41,55 @@ private fun generateRoomId(): RoomId {
     return RoomId(String(Base64.getUrlEncoder().encode(bytes)))
 }
 
-fun joinRoom(roomId: RoomId, session: Session): String {
-    if (sessions[session] != null) throw Disconnect()
+fun joinRoom(roomId: RoomId, ws: WsContext): String {
+    if (websockets[ws] != null) throw Disconnect()
     var room = rooms[roomId]
     if (room == null) {
-        createRoom(session, roomId)
-        log(session, "create ${roomId.roomId}")
+        createRoom(ws, roomId)
+        log(ws, "create ${roomId.roomId}")
         room = rooms[roomId]!!
     } else {
-        room.participants.add(User(session))
+        synchronized(room.participants) {
+            room.participants.add(User(ws))
+        }
         room.shutdownThread?.interrupt()
         room.shutdownThread = null
-        sessions[session] = roomId
-        if (room.participants.size > room.maxConcurentUsers) {
-            room.maxConcurentUsers = room.participants.size
+        websockets[ws] = roomId
+        if (room.participants.size > room.maxConcurrentUsers) {
+            room.maxConcurrentUsers = room.participants.size
         }
     }
-    room.broadcastAll(session, "users ${room.participants.size}")
+    room.broadcastAll(ws, "users ${room.participants.size}")
     if (room.queue.isNotEmpty()) {
         val playingSource = gson.toJson(room.queue[0].source)
-        log(session, "video $playingSource")
-        session.remote.sendStringByFuture("video $playingSource")
+        log(ws, "video $playingSource")
+        ws.send("video $playingSource")
         for (item in room.queue.drop(1)) {
             val videoJson = gson.toJson(item)
-            log(session, "queue add $videoJson")
-            session.remote.sendStringByFuture("queue add $videoJson")
+            log(ws, "queue add $videoJson")
+            ws.send("queue add $videoJson")
         }
     }
     return "join ok"
 }
 
-fun close(session: Session) {
-    val roomId = sessions.remove(session) ?: return
+fun close(ws: WsContext) {
+    val roomId = websockets.remove(ws) ?: return
     val room = rooms[roomId]!!
 
-    room.participants.removeAll { it.session == session }
-    room.broadcastAll(session, "users ${room.participants.size}")
+    synchronized(room.participants) {
+        room.participants.removeAll { it.ws == ws }
+    }
+    room.broadcastAll(ws, "users ${room.participants.size}")
     if (room.participants.isEmpty()) {
-        scheduleRoomClose(room, roomId, session)
+        scheduleRoomClose(room, roomId, ws)
     }
 }
 
 private fun scheduleRoomClose(
     room: Room,
     roomId: RoomId,
-    session: Session
+    ws: WsContext
 ) {
     room.shutdownThread = thread {
         try {
@@ -93,9 +99,9 @@ private fun scheduleRoomClose(
             return@thread
         }
         rooms.remove(roomId)
-        log(session, "<close ${roomId.roomId}>")
+        log(ws, "<close ${roomId.roomId}>")
         if (roomId.roomId != "test") {
-            logger.info { "room statistic: ${room.maxConcurentUsers} users, ${room.numQueuedVideos} videos" }
+            logger.info { "room statistic: ${room.maxConcurrentUsers} users, ${room.numQueuedVideos} videos" }
         }
         if (rooms.isEmpty()) {
             logger.info { "no more active rooms" }
@@ -103,7 +109,8 @@ private fun scheduleRoomClose(
     }
 }
 
-fun kill(session: Session, reason: String = "invalid command") {
-    session.remote.sendStringByFuture(reason)
-    session.close(HttpStatus.BAD_REQUEST_400, reason)
+fun kill(ws: WsContext, reason: String = "invalid command") {
+    log(ws, "<killing: ${reason}>")
+    ws.send(reason)
+    ws.closeSession(WsCloseStatus.POLICY_VIOLATION, reason)
 }

@@ -1,6 +1,6 @@
 package de.randomerror.ytsync
 
-import org.eclipse.jetty.websocket.api.Session
+import io.javalin.websocket.WsContext
 import java.time.Instant
 import java.util.*
 import kotlin.math.abs
@@ -15,28 +15,34 @@ data class Room(
     var timeoutSyncAt: Instant? = null,
     var ignorePauseTill: Instant? = null,
     var ignoreSkipTill: Instant? = null,
-    var maxConcurentUsers: Int = 1,
+    var maxConcurrentUsers: Int = 1,
     var numQueuedVideos: Int = 0,
 ) {
-    fun getUser(session: Session) = participants.find { it.session == session }!!
+    fun getUser(ws: WsContext) = participants.find { it.ws == ws }!!
 
-    fun broadcastActive(session: Session, message: String) {
-        log(session, "broadcast: $message")
-        participants
-            .filter { it.syncState != SyncState.NotStarted }
-            .forEach { member -> member.session.remote.sendStringByFuture(message) }
+    fun broadcastActive(ws: WsContext, message: String) {
+        log(ws, "broadcast: $message")
+        synchronized(participants) {
+            participants
+                .filter { it.syncState != SyncState.NotStarted }
+                .forEach { member -> member.ws.send(message) }
+        }
     }
 
-    fun broadcastAll(session: Session, message: String) {
-        log(session, "broadcast all: $message")
-        participants
-            .forEach { member -> member.session.remote.sendStringByFuture(message) }
+    fun broadcastAll(ws: WsContext, message: String) {
+        log(ws, "broadcast all: $message")
+        synchronized(participants) {
+            participants
+                .forEach { member -> member.ws.send(message) }
+        }
     }
 
     fun setSyncState(state: SyncState) {
-        participants
-            .filter { it.syncState != SyncState.NotStarted }
-            .forEach { it.syncState = state }
+        synchronized(participants) {
+            participants
+                .filter { it.syncState != SyncState.NotStarted }
+                .forEach { it.syncState = state }
+        }
     }
 }
 
@@ -57,7 +63,7 @@ data class QueueItem(
 )
 
 data class User(
-    val session: Session,
+    val ws: WsContext,
     var syncState: SyncState = SyncState.NotStarted
 )
 

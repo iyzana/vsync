@@ -7,11 +7,8 @@ import com.google.gson.JsonParser
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.io.FileNotFoundException
 import java.io.StringWriter
-import java.lang.AssertionError
-import java.lang.UnsupportedOperationException
 import java.net.HttpURLConnection
 import java.net.URI
-import java.net.URL
 import java.util.concurrent.TimeUnit
 import kotlin.concurrent.thread
 import kotlin.time.Duration

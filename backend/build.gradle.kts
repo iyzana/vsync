@@ -1,8 +1,8 @@
 plugins {
-    kotlin("jvm") version "1.9.23"
+    kotlin("jvm") version "2.1.0"
 
     application
-    id("com.gradleup.shadow") version "8.3.1"
+    id("com.gradleup.shadow") version "8.3.5"
     id("io.gitlab.arturbosch.detekt") version "1.23.7"
 }
 
@@ -18,13 +18,13 @@ dependencies {
     implementation(platform("org.jetbrains.kotlin:kotlin-bom"))
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
 
-    implementation("com.sparkjava:spark-kotlin:1.0.0-alpha")
+    implementation("io.javalin:javalin:6.3.0")
     implementation("com.google.code.gson:gson:2.11.0")
 
-    implementation("ch.qos.logback:logback-classic:1.5.8")
-    implementation("io.github.oshai:kotlin-logging-jvm:7.0.0")
+    implementation("ch.qos.logback:logback-classic:1.5.12")
+    implementation("io.github.oshai:kotlin-logging-jvm:7.0.3")
 
-    implementation("com.mohamedrejeb.ksoup:ksoup-html:0.4.0")
+    implementation("com.mohamedrejeb.ksoup:ksoup-html:0.4.1")
 
     testImplementation("org.jetbrains.kotlin:kotlin-test")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit")

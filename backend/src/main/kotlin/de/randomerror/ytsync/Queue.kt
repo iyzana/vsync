@@ -1,6 +1,6 @@
 package de.randomerror.ytsync
 
-import org.eclipse.jetty.websocket.api.Session
+import io.javalin.websocket.WsContext
 import java.time.Instant
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.LinkedBlockingQueue
@@ -17,45 +17,45 @@ private const val FETCHER_KEEPALIVE_SECONDS = 60L
 private val videoInfoFetcher: ExecutorService =
     ThreadPoolExecutor(FETCHER_CORE_POOL, FETCHER_MAX_POOL, FETCHER_KEEPALIVE_SECONDS, SECONDS, LinkedBlockingQueue())
 
-fun enqueue(session: Session, query: String): String {
-    val room = getRoom(session)
+fun enqueue(ws: WsContext, query: String): String {
+    val room = getRoom(ws)
 
     val youtubeId = youtubeUrlRegex.find(query)?.let { it.groups[1]!!.value }
     if (youtubeId != null) {
         synchronized(room.queue) {
             if (room.queue.size == 0) {
-                enqueueFallbackVideo(room, session, query, youtubeId)
+                enqueueFallbackVideo(room, ws, query, youtubeId)
                 return "queue immediate"
             }
         }
     }
     if (room.queue.any { it.originalQuery == query }) {
-        session.remote.sendStringByFuture("queue err duplicate")
+        ws.send("queue err duplicate")
         return "queue err duplicate"
     }
     val loadingQueueItem = getInitialVideoInfo(query, youtubeId)
-    room.broadcastAll(session, "queue add ${gson.toJson(loadingQueueItem)}")
+    room.broadcastAll(ws, "queue add ${gson.toJson(loadingQueueItem)}")
     videoInfoFetcher.execute {
         // try to get video info, but if it fails, use the fallback info so that the video at least plays
         val videoInfo = fetchVideoInfo(query, youtubeId) ?: youtubeId?.let { getFallbackYoutubeVideo(query, it) }
-        enqueueVideo(room, session, videoInfo, loadingQueueItem)
+        enqueueVideo(room, ws, videoInfo, loadingQueueItem)
     }
     return "queue fetching"
 }
 
-fun enqueueFallbackVideo(room: Room, session: Session, query: String, youtubeId: String) {
+fun enqueueFallbackVideo(room: Room, ws: WsContext, query: String, youtubeId: String) {
     // this is the first video, it does not go into the queue, we don't need any video info
     val fallbackVideo = getFallbackYoutubeVideo(query, youtubeId)
     room.queue.add(fallbackVideo)
-    room.broadcastAll(session, "video ${gson.toJson(fallbackVideo.source)}")
+    room.broadcastAll(ws, "video ${gson.toJson(fallbackVideo.source)}")
     room.numQueuedVideos += 1
 }
 
-fun enqueueVideo(room: Room, session: Session, videoInfo: QueueItem?, loadingQueueItem: QueueItem) {
+fun enqueueVideo(room: Room, ws: WsContext, videoInfo: QueueItem?, loadingQueueItem: QueueItem) {
     if (videoInfo == null) {
-        log(session, "queue err not-found")
-        room.broadcastAll(session, "queue rm ${loadingQueueItem.id}")
-        session.remote.sendStringByFuture("queue err not-found")
+        log(ws, "queue err not-found")
+        room.broadcastAll(ws, "queue rm ${loadingQueueItem.id}")
+        ws.send("queue err not-found")
         return
     }
     val queueItem = videoInfo.copy(
@@ -64,18 +64,18 @@ fun enqueueVideo(room: Room, session: Session, videoInfo: QueueItem?, loadingQue
     )
     synchronized(room.queue) {
         if (room.queue.any { it.source != null && it.source.url == queueItem.source?.url }) {
-            session.remote.sendStringByFuture("queue err duplicate")
-            room.broadcastAll(session, "queue rm ${loadingQueueItem.id}")
+            ws.send("queue err duplicate")
+            room.broadcastAll(ws, "queue rm ${loadingQueueItem.id}")
             return
         }
         room.queue.add(queueItem)
         room.numQueuedVideos += 1
         if (room.queue.size == 1) {
-            room.broadcastAll(session, "queue rm ${queueItem.id}")
-            room.broadcastAll(session, "video ${gson.toJson(queueItem.source)}")
+            room.broadcastAll(ws, "queue rm ${queueItem.id}")
+            room.broadcastAll(ws, "video ${gson.toJson(queueItem.source)}")
             return
         } else {
-            room.broadcastAll(session, "queue add ${gson.toJson(queueItem)}")
+            room.broadcastAll(ws, "queue add ${gson.toJson(queueItem)}")
         }
     }
     val favicon = getFavicon(queueItem.originalQuery, queueItem.source!!.url)
@@ -84,26 +84,26 @@ fun enqueueVideo(room: Room, session: Session, videoInfo: QueueItem?, loadingQue
             val index = room.queue.indexOfFirst { it.id == queueItem.id }
             if (index > 0) {
                 val queueItemWithFavicon = queueItem.copy(favicon = favicon)
-                room.broadcastAll(session, "queue add ${gson.toJson(queueItemWithFavicon)}")
+                room.broadcastAll(ws, "queue add ${gson.toJson(queueItemWithFavicon)}")
                 room.queue[index] = queueItemWithFavicon
             }
         }
     }
 }
 
-fun dequeue(session: Session, queueId: String): String {
-    val room = getRoom(session)
+fun dequeue(ws: WsContext, queueId: String): String {
+    val room = getRoom(ws)
     // first in queue is currently playing video
     if (room.queue.isNotEmpty() && room.queue[0].id == queueId) {
         return "queue rm deny"
     }
     room.queue.removeAll { it.id == queueId }
-    room.broadcastAll(session, "queue rm $queueId")
+    room.broadcastAll(ws, "queue rm $queueId")
     return "queue rm"
 }
 
-fun reorder(session: Session, order: String): String {
-    val room = getRoom(session)
+fun reorder(ws: WsContext, order: String): String {
+    val room = getRoom(ws)
     val queue = room.queue
     val oldOrder = queue.drop(1).map { it.id }
     val newOrder = order.split(',')
@@ -114,13 +114,13 @@ fun reorder(session: Session, order: String): String {
     }
 
     queue.subList(1, queue.size).sortBy { video -> newOrder.indexOf(video.id) }
-    room.broadcastAll(session, "queue order $order")
+    room.broadcastAll(ws, "queue order $order")
 
     return "queue order ok"
 }
 
-fun skip(session: Session): String {
-    val room = getRoom(session)
+fun skip(ws: WsContext): String {
+    val room = getRoom(ws)
     synchronized(room.queue) {
         // first in queue is currently playing video
         if (room.queue.size < 2) {
@@ -133,7 +133,7 @@ fun skip(session: Session): String {
         }
         room.ignoreSkipTill = Instant.now().plusSeconds(2)
 
-        playNext(session, room)
+        playNext(ws, room)
     }
 
     return "skip"
