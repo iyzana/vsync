@@ -171,6 +171,8 @@ private fun buildYtDlpCommand(query: String, fromYoutube: Boolean): Array<String
         "yt-dlp",
         "--default-search", "ytsearch",
         "--no-playlist",
+        "--playlist-items",
+        "1:1",
         "--dump-json",
     )
     if (!fromYoutube) {

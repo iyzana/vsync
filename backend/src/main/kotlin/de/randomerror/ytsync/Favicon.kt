@@ -1,5 +1,6 @@
 package de.randomerror.ytsync
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import com.mohamedrejeb.ksoup.html.parser.KsoupHtmlHandler
 import com.mohamedrejeb.ksoup.html.parser.KsoupHtmlParser
 import java.net.URI
@@ -7,6 +8,8 @@ import java.net.URISyntaxException
 import kotlin.time.Duration.Companion.seconds
 
 private const val HTML_MAX_BYTES = 64 * 1024 // 64KiB
+
+private val logger = KotlinLogging.logger {}
 
 private val FAVICON_CACHE = mutableMapOf<String, String>()
 
@@ -30,7 +33,12 @@ fun getInitialFavicon(query: String, youtubeId: String?): String? {
 }
 fun getFavicon(query: String, videoUrl: String): String? {
     val uri = try {
-        URI(query)
+        var uri = URI(query)
+        if (uri.isAbsolute) {
+            uri
+        } else {
+            URI(videoUrl)
+        }
     } catch (_: URISyntaxException) {
         URI(videoUrl)
     }
