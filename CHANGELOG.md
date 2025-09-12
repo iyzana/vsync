@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.0.1](https://github.com/iyzana/vsync/compare/v3.0.0...v3.0.1) (2025-09-03)
+
+
+### Bug Fixes
+
+* search term adding and favicon loading ([e7be2b6](https://github.com/iyzana/vsync/commit/e7be2b65f8142d73e4aa683c535e7283abc2c3f1))
+
 ## [3.0.0](https://github.com/iyzana/vsync/compare/v2.1.0...v3.0.0) (2024-09-12)
 
 
