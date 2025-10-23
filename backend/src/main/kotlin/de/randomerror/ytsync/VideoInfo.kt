@@ -139,6 +139,9 @@ private fun parseYtDlpOutput(
         val contentType = if (isYoutube) null else getContentType(url)
         val startTime = video.getNullable("start_time")?.asInt ?: findStartTimeSeconds(query)
         QueueItem(VideoSource(url, contentType, startTime), query, title, thumbnail, null, false)
+    } catch (e: IllegalStateException) {
+        logger.warn(e) { "failed to parse ytdlp output for query $query" }
+        null
     } catch (e: JsonParseException) {
         logger.warn(e) { "failed to parse ytdlp output for query $query" }
         null
