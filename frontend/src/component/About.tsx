@@ -42,13 +42,14 @@ function About() {
         <li>reddit.com</li>
         <li>bsky.app</li>
         <li>soundcloud.com</li>
+        <li>twitch.tv (clips)</li>
       </ul>
       <h2>Unsupported sites</h2>
       <p>A list of sites that are known not to work</p>
       <ul>
         <li>netflix.com</li>
         <li>tiktok.com</li>
-        <li>twitch.tv</li>
+        <li>twitch.tv (Livestream, VODs)</li>
         <li>instagram.com</li>
         <li>tvnow.de</li>
         <li>plus.rtl.de</li>

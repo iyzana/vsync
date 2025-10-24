@@ -7,6 +7,7 @@ import com.google.gson.JsonParser
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.io.FileNotFoundException
 import java.io.StringWriter
+import java.lang.Exception
 import java.net.HttpURLConnection
 import java.net.URI
 import java.util.concurrent.TimeUnit
@@ -135,6 +136,8 @@ data class YtDlpFormat(
     val manifestUrl: String?,
     val hasVideo: Boolean,
     val hasAudio: Boolean,
+    val ext: String?,
+    val protocol: String?,
 )
 
 private fun parseYtDlpOutput(
@@ -144,9 +147,7 @@ private fun parseYtDlpOutput(
 ): QueueItem? {
     return try {
         val video = JsonParser.parseString(videoData).asJsonObject
-        val url = getUrl(video, isYoutube) ?: return null
-        val contentType = if (isYoutube) null else getContentType(url)
-        logger.info { contentType }
+        val videoSource = getVideoSource(video, isYoutube) ?: return null
         val title = video.getNullable("title")?.asString
         val series = video.getNullable("series")?.asString?.trim()
         val seasonNumber = video.getNullable("season_number")?.asInt
@@ -155,38 +156,28 @@ private fun parseYtDlpOutput(
         val thumbnail = video.getNullable("thumbnail")?.asString
         val startTime = video.getNullable("start_time")?.asInt ?: findStartTimeSeconds(query)
         QueueItem(
-            VideoSource(url, contentType), query,
+            videoSource, query,
             VideoMetadata(title, series, seasonNumber, episodeNumber, channel),
             startTime, thumbnail, null, false
         )
-    } catch (e: IllegalStateException) {
-        logger.warn(e) { "failed to parse ytdlp output for query $query" }
-        null
-    } catch (e: JsonParseException) {
-        logger.warn(e) { "failed to parse ytdlp output for query $query" }
-        null
-    } catch (e: AssertionError) {
-        logger.warn(e) { "failed to parse ytdlp output for query $query" }
-        null
-    } catch (e: UnsupportedOperationException) {
+    } catch (e: Exception) {
         logger.warn(e) { "failed to parse ytdlp output for query $query" }
         null
     }
 }
 
-private fun getUrl(video: JsonObject, isYoutube: Boolean): String? {
+private fun getVideoSource(video: JsonObject, isYoutube: Boolean): VideoSource? {
     if (isYoutube) {
-        return video.getNullable("webpage_url")?.asString
+        return VideoSource(video.get("webpage_url").asString, null)
     }
     val mainManifestUrl = video.getNullable("manifest_url")?.asString
     if (mainManifestUrl != null) {
-        return mainManifestUrl
+        return toVideoSource(mainManifestUrl)
     }
     val formats = parseYtDlpFormats(video)
-    logger.info { formats }
     if (formats.all { !it.hasVideo } || formats.all { !it.hasAudio }) {
         val format = formats.first()
-        return format.manifestUrl ?: format.url
+        return toVideoSource(format)
     }
     val fullManifests = formats
         .filter { it.manifestUrl != null }
@@ -199,8 +190,28 @@ private fun getUrl(video: JsonObject, isYoutube: Boolean): String? {
     val format = formats
         .find { format -> (format.hasVideo && format.hasAudio) || fullManifests.contains(format.manifestUrl) }
         ?: return null
-    logger.info { format }
-    return format.manifestUrl ?: format.url
+    return toVideoSource(format)
+}
+
+private fun toVideoSource(url: String): VideoSource {
+    return VideoSource(url, fetchContentType(url))
+}
+
+private fun toVideoSource(format: YtDlpFormat): VideoSource {
+    val url = format.manifestUrl ?: format.url
+    var contentType = fetchContentType(url)
+    if (contentType == null
+        || contentType == "binary/octet-stream"
+        || contentType == "application/octet-stream"
+        || contentType.startsWith("text/")) {
+        if (format.protocol in listOf("https", "http") && format.ext == "mp4") {
+            contentType = "video/mp4"
+        }
+        if (format.protocol in listOf("https", "http") && format.ext == "m4a") {
+            contentType = "audio/m4a"
+        }
+    }
+    return VideoSource(url, contentType)
 }
 
 private fun parseYtDlpFormats(video: JsonObject): List<YtDlpFormat> {
@@ -211,19 +222,17 @@ private fun parseYtDlpFormats(video: JsonObject): List<YtDlpFormat> {
             format.get("url").asString,
             format.getNullable("manifest_url")?.asString,
             vcodec != "none",
-            acodec != "none"
+            acodec != "none",
+            format.getNullable("ext")?.asString,
+            format.getNullable("protocol")?.asString,
         )
     }.reversed()
 }
 
-private fun getContentType(url: String, method: String = "HEAD"): String? {
+private fun fetchContentType(url: String): String? {
     val connection = URI(url).toURL().openConnection() as HttpURLConnection
     AutoCloseable { connection.disconnect() }.use {
-        connection.requestMethod = method
-        if (method == "HEAD" && connection.responseCode == 405 /* Method not allowed */) {
-            return getContentType(url, "GET")
-        }
-        logger.info { connection.headerFields }
+        connection.requestMethod = "GET"
         return connection.getHeaderField("Content-Type")
     }
 }
