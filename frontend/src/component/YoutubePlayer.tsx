@@ -35,7 +35,7 @@ const getVideoId = (videoUrl: string) => {
 };
 
 function YoutubePlayer({
-  source,
+  video: video,
   setOverlay,
   volume,
   setVolume,
@@ -88,9 +88,9 @@ function YoutubePlayer({
         if (hasEverPlayed) {
           console.log(
             'storing player volume live ' +
-              player.isMuted() +
-              ' ' +
-              player.getVolume() / 100,
+            player.isMuted() +
+            ' ' +
+            player.getVolume() / 100,
           );
           if (player.isMuted()) {
             setVolume(0);
@@ -129,7 +129,7 @@ function YoutubePlayer({
     } else if (newState === YouTube.PlayerState.ENDED) {
       // sanity check playback time, because the youtube player may send ended events event after the video was switched
       if (player.getCurrentTime() > player.getDuration() - 1) {
-        sendMessage(`end ${source.url}`);
+        sendMessage(`end ${video.source.url}`);
       }
     } else if (
       newState === YouTube.PlayerState.BUFFERING &&
@@ -139,7 +139,7 @@ function YoutubePlayer({
     }
   }, [
     player,
-    source,
+    video,
     oldState,
     hasEverPlayed,
     preloadTime,
@@ -196,9 +196,9 @@ function YoutubePlayer({
       if (player) {
         console.log(
           'storing player volume live ' +
-            player.isMuted() +
-            ' ' +
-            player.getVolume() / 100,
+          player.isMuted() +
+          ' ' +
+          player.getVolume() / 100,
         );
         if (player.isMuted()) {
           setVolume(0);
@@ -241,10 +241,10 @@ function YoutubePlayer({
         ...opts,
         playerVars: {
           ...opts.playerVars,
-          start: source?.startTimeSeconds || 0,
+          start: video?.startTimeSeconds || 0,
         },
       }}
-      videoId={getVideoId(source.url)}
+      videoId={getVideoId(video.source.url)}
       onReady={onReady}
       onStateChange={onStateChange}
       onPlaybackRateChange={onPlaybackRateChange}

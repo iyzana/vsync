@@ -1,8 +1,8 @@
 .queue {
   min-height: 0;
   flex-grow: 1;
-  padding: 0 var(--s1);
-  margin-bottom: calc(-1 * var(--s1));
+  padding: 0 var(--s2);
+  margin-bottom: calc(-1 * var(--s2));
 
   background-color: var(--card);
   border-radius: var(--radius) var(--radius) 0 0;
@@ -19,8 +19,8 @@
   /* to render above font awesome layered icons */
   z-index: 1;
 
-  padding-top: calc(var(--s1) - var(--s0));
-  padding-bottom: var(--s0);
+  padding-top: calc(var(--s2) - var(--s1));
+  padding-bottom: var(--s1);
   background-color: var(--card);
 
   display: flex;
@@ -30,7 +30,7 @@
 
 .title {
   margin: 0;
-  margin: var(--s0) 0;
+  margin: var(--s1) 0;
   display: flex;
   align-items: center;
 }
@@ -43,25 +43,25 @@
 }
 
 .skip {
-  margin: calc(-1 * var(--s0)) 0;
+  margin: calc(-1 * var(--s1)) 0;
 }
 
 .getlink {
-  padding: var(--s0);
-  margin: calc(var(--s0) * -1);
+  padding: var(--s1);
+  margin: calc(var(--s1) * -1);
   cursor: pointer;
 }
 
 .queue-list {
-  margin-top: var(--s0);
+  margin-top: var(--s1);
+  margin-bottom: var(--s2);
+}
+
+.queue-list>* {
   margin-bottom: var(--s1);
 }
 
-.queue-list > * {
-  margin-bottom: var(--s0);
-}
-
-.queue-list > *:last-child {
+.queue-list>*:last-child {
   margin-bottom: 0;
 }
 
@@ -73,6 +73,7 @@
 }
 
 .remove {
+  margin-inline-start: auto;
   display: inline-flex;
   align-items: flex-start;
   visibility: hidden;
@@ -80,22 +81,18 @@
   padding: 0.5rem;
 }
 
-.queue-item:hover > .remove {
+.queue-item:hover .remove {
   visibility: visible;
 }
 
-.video-info {
+.queue-video-info {
   width: 100%;
   display: flex;
   flex-flow: row nowrap;
-  margin-right: var(--s0);
+  margin-right: var(--s1);
   align-items: flex-start;
 }
 
-.hostname {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 4px;
-  color: var(--fg-light);
+.queue-video-title {
+  font-weight: bold;
 }

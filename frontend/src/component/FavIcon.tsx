@@ -1,18 +1,18 @@
-import { useState } from 'react';
-import QueueItem from '../model/QueueItem';
+import { useEffect, useState } from 'react';
 import './FavIcon.css';
 
 interface FavIconProps {
-  item: QueueItem;
+  favicon?: string;
 }
 
-function FavIcon({ item }: FavIconProps) {
+function FavIcon({ favicon }: FavIconProps) {
   const [error, setError] = useState(false);
-  return error || !item.favicon ? null : (
+  useEffect(() => setError(false), [favicon]);
+  return error || !favicon ? null : (
     <img
       className="favicon"
-      src={item.favicon}
-      alt={`favicon of ${new URL(item.favicon).host}`}
+      src={favicon}
+      alt={`favicon of ${new URL(favicon).host}`}
       onError={() => setError(true)}
     ></img>
   );

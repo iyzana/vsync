@@ -2,7 +2,7 @@
   display: inline-block;
   color: var(--fg);
   background-color: var(--card-alt);
-  padding: var(--s0);
+  padding: var(--s1);
   border-radius: var(--radius);
   text-decoration: none;
 }
@@ -12,7 +12,7 @@
 
   display: flex;
   flex-wrap: wrap;
-  gap: var(--s0);
+  gap: var(--s1);
 }
 
 .shortcuts > li {
@@ -21,12 +21,12 @@
 }
 
 .shortcuts > li > *:last-child {
-  margin-left: var(--s0);
+  margin-left: var(--s1);
 }
 
 kbd {
   background-color: var(--card-alt);
-  padding: 2px var(--s0);
+  padding: 2px var(--s1);
   border-radius: var(--radius);
   border: 1px solid var(--fg-light);
 

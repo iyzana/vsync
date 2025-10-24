@@ -8,10 +8,10 @@
 .with-sidebar {
   flex-shrink: 0;
   overflow: hidden;
-  padding: var(--s1);
+  padding: var(--s2);
 
   display: flex;
-  gap: var(--s1);
+  gap: var(--s2);
   flex-wrap: wrap;
   justify-content: center;
 }
@@ -32,10 +32,10 @@
   max-height: min(
     max(
       /* video height based on view width */
-        calc((100vw - 3 * var(--s1) - 30rem) * 9 / 16),
-      30rem /* ensure minimum height when control is below video */
+        calc((100vw - 3 * var(--s2) - 30rem) * 9 / 16),
+      40rem /* ensure minimum height when control is below video */
     ),
-    calc(100vh - 2 * var(--s1))
+    calc(100vh - 2 * var(--s2))
       /* cap to view height (minus vertical padding) */
   );
 }
@@ -44,11 +44,11 @@
   flex-shrink: 0;
   display: flex;
   justify-content: flex-end;
-  padding: calc(var(--s0) / 2);
+  padding: calc(var(--s1) / 2);
 }
 
 .social {
-  padding: calc(var(--s0) / 2);
+  padding: calc(var(--s1) / 2);
   color: var(--card-alt);
 }
 

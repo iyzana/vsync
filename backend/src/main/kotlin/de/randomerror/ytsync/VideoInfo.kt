@@ -28,16 +28,19 @@ fun getInitialVideoInfo(query: String, youtubeId: String?, loading: Boolean = tr
             VideoSource(
                 "https://www.youtube.com/watch?v=$youtubeId",
                 null,
-                startTime
             ),
             query,
             null,
+            startTime,
             "https://i.ytimg.com/vi/$youtubeId/mqdefault.jpg",
             favicon,
             loading
         )
     }
-    return QueueItem(null, query, null, null, favicon, loading)
+    return QueueItem(
+        null, query,
+        null, null, null, favicon, loading
+    )
 }
 
 fun getFallbackYoutubeVideo(query: String, youtubeId: String): QueueItem {
@@ -79,15 +82,20 @@ fun fetchVideoInfo(query: String, youtubeId: String?): QueueItem? {
 private fun fetchVideoInfoYouTubeOEmbed(query: String, youtubeId: String): QueueItem? {
     val videoData = try {
         URI("https://www.youtube.com/oembed?url=$query").toURL().readText()
-    } catch (ignored: FileNotFoundException) {
+    } catch (_: FileNotFoundException) {
         return null
     }
     return try {
         val video = JsonParser.parseString(videoData).asJsonObject
         val startTime = findStartTimeSeconds(query)
         val title = video.getNullable("title")?.asString
+        val channel = video.getNullable("author_name")?.asString
         val thumbnail = "https://i.ytimg.com/vi/$youtubeId/mqdefault.jpg"
-        QueueItem(VideoSource(query, null, startTime), query, title, thumbnail, null, false)
+        QueueItem(
+            VideoSource(query, null), query,
+            VideoMetadata(title, null, null, null, channel),
+            startTime, thumbnail, null, false
+        )
     } catch (e: JsonParseException) {
         logger.warn(e) { "failed to parse oembed response for query $query" }
         null
@@ -113,7 +121,7 @@ private fun fetchVideoInfoYtDlp(youtubeId: String?, query: String): QueueItem? {
         return null
     }
     if (process.exitValue() != 0) {
-        logger.warn { "ytdl err" }
+        logger.warn { "ytdl err ${process.exitValue()}" }
         logger.warn { process.errorStream.bufferedReader().readText() }
         return null
     }
@@ -135,10 +143,18 @@ private fun parseYtDlpOutput(
             video.getNullable("manifest_url") ?: video.getNullable("url")
         }?.asString ?: return null
         val title = video.getNullable("title")?.asString
+        val series = video.getNullable("series")?.asString?.trim()
+        val seasonNumber = video.getNullable("season_number")?.asInt
+        val episodeNumber = video.getNullable("episode_number")?.asInt
+        val channel = video.getNullable("channel")?.asString
         val thumbnail = video.getNullable("thumbnail")?.asString
         val contentType = if (isYoutube) null else getContentType(url)
         val startTime = video.getNullable("start_time")?.asInt ?: findStartTimeSeconds(query)
-        QueueItem(VideoSource(url, contentType, startTime), query, title, thumbnail, null, false)
+        QueueItem(
+            VideoSource(url, contentType), query,
+            VideoMetadata(title, series, seasonNumber, episodeNumber, channel),
+            startTime, thumbnail, null, false
+        )
     } catch (e: IllegalStateException) {
         logger.warn(e) { "failed to parse ytdlp output for query $query" }
         null
@@ -174,8 +190,7 @@ private fun buildYtDlpCommand(query: String, fromYoutube: Boolean): Array<String
         "yt-dlp",
         "--default-search", "ytsearch",
         "--no-playlist",
-        "--playlist-items",
-        "1:1",
+        "--playlist-items", "1:1",
         "--dump-json",
     )
     if (!fromYoutube) {

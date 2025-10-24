@@ -49,17 +49,38 @@ data class Room(
 data class VideoSource(
     val url: String,
     val mimeType: String?,
-    val startTimeSeconds: Int?,
 )
 
 data class QueueItem(
     val source: VideoSource?,
     val originalQuery: String,
-    val title: String?,
+    val metadata: VideoMetadata?,
+    val startTimeSeconds: Int?,
     val thumbnail: String?,
     val favicon: String?,
     val loading: Boolean,
     val id: String = UUID.randomUUID().toString(),
+) {
+    fun toVideoCommand(): VideoCommand? {
+        val source = source ?: return null
+        return VideoCommand(source, originalQuery, metadata, startTimeSeconds, favicon)
+    }
+}
+
+data class VideoMetadata(
+    val title: String?,
+    val series: String?,
+    val seasonNumber: Int?,
+    val episodeNumber: Int?,
+    val channel: String?,
+)
+
+data class VideoCommand(
+    val source: VideoSource,
+    val originalQuery: String,
+    val metadata: VideoMetadata?,
+    val startTimeSeconds: Int?,
+    val favicon: String?,
 )
 
 data class User(

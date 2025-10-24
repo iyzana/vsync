@@ -9,6 +9,8 @@ import { useWebsocketMessages } from '../hook/websocket-messages';
 import { WebsocketContext } from '../context/websocket';
 import FavIcon from './FavIcon';
 import Thumbnail from './Thumbnail';
+import Host from './Host';
+import VideoMetadataLine from './VideoMetadataLine';
 
 const getDomain: (item: QueueItem) => string | null = (item: QueueItem) => {
   let baseUrl;
@@ -126,7 +128,7 @@ function Queue({ addNotification }: QueueProps) {
           <div className="status">
             {queue.filter(video => !video.loading).length === 0 ? null : (
               <button className="skip" onClick={skip}>
-                Skip <FontAwesomeIcon icon={faAngleDoubleRight} />
+                Play next <FontAwesomeIcon icon={faAngleDoubleRight} />
               </button>
             )}
           </div>
@@ -139,29 +141,27 @@ function Queue({ addNotification }: QueueProps) {
           {queue.map((item) => {
             return (
               <li key={item.id} className="queue-item">
-                <div className="video-info">
+                <div className="queue-video-info">
                   <Thumbnail
                     thumbnailUrl={item.thumbnail || null}
                     loading={item.loading}
                   />
                   <div>
-                    <div>
-                      {item.title || (item.loading ? 'Loading...' : 'No title')}
+                    <div className='queue-video-title'>
+                      {item.metadata?.title || (item.loading ? 'Loading...' : 'No title')}
                     </div>
-                    <div className="hostname">
-                      <FavIcon item={item} />{' '}
-                      <span>{getDomain(item) || ''}</span>
-                    </div>
+                    <VideoMetadataLine metadata={item.metadata} />
+                    <Host element={item} />
                   </div>
+                  {!item.loading ? (
+                    <button
+                      className="remove"
+                      onClick={() => removeVideo(item.id)}
+                    >
+                      <FontAwesomeIcon icon={faTimes} />
+                    </button>
+                  ) : null}
                 </div>
-                {!item.loading ? (
-                  <button
-                    className="remove"
-                    onClick={() => removeVideo(item.id)}
-                  >
-                    <FontAwesomeIcon icon={faTimes} />
-                  </button>
-                ) : null}
               </li>
             );
           })}

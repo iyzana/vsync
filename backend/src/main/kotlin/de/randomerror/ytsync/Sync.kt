@@ -88,8 +88,8 @@ fun sync(ws: WsContext): String {
     val timestamp = if (room.queue.isEmpty()) {
         TimeStamp.ZERO
     } else {
-        val video = room.queue[0].source
-        video?.startTimeSeconds?.let(::TimeStamp) ?: TimeStamp.ZERO
+        val video = room.queue[0]
+        video.startTimeSeconds?.let(::TimeStamp) ?: TimeStamp.ZERO
     }
     user.syncState = SyncState.Playing(Instant.now(), timestamp)
     val activeMembers = room.participants.filter { it.syncState != SyncState.NotStarted }
@@ -145,8 +145,8 @@ fun playNext(ws: WsContext, room: Room) {
     if (room.queue.isNotEmpty()) {
         val next = room.queue[0]
         room.broadcastAll(ws, "queue rm ${next.id}")
-        room.broadcastAll(ws, "video ${gson.toJson(next.source)}")
-        room.setSyncState(SyncState.Playing(Instant.now(), TimeStamp(next.source?.startTimeSeconds?.toDouble() ?: 0.0)))
+        room.broadcastAll(ws, "video ${gson.toJson(next.toVideoCommand())}")
+        room.setSyncState(SyncState.Playing(Instant.now(), TimeStamp(next.startTimeSeconds?.toDouble() ?: 0.0)))
     } else {
         room.broadcastAll(ws, "video")
     }

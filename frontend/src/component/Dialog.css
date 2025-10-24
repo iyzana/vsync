@@ -30,15 +30,15 @@ dialog::backdrop {
 dialog div {
   width: 100%;
   min-height: 100%;
-  padding: var(--s1);
+  padding: var(--s2);
 }
 
 dialog .close {
   background-color: unset;
   position: fixed;
-  padding: var(--s1);
-  top: var(--s0);
-  right: var(--s0);
+  padding: var(--s2);
+  top: var(--s1);
+  right: var(--s1);
   cursor: pointer;
 }
 

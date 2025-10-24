@@ -47,7 +47,7 @@ fun enqueueFallbackVideo(room: Room, ws: WsContext, query: String, youtubeId: St
     // this is the first video, it does not go into the queue, we don't need any video info
     val fallbackVideo = getFallbackYoutubeVideo(query, youtubeId)
     room.queue.add(fallbackVideo)
-    room.broadcastAll(ws, "video ${gson.toJson(fallbackVideo.source)}")
+    room.broadcastAll(ws, "video ${gson.toJson(fallbackVideo.toVideoCommand())}")
     room.numQueuedVideos += 1
 }
 
@@ -72,7 +72,7 @@ fun enqueueVideo(room: Room, ws: WsContext, videoInfo: QueueItem?, loadingQueueI
         room.numQueuedVideos += 1
         if (room.queue.size == 1) {
             room.broadcastAll(ws, "queue rm ${queueItem.id}")
-            room.broadcastAll(ws, "video ${gson.toJson(queueItem.source)}")
+            room.broadcastAll(ws, "video ${gson.toJson(queueItem.toVideoCommand())}")
             return
         } else {
             room.broadcastAll(ws, "queue add ${gson.toJson(queueItem)}")

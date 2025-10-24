@@ -1,7 +1,8 @@
 .thumbnail {
   min-width: 35%;
   max-width: 35%;
-  margin-right: var(--s0);
+  max-height: 100px;
+  margin-right: var(--s1);
 }
 
 .placeholder {

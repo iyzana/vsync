@@ -10,7 +10,7 @@
 
 .input-text {
   width: 100%;
-  padding: var(--s0);
+  padding: var(--s1);
   padding-right: 36px;
   margin-right: -36px;
   color: var(--fg);

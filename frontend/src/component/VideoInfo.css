@@ -1,0 +1,15 @@
+.video-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s0);
+}
+
+.video-info-data {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s0);
+}
+
+.video-info-title {
+  font-weight: bold;
+}

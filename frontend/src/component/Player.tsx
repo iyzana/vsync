@@ -7,22 +7,17 @@ import {
 import Overlay from './Overlay';
 import ErrorBoundary from './ErrorBoundary';
 import OverlayState from '../model/Overlay';
+import { VideoCommand } from '../model/VideoSource';
 const YoutubePlayer = lazy(() => import('./YoutubePlayer'));
 const VideoJsPlayer = lazy(() => import('./VideoJsPlayer'));
 
 export interface EmbeddedPlayerProps {
-  source: VideoSource;
+  video: VideoCommand;
   setOverlay: (state: OverlayState) => void;
   volume: number | null;
   setVolume: (volume: number) => void;
   playbackPermission: boolean;
   gotPlaybackPermission: () => void;
-}
-
-export interface VideoSource {
-  url: string;
-  mimeType: string | null;
-  startTimeSeconds: number | null;
 }
 
 function isYoutubeUrl(url: string): boolean {
@@ -34,7 +29,7 @@ function isYoutubeUrl(url: string): boolean {
 
 function Player() {
   const [overlay, setOverlay] = useState<OverlayState>(OverlayState.NONE);
-  const [source, setSource] = useState<VideoSource | null>(null);
+  const [video, setSource] = useState<VideoCommand | null>(null);
   const [volume, setVolume] = useState<number | null>(null);
   const [playbackPermission, setPlaybackPermission] = useState<boolean>(false);
 
@@ -83,7 +78,7 @@ function Player() {
 
   return (
     <div className="aspect-ratio">
-      {source === null ? (
+      {video === null ? (
         <div className="aspect-ratio-inner empty-player">
           No videos in queue
         </div>
@@ -103,9 +98,9 @@ function Player() {
             }
           >
             <div className="aspect-ratio-inner">
-              {isYoutubeUrl(source.url) ? (
+              {isYoutubeUrl(video.source.url) ? (
                 <YoutubePlayer
-                  source={source}
+                  video={video}
                   setOverlay={setOverlay}
                   volume={volume}
                   setVolume={setVolume}
@@ -114,7 +109,7 @@ function Player() {
                 />
               ) : (
                 <VideoJsPlayer
-                  source={source}
+                  video={video}
                   setOverlay={setOverlay}
                   volume={volume}
                   setVolume={setVolume}

@@ -14,7 +14,7 @@ const opts = {
   responsive: true,
   fluid: false,
   userActions: {
-    hotkeys: function (event: any) {
+    hotkeys: function(event: any) {
       const player = this as unknown as Player;
       const key = event.which;
       if (key === 32 /* space */ || key === 75 /* k */) {
@@ -71,7 +71,7 @@ const opts = {
 };
 
 export const VideoJsPlayer = ({
-  source,
+  video,
   setOverlay,
   volume,
   setVolume,
@@ -83,7 +83,7 @@ export const VideoJsPlayer = ({
   const waitReadyRef = useRef(false);
   const playbackPermissionRef = useRef(playbackPermission);
   const gotPlaybackPermissionRef = useRef(gotPlaybackPermission);
-  const sourceRef = useRef(source);
+  const videoRef = useRef(video);
   const { sendMessage } = useContext(WebsocketContext);
 
   useWebsocketMessages(
@@ -92,7 +92,7 @@ export const VideoJsPlayer = ({
       if (!player) {
         return;
       }
-      player.ready(function () {
+      player.ready(function() {
         if (msg === 'play') {
           console.log('processing server message play');
           player.play();
@@ -142,7 +142,7 @@ export const VideoJsPlayer = ({
       const player = playerRef.current;
       player.ready(() => {
         console.log('registering player hooks');
-        player.on('play', function () {
+        player.on('play', function() {
           console.log('player hook play');
           if (playbackPermissionRef.current) {
             sendMessage(`play ${player.currentTime()}`);
@@ -153,18 +153,18 @@ export const VideoJsPlayer = ({
             sendMessage('sync');
           }
         });
-        player.on('pause', function () {
+        player.on('pause', function() {
           console.log('player hook pause');
           if (!waitReadyRef.current) {
             sendMessage(`pause ${player.currentTime()}`);
             setOverlay(OverlayState.PAUSED);
           }
         });
-        player.on('stalled', function () {
+        player.on('stalled', function() {
           console.log('player hook stalled');
           sendMessage(`buffer ${player.currentTime()}`);
         });
-        player.on('seeked', function () {
+        player.on('seeked', function() {
           if (!playbackPermissionRef.current) {
             return;
           }
@@ -178,28 +178,28 @@ export const VideoJsPlayer = ({
           }
           // fixme: on keyboard seek player is playing here
         });
-        player.on('ended', function () {
+        player.on('ended', function() {
           console.log('player hook ended');
-          sendMessage(`end ${sourceRef.current.url}`);
+          sendMessage(`end ${videoRef.current.source.url}`);
         });
-        player.on('ratechange', function () {
+        player.on('ratechange', function() {
           console.log('player hook ratechange');
           sendMessage(`speed ${player.playbackRate()}`);
         });
-        player.on('canplay', function () {
+        player.on('canplay', function() {
           console.log('player hook canplay');
           if (waitReadyRef.current) {
             console.log('canplay');
             sendMessage(`ready ${player.currentTime()}`);
           }
         });
-        player.on('volumechange', function () {
+        player.on('volumechange', function() {
           console.log('player hook volumechange');
           console.log(
             'storing videojs player volume ' +
-              player.muted() +
-              ' ' +
-              player.volume(),
+            player.muted() +
+            ' ' +
+            player.volume(),
           );
           if (player.muted()) {
             setVolume(0);
@@ -234,13 +234,13 @@ export const VideoJsPlayer = ({
     }
     const player = playerRef.current;
     player.ready(() => {
-      sourceRef.current = source;
-      player.src({ src: source.url, type: source.mimeType || undefined });
-      if (source.startTimeSeconds) {
-        player.currentTime(source.startTimeSeconds);
+      videoRef.current = video;
+      player.src({ src: video.source.url, type: video.source.mimeType || undefined });
+      if (video.startTimeSeconds) {
+        player.currentTime(video.startTimeSeconds);
       }
     });
-  }, [source]);
+  }, [video]);
 
   // dispose video.js when the component unmounts
   useEffect(() => {

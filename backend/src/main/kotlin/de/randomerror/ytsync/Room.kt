@@ -3,8 +3,6 @@ package de.randomerror.ytsync
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.javalin.websocket.WsCloseStatus
 import io.javalin.websocket.WsContext
-import org.eclipse.jetty.http.HttpStatus
-import org.eclipse.jetty.websocket.api.CloseStatus
 import java.util.*
 import kotlin.concurrent.thread
 
@@ -61,9 +59,9 @@ fun joinRoom(roomId: RoomId, ws: WsContext): String {
     }
     room.broadcastAll(ws, "users ${room.participants.size}")
     if (room.queue.isNotEmpty()) {
-        val playingSource = gson.toJson(room.queue[0].source)
-        log(ws, "video $playingSource")
-        ws.send("video $playingSource")
+        val videoCommand = gson.toJson(room.queue[0].toVideoCommand())
+        log(ws, "video $videoCommand")
+        ws.send("video $videoCommand")
         for (item in room.queue.drop(1)) {
             val videoJson = gson.toJson(item)
             log(ws, "queue add $videoJson")

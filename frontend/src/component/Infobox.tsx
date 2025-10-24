@@ -60,7 +60,7 @@ function Infobox({ notifications, addNotification }: InfoboxProps) {
 
   return (
     <div
-      className={`infobox ${notification != null ? notification.level : ''}`}
+      className={`card infobox ${notification != null ? notification.level : ''}`}
     >
       {notification != null ? (
         <>

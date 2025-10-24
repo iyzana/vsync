@@ -10,7 +10,7 @@
 .overlay > .text {
   display: flex;
   align-items: center;
-  gap: var(--s0);
+  gap: var(--s1);
 }
 
 .overlay.blocked {

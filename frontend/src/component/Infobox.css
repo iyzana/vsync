@@ -1,12 +1,8 @@
 .infobox {
-  padding: var(--s1);
-  background-color: var(--card);
-  border-radius: var(--radius);
-
   display: flex;
   flex-flow: row wrap;
-  column-gap: var(--s0);
-  row-gap: var(--s1);
+  column-gap: var(--s1);
+  row-gap: var(--s2);
   align-items: center;
   justify-content: space-between;
 }
@@ -29,8 +25,8 @@
 
 .remaining {
   background-color: var(--card);
-  padding: var(--s0);
-  margin: calc(-1 * var(--s0)) 0;
+  padding: var(--s1);
+  margin: calc(-1 * var(--s1)) 0;
   border-radius: var(--radius);
 }
 
@@ -52,9 +48,9 @@
 
 .copylink {
   flex: 0 0 auto;
-  margin: calc(-1 * var(--s0)) auto;
+  margin: calc(-1 * var(--s1)) auto;
 }
 
 .about {
-  margin: calc(-1 * var(--s0)) 0;
+  margin: calc(-1 * var(--s1)) 0;
 }

@@ -1,6 +1,7 @@
 :root {
-  --s0: 0.75rem;
-  --s1: 2rem;
+  --s0: 0.2rem;
+  --s1: 0.75rem;
+  --s2: 2rem;
   --bg: #0a0a0a;
   --card: #222222;
   --card-alt: #444444;
@@ -40,7 +41,7 @@ button {
   color: var(--fg);
   background-color: var(--card-alt);
   border: none;
-  padding: var(--s0);
+  padding: var(--s1);
   border-radius: var(--radius);
 }
 
@@ -54,4 +55,15 @@ button:disabled {
 
 #root {
   height: 100%;
+}
+
+.card {
+  padding: var(--s2);
+  background-color: var(--card);
+  border-radius: var(--radius);
+}
+
+.card-title {
+  margin-block-start: 0;
+  margin-block-end: var(--s1);
 }

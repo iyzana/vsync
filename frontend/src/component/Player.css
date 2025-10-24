@@ -3,7 +3,7 @@
   width: 100%;
   overflow: hidden;
   /* force container into 16:9 aspect ratio, but cap at viewport height (minus vertical padding) */
-  padding-top: min(100% * 9 / 16, calc(100vh - 2 * var(--s1)));
+  padding-top: min(100% * 9 / 16, calc(100vh - 2 * var(--s2)));
   position: relative;
 }
 
