@@ -146,6 +146,7 @@ private fun parseYtDlpOutput(
         val video = JsonParser.parseString(videoData).asJsonObject
         val url = getUrl(video, isYoutube) ?: return null
         val contentType = if (isYoutube) null else getContentType(url)
+        logger.info { contentType }
         val title = video.getNullable("title")?.asString
         val series = video.getNullable("series")?.asString?.trim()
         val seasonNumber = video.getNullable("season_number")?.asInt
@@ -182,6 +183,7 @@ private fun getUrl(video: JsonObject, isYoutube: Boolean): String? {
         return mainManifestUrl
     }
     val formats = parseYtDlpFormats(video)
+    logger.info { formats }
     if (formats.all { !it.hasVideo } || formats.all { !it.hasAudio }) {
         val format = formats.first()
         return format.manifestUrl ?: format.url
@@ -197,6 +199,7 @@ private fun getUrl(video: JsonObject, isYoutube: Boolean): String? {
     val format = formats
         .find { format -> (format.hasVideo && format.hasAudio) || fullManifests.contains(format.manifestUrl) }
         ?: return null
+    logger.info { format }
     return format.manifestUrl ?: format.url
 }
 
@@ -213,10 +216,14 @@ private fun parseYtDlpFormats(video: JsonObject): List<YtDlpFormat> {
     }.reversed()
 }
 
-private fun getContentType(url: String): String? {
+private fun getContentType(url: String, method: String = "HEAD"): String? {
     val connection = URI(url).toURL().openConnection() as HttpURLConnection
     AutoCloseable { connection.disconnect() }.use {
-        connection.requestMethod = "HEAD"
+        connection.requestMethod = method
+        if (method == "HEAD" && connection.responseCode == 405 /* Method not allowed */) {
+            return getContentType(url, "GET")
+        }
+        logger.info { connection.headerFields }
         return connection.getHeaderField("Content-Type")
     }
 }
