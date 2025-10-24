@@ -9,7 +9,7 @@ import java.util.concurrent.TimeUnit.SECONDS
 import kotlin.text.RegexOption.IGNORE_CASE
 
 private val youtubeUrlRegex: Regex =
-    Regex("""https://(?:www\.)?youtu(?:\.be|be\.com)/(?:watch\?v=|embed/|shorts/)?([^?&]+)(?:.*)?""", IGNORE_CASE)
+    Regex("""https://(?:[a-z]+\.)?youtu(?:\.be|be\.com)/(?:watch\?v=|embed/|shorts/)?([^?&]+)(?:.*)?""", IGNORE_CASE)
 
 private const val FETCHER_CORE_POOL = 4
 private const val FETCHER_MAX_POOL = 16

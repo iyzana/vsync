@@ -37,18 +37,24 @@ function About() {
         <li>youtube.com</li>
         <li>ardmediathek.de</li>
         <li>zdf.de</li>
-        <li>PeerTube-instances</li>
-        <li>Invidious-instances</li>
-        <li>vimeo.com</li>
+        <li>arte.tv</li>
+        <li>PeerTube instances</li>
+        <li>reddit.com</li>
+        <li>bsky.app</li>
+        <li>soundcloud.com</li>
       </ul>
       <h2>Unsupported sites</h2>
       <p>A list of sites that are known not to work</p>
       <ul>
         <li>netflix.com</li>
+        <li>tiktok.com</li>
         <li>twitch.tv</li>
-        <li>reddit.com</li>
         <li>instagram.com</li>
         <li>tvnow.de</li>
+        <li>plus.rtl.de</li>
+        <li>vimeo.com</li>
+        <li>Mastodon instances</li>
+        <li>Invidious instances</li>
       </ul>
       <h2>Bookmarklet</h2>
       <p>

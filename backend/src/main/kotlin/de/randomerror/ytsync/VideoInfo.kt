@@ -130,6 +130,13 @@ private fun fetchVideoInfoYtDlp(youtubeId: String?, query: String): QueueItem? {
     return parseYtDlpOutput(videoData, query, isYoutube)
 }
 
+data class YtDlpFormat(
+    val url: String,
+    val manifestUrl: String?,
+    val hasVideo: Boolean,
+    val hasAudio: Boolean,
+)
+
 private fun parseYtDlpOutput(
     videoData: String,
     query: String,
@@ -137,18 +144,14 @@ private fun parseYtDlpOutput(
 ): QueueItem? {
     return try {
         val video = JsonParser.parseString(videoData).asJsonObject
-        val url = if (isYoutube) {
-            video.getNullable("webpage_url")
-        } else {
-            video.getNullable("manifest_url") ?: video.getNullable("url")
-        }?.asString ?: return null
+        val url = getUrl(video, isYoutube) ?: return null
+        val contentType = if (isYoutube) null else getContentType(url)
         val title = video.getNullable("title")?.asString
         val series = video.getNullable("series")?.asString?.trim()
         val seasonNumber = video.getNullable("season_number")?.asInt
         val episodeNumber = video.getNullable("episode_number")?.asInt
         val channel = video.getNullable("channel")?.asString
         val thumbnail = video.getNullable("thumbnail")?.asString
-        val contentType = if (isYoutube) null else getContentType(url)
         val startTime = video.getNullable("start_time")?.asInt ?: findStartTimeSeconds(query)
         QueueItem(
             VideoSource(url, contentType), query,
@@ -170,10 +173,52 @@ private fun parseYtDlpOutput(
     }
 }
 
+private fun getUrl(video: JsonObject, isYoutube: Boolean): String? {
+    if (isYoutube) {
+        return video.getNullable("webpage_url")?.asString
+    }
+    val mainManifestUrl = video.getNullable("manifest_url")?.asString
+    if (mainManifestUrl != null) {
+        return mainManifestUrl
+    }
+    val formats = parseYtDlpFormats(video)
+    if (formats.all { !it.hasVideo } || formats.all { !it.hasAudio }) {
+        val format = formats.first()
+        return format.manifestUrl ?: format.url
+    }
+    val fullManifests = formats
+        .filter { it.manifestUrl != null }
+        .groupBy { it.manifestUrl }
+        .filter { (_, manifestFormats) ->
+            manifestFormats.find { it.hasVideo } != null
+                && manifestFormats.find { it.hasAudio } != null
+        }
+        .map { (manifestUrl, _) -> manifestUrl }
+    val format = formats
+        .find { format -> (format.hasVideo && format.hasAudio) || fullManifests.contains(format.manifestUrl) }
+        ?: return null
+    return format.manifestUrl ?: format.url
+}
+
+private fun parseYtDlpFormats(video: JsonObject): List<YtDlpFormat> {
+    return video.get("formats").asJsonArray.map { it.asJsonObject }.map { format ->
+        var vcodec = format.getNullable("vcodec")?.asString
+        var acodec = format.getNullable("acodec")?.asString
+        YtDlpFormat(
+            format.get("url").asString,
+            format.getNullable("manifest_url")?.asString,
+            vcodec != "none",
+            acodec != "none"
+        )
+    }.reversed()
+}
+
 private fun getContentType(url: String): String? {
     val connection = URI(url).toURL().openConnection() as HttpURLConnection
-    connection.requestMethod = "HEAD"
-    return connection.getHeaderField("Content-Type")
+    AutoCloseable { connection.disconnect() }.use {
+        connection.requestMethod = "HEAD"
+        return connection.getHeaderField("Content-Type")
+    }
 }
 
 fun JsonObject.getNullable(key: String): JsonElement? {
@@ -193,12 +238,6 @@ private fun buildYtDlpCommand(query: String, fromYoutube: Boolean): Array<String
         "--playlist-items", "1:1",
         "--dump-json",
     )
-    if (!fromYoutube) {
-        // only allow pre-merged formats except from youtube, videojs can't play split streams
-        // m3u8 can be problematic if the hoster does not set an access-control-allow-origin header
-        command.add("-f")
-        command.add("b")
-    }
     command.add("--")
     command.add(query)
     return command.toTypedArray()

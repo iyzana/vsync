@@ -21,10 +21,7 @@ export interface EmbeddedPlayerProps {
 }
 
 function isYoutubeUrl(url: string): boolean {
-  return (
-    url.startsWith('https://www.youtube.com/') ||
-    url.startsWith('https://youtu.be/')
-  );
+  return url.match(/https:\/\/(?:[a-z]+\.)?youtu(?:\.be|be\.com)\//) != null;
 }
 
 function Player() {

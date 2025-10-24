@@ -28,7 +28,9 @@ function Thumbnail({ thumbnailUrl, loading }: ThumbnailProps) {
       )}
     </div>
   ) : (
-    <img className="thumbnail" src={thumbnailUrl || undefined} alt="" />
+    <div className='thumbnail'>
+      <img src={thumbnailUrl || undefined} alt="" />
+    </div>
   );
 }
 
