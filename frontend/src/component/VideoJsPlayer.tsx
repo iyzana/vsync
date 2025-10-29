@@ -1,12 +1,12 @@
-import './VideoJsPlayer.css';
-import { useContext, useEffect, useRef } from 'react';
-import videojs from 'video.js';
-import type Player from 'video.js/dist/types/player';
-import 'video.js/dist/video-js.css';
-import { EmbeddedPlayerProps } from './Player';
-import { useWebsocketMessages } from '../hook/websocket-messages';
-import { WebsocketContext } from '../context/websocket';
-import OverlayState from '../model/Overlay';
+import "./VideoJsPlayer.css";
+import { useContext, useEffect, useRef } from "react";
+import videojs from "video.js";
+import type Player from "video.js/dist/types/player";
+import "video.js/dist/video-js.css";
+import { EmbeddedPlayerProps } from "./Player";
+import { useWebsocketMessages } from "../hook/websocket-messages";
+import { WebsocketContext } from "../context/websocket";
+import OverlayState from "../model/Overlay";
 
 const opts = {
   autoplay: true,
@@ -56,11 +56,11 @@ const opts = {
         const textTracks = (player as any).textTracks();
         for (let i = 0; i < textTracks.length; i++) {
           const track = textTracks[i];
-          if (track.kind === 'captions') {
-            if (track.mode !== 'showing') {
-              track.mode = 'showing';
+          if (track.kind === "captions") {
+            if (track.mode !== "showing") {
+              track.mode = "showing";
             } else {
-              track.mode = 'hidden';
+              track.mode = "hidden";
             }
             return;
           }
@@ -93,25 +93,25 @@ export const VideoJsPlayer = ({
         return;
       }
       player.ready(function() {
-        if (msg === 'play') {
-          console.log('processing server message play');
+        if (msg === "play") {
+          console.log("processing server message play");
           player.play();
-        } else if (msg.startsWith('pause')) {
-          console.log('processing server message pause');
+        } else if (msg.startsWith("pause")) {
+          console.log("processing server message pause");
           player.pause();
-          const timestamp = parseFloat(msg.split(' ')[1]);
+          const timestamp = parseFloat(msg.split(" ")[1]);
           const shouldSeek = Math.abs(player.currentTime()! - timestamp) > 0.5;
           if (shouldSeek) {
-            console.log('seeking due to pause');
+            console.log("seeking due to pause");
             player.currentTime(timestamp);
           }
-        } else if (msg.startsWith('ready?')) {
-          console.log('processing server message ready');
+        } else if (msg.startsWith("ready?")) {
+          console.log("processing server message ready");
           player.pause();
-          const timestamp = parseFloat(msg.split(' ')[1]);
+          const timestamp = parseFloat(msg.split(" ")[1]);
           const shouldSeek = Math.abs(player.currentTime()! - timestamp) > 0.5;
           if (shouldSeek) {
-            console.log('seeking due to ready');
+            console.log("seeking due to ready");
             player.currentTime(timestamp);
           }
 
@@ -130,9 +130,11 @@ export const VideoJsPlayer = ({
     // make sure video.js is only initialized once
     if (!playerRef.current) {
       const placeholderElement = placeholderRef.current;
+      // todo: i don't think this return can ever happen
       if (!placeholderElement) return;
+      // todo: don't createElement, instead render a div with an id and use that
       const videoElement = placeholderElement.appendChild(
-        document.createElement('video-js'),
+        document.createElement("video-js"),
       );
 
       if (!videoElement) return;
@@ -141,34 +143,35 @@ export const VideoJsPlayer = ({
 
       const player = playerRef.current;
       player.ready(() => {
-        console.log('registering player hooks');
-        player.on('play', function() {
-          console.log('player hook play');
+        console.log("registering player hooks");
+        // todo: don't rely on reference, instead register and unregister the event listeners using on/off
+        player.on("play", function() {
+          console.log("player hook play");
           if (playbackPermissionRef.current) {
             sendMessage(`play ${player.currentTime()}`);
             waitReadyRef.current = false;
             setOverlay(OverlayState.NONE);
           } else {
             gotPlaybackPermissionRef.current();
-            sendMessage('sync');
+            sendMessage("sync");
           }
         });
-        player.on('pause', function() {
-          console.log('player hook pause');
+        player.on("pause", function() {
+          console.log("player hook pause");
           if (!waitReadyRef.current) {
             sendMessage(`pause ${player.currentTime()}`);
             setOverlay(OverlayState.PAUSED);
           }
         });
-        player.on('stalled', function() {
-          console.log('player hook stalled');
+        player.on("stalled", function() {
+          console.log("player hook stalled");
           sendMessage(`buffer ${player.currentTime()}`);
         });
-        player.on('seeked', function() {
+        player.on("seeked", function() {
           if (!playbackPermissionRef.current) {
             return;
           }
-          console.log('player hook seeked');
+          console.log("player hook seeked");
           if (player.paused()) {
             if (waitReadyRef.current) {
               sendMessage(`play ${player.currentTime()}`);
@@ -178,27 +181,27 @@ export const VideoJsPlayer = ({
           }
           // fixme: on keyboard seek player is playing here
         });
-        player.on('ended', function() {
-          console.log('player hook ended');
+        player.on("ended", function() {
+          console.log("player hook ended");
           sendMessage(`end ${videoRef.current.source.url}`);
         });
-        player.on('ratechange', function() {
-          console.log('player hook ratechange');
+        player.on("ratechange", function() {
+          console.log("player hook ratechange");
           sendMessage(`speed ${player.playbackRate()}`);
         });
-        player.on('canplay', function() {
-          console.log('player hook canplay');
+        player.on("canplay", function() {
+          console.log("player hook canplay");
           if (waitReadyRef.current) {
-            console.log('canplay');
+            console.log("canplay");
             sendMessage(`ready ${player.currentTime()}`);
           }
         });
-        player.on('volumechange', function() {
-          console.log('player hook volumechange');
+        player.on("volumechange", function() {
+          console.log("player hook volumechange");
           console.log(
-            'storing videojs player volume ' +
+            "storing videojs player volume " +
             player.muted() +
-            ' ' +
+            " " +
             player.volume(),
           );
           if (player.muted()) {
@@ -208,7 +211,7 @@ export const VideoJsPlayer = ({
           }
         });
 
-        console.log('setting videojs player volume ' + volume);
+        console.log("setting videojs player volume " + volume);
         if (volume === 0) {
           player.volume(0);
           player.muted(true);
@@ -235,7 +238,10 @@ export const VideoJsPlayer = ({
     const player = playerRef.current;
     player.ready(() => {
       videoRef.current = video;
-      player.src({ src: video.source.url, type: video.source.mimeType || undefined });
+      player.src({
+        src: video.source.url,
+        type: video.source.mimeType || undefined,
+      });
       if (video.startTimeSeconds) {
         player.currentTime(video.startTimeSeconds);
       }

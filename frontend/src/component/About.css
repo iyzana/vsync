@@ -15,12 +15,12 @@
   gap: var(--s1);
 }
 
-.shortcuts > li {
+.shortcuts>li {
   list-style: none;
   flex: 0 1 400px;
 }
 
-.shortcuts > li > *:last-child {
+.shortcuts>li>*:last-child {
   margin-left: var(--s1);
 }
 

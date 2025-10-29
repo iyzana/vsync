@@ -7,27 +7,9 @@ import { useCallback, useContext, useState } from 'react';
 import Notification from '../model/Notification';
 import { useWebsocketMessages } from '../hook/websocket-messages';
 import { WebsocketContext } from '../context/websocket';
-import FavIcon from './FavIcon';
 import Thumbnail from './Thumbnail';
 import Host from './Host';
 import VideoMetadataLine from './VideoMetadataLine';
-
-const getDomain: (item: QueueItem) => string | null = (item: QueueItem) => {
-  let baseUrl;
-  try {
-    baseUrl = new URL(item.originalQuery);
-  } catch (e) {
-    if (item.source) {
-      baseUrl = new URL(item.source?.url);
-    } else if (item.favicon) {
-      baseUrl = new URL(item.favicon);
-    } else {
-      return null;
-    }
-  }
-  const host = baseUrl.hostname;
-  return host.replace(/^www./, '');
-};
 
 interface QueueProps {
   addNotification: (notification: Notification) => void;

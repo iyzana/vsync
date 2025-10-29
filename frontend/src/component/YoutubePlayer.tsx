@@ -35,7 +35,7 @@ const getVideoId = (videoUrl: string) => {
 };
 
 function YoutubePlayer({
-  video: video,
+  video,
   setOverlay,
   volume,
   setVolume,
@@ -182,7 +182,7 @@ function YoutubePlayer({
         player?.seekTo(preloadTime, true);
         // youtube does not update videoLoadedFraction
         // without updated seek event
-        setPreloadTime((time) => time!! + 0.01);
+        // setPreloadTime((time) => time!! + 0.01);
         setNextReadyCheck((check) => Math.min(5000, check * 2));
       }
     }, nextReadyCheck);
@@ -234,6 +234,8 @@ function YoutubePlayer({
     [volume],
   );
 
+  // todo: ditch react-youtube and youtube-player as both introduce abstractions that are more
+  // hindrance than help
   return (
     <YouTube
       className="youtube-player"
