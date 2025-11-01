@@ -1,5 +1,21 @@
 # Changelog
 
+## [3.1.0](https://github.com/iyzana/vsync/compare/v3.0.1...v3.1.0) (2025-11-01)
+
+
+### Features
+
+* show info of currently playing video ([b7b0245](https://github.com/iyzana/vsync/commit/b7b02456f4bc4cf1568e74fdb711ce9f9e2c0421))
+* support yt music and manifests with separate a/v streams ([fa4d29d](https://github.com/iyzana/vsync/commit/fa4d29d94e8cc684b8fe1b98e3d66ca2d249ddc1))
+
+
+### Bug Fixes
+
+* fallback to GET request if HEAD is not supported ([0193cce](https://github.com/iyzana/vsync/commit/0193cce1a175afa2394c46c06ae414de946930de))
+* handle exception for playlists of length 0 ([7fd086a](https://github.com/iyzana/vsync/commit/7fd086a78fdc1e3b233e1e571ee834c1062fd058))
+* more reliable content type fetching ([1de0dc7](https://github.com/iyzana/vsync/commit/1de0dc7b77cf80eff2e86412081c47f2eb6a46f7))
+* queue overlap with url input ([b6fa225](https://github.com/iyzana/vsync/commit/b6fa225efbd5c35b11f06f684271ddef7cdcc26d))
+
 ## [3.0.1](https://github.com/iyzana/vsync/compare/v3.0.0...v3.0.1) (2025-09-03)
 
 
