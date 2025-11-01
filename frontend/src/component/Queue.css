@@ -2,7 +2,7 @@
   min-height: 0;
   flex-grow: 1;
   padding: 0 var(--s2);
-  margin-bottom: calc(-1 * var(--s2));
+  margin-bottom: calc(-1 * var(--s1));
 
   background-color: var(--card);
   border-radius: var(--radius) var(--radius) 0 0;
