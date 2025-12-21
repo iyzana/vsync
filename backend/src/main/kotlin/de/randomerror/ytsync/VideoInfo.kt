@@ -6,6 +6,7 @@ import com.google.gson.JsonParseException
 import com.google.gson.JsonParser
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.io.FileNotFoundException
+import java.io.IOException
 import java.io.StringWriter
 import java.lang.Exception
 import java.net.HttpURLConnection
@@ -97,6 +98,9 @@ private fun fetchVideoInfoYouTubeOEmbed(query: String, youtubeId: String): Queue
             VideoMetadata(title, null, null, null, channel),
             startTime, thumbnail, null, false
         )
+    } catch (e: IOException) {
+        logger.warn(e) { "failed to parse oembed response for query $query" }
+        null
     } catch (e: JsonParseException) {
         logger.warn(e) { "failed to parse oembed response for query $query" }
         null

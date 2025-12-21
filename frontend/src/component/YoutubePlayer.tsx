@@ -236,6 +236,10 @@ function YoutubePlayer({
 
   // todo: ditch react-youtube and youtube-player as both introduce abstractions that are more
   // hindrance than help
+
+  // todo: the YouTube component throws an exception for malformed video IDs. That can happen when queueing the initial video.
+  // A react error boundary is required to catch that
+  
   return (
     <YouTube
       className="youtube-player"
