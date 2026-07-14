@@ -1,1 +1,1 @@
-rootProject.name = "yt-sync"
+rootProject.name = "vsync"

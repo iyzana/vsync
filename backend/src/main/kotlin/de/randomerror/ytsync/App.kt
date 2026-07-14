@@ -31,9 +31,9 @@ fun main() {
         }
     }
 
-    Javalin.create()
-        .ws("/api/room") { ws -> webSocket(ws) }
-        .start("::", LISTEN_PORT)
+    Javalin.create { config ->
+        config.routes.ws("/api/room") { ws -> webSocket(ws) }
+    }.start("::", LISTEN_PORT)
 }
 
 private fun updateYoutubeDl() {
@@ -121,5 +121,5 @@ private fun matchesMinArgs(cmd: List<String>, command: String, subcommand: Strin
 fun log(ws: WsContext, message: String) {
     val roomId = websockets[ws]?.let { "@${it.roomId} " } ?: ""
     val context = local.get()?.let { "[$it] " } ?: ""
-    logger.debug { "$roomId${ws.session.remoteAddress}: $context$message" }
+    logger.debug { "$roomId${ws.session.remoteSocketAddress}: $context$message" }
 }
