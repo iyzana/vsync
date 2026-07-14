@@ -93,6 +93,19 @@
   align-items: flex-start;
 }
 
+.queue-video-detail {
+  min-inline-size: 0;
+}
+
 .queue-video-title {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  line-clamp: 3;
+  -webkit-line-clamp: 3;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  overflow-wrap: anywhere;
+
   font-weight: bold;
 }

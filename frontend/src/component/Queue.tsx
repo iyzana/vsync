@@ -128,7 +128,7 @@ function Queue({ addNotification }: QueueProps) {
                     thumbnailUrl={item.thumbnail || null}
                     loading={item.loading}
                   />
-                  <div>
+                  <div className='queue-video-detail'>
                     <div className='queue-video-title'>
                       {item.metadata?.title || (item.loading ? 'Loading...' : 'No title')}
                     </div>
