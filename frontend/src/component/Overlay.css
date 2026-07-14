@@ -4,11 +4,17 @@
   justify-content: center;
   align-items: center;
   font-size: 1.8rem;
-  filter: drop-shadow(0px 0px 1px #222222) drop-shadow(0px 0px 1px #222222);
 }
 
 .overlay>.text {
   display: flex;
+
+  background-color: #22222288;
+  padding: 10px;
+  padding-inline-end: 16px;
+  border-radius: var(--radius);
+  margin-block-start: 160px;
+
   align-items: center;
   gap: var(--s1);
 }

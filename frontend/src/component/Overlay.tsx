@@ -1,7 +1,7 @@
 import {
   faCircleExclamation,
   faPause,
-  faSyncAlt,
+  faArrowsSpin,
   IconDefinition,
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -23,7 +23,7 @@ const OVERLAYS: Record<keyof typeof OverlayState, OverlayConfig | null> = {
   },
   SYNCING: {
     text: 'Syncing',
-    icon: faSyncAlt,
+    icon: faArrowsSpin,
     classes: null,
   },
   UNSTARTED: {
