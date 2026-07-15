@@ -64,7 +64,7 @@ private fun parseYtDlpOutput(
         val videoSource = if (isYoutube) {
             VideoSource(video.get("webpage_url").asString, null)
         } else {
-            getVideoSource(video)
+            getVideoSource(video) ?: return null
         }
         val title = video.getNullable("title")?.asString
         val series = video.getNullable("series")?.asString?.trim()
