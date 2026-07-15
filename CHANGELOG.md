@@ -1,5 +1,18 @@
 # Changelog
 
+## [3.2.0](https://github.com/iyzana/vsync/compare/v3.1.0...v3.2.0) (2026-07-15)
+
+
+### Features
+
+* limit video title length overflow ([53fa074](https://github.com/iyzana/vsync/commit/53fa0741f1faa704ab345fffa573d24308f95ceb))
+* update sync overlay look ([6b8cd6f](https://github.com/iyzana/vsync/commit/6b8cd6f8bd647eec17def609f88ae0ea0958e5cd))
+
+
+### Bug Fixes
+
+* videoSource null problem ([01e31a4](https://github.com/iyzana/vsync/commit/01e31a4a31a548e78e05e7a76065fabd033f7c8b))
+
 ## [3.1.0](https://github.com/iyzana/vsync/compare/v3.0.1...v3.1.0) (2025-12-21)
 
 
